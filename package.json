@@ -1,0 +1,23 @@
+{
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "docs:install": "cd docs && npm ci",
+    "docs:dev": "cd docs && npm run dev",
+    "docs:build": "cd docs && npm run build",
+    "docs:preview": "cd docs && npm run preview"
+  },
+  "dependencies": {
+    "vue": "^2.6.14"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue2": "^2.2.0",
+    "autoprefixer": "^10.4.5",
+    "laravel-vite-plugin": "^0.7.6",
+    "postcss": "^8.4.12",
+    "vite": "^4.3.9"
+  }
+}

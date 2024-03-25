@@ -1,0 +1,56 @@
+{
+    "name": "daun/statamic-mux",
+    "description": "Upload video assets to Mux and embed them in your Statamic site",
+    "type": "statamic-addon",
+    "homepage": "https://github.com/daun/statamic-mux",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Philipp Daun",
+            "email": "post@philippdaun.net",
+            "homepage": "https://philippdaun.net",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "email": "post@philippdaun.net"
+    },
+    "keywords": [
+        "statamic",
+        "video",
+        "mux"
+    ],
+    "require": {
+        "php": "^8.0",
+        "firebase/php-jwt": "^6.10",
+        "guzzlehttp/guzzle": "^7.8",
+        "laravel/framework": "^9.0 || ^10.0",
+        "muxinc/mux-php": "^3.14",
+        "srwiez/thumbhash": "^1.2",
+        "statamic/cms": "^4.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Daun\\StatamicMux\\": "src"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "allow-plugins": {
+            "pixelfear/composer-dist-plugin": true
+        }
+    },
+    "extra": {
+        "statamic": {
+            "name": "Statamic Mux",
+            "description": "Upload video assets to Mux and embed them in your Statamic site"
+        },
+        "laravel": {
+            "providers": [
+                "Daun\\StatamicMux\\ServiceProvider"
+            ]
+        }
+    }
+}
