@@ -1,0 +1,320 @@
+/**
+ * Customize default theme styling by overriding CSS variables:
+ * https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/vars.css
+ */
+
+/**
+ * Colors
+ *
+ * Each colors have exact same color scale system with 3 levels of solid
+ * colors with different brightness, and 1 soft color.
+ *
+ * - `XXX-1`: The most solid color used mainly for colored text. It must
+ *   satisfy the contrast ratio against when used on top of `XXX-soft`.
+ *
+ * - `XXX-2`: The color used mainly for hover state of the button.
+ *
+ * - `XXX-3`: The color for solid background, such as bg color of the button.
+ *   It must satisfy the contrast ratio with pure white (#ffffff) text on
+ *   top of it.
+ *
+ * - `XXX-soft`: The color used for subtle background such as custom container
+ *   or badges. It must satisfy the contrast ratio when putting `XXX-1` colors
+ *   on top of it.
+ *
+ *   The soft color must be semi transparent alpha channel. This is crucial
+ *   because it allows adding multiple "soft" colors on top of each other
+ *   to create a accent, such as when having inline code block inside
+ *   custom containers.
+ *
+ * - `default`: The color used purely for subtle indication without any
+ *   special meanings attched to it such as bg color for menu hover state.
+ *
+ * - `brand`: Used for primary brand colors, such as link text, button with
+ *   brand theme, etc.
+ *
+ * - `tip`: Used to indicate useful information. The default theme uses the
+ *   brand color for this by default.
+ *
+ * - `warning`: Used to indicate warning to the users. Used in custom
+ *   container, badges, etc.
+ *
+ * - `danger`: Used to show error, or dangerous message to the users. Used
+ *   in custom container, badges, etc.
+ * -------------------------------------------------------------------------- */
+
+/* Custom brand color: pink/orange */
+
+:root {
+  --vp-c-pink-1: hsl(340, 85%, 44%);
+  --vp-c-pink-2: hsl(340, 75%, 53%);
+  --vp-c-pink-3: hsl(340, 69%, 61%);
+  --vp-c-pink-soft: hsla(340, 89%, 60%, 0.14);
+}
+
+.dark {
+  --vp-c-pink-1: hsl(340, 88%, 70%);
+  --vp-c-pink-2: hsl(340, 86%, 60%);
+  --vp-c-pink-3: hsl(340, 63%, 44%);
+  --vp-c-pink-soft: hsla(340, 89%, 60%, 0.16);
+}
+
+:root {
+  --vp-c-default-1: var(--vp-c-gray-1);
+  --vp-c-default-2: var(--vp-c-gray-2);
+  --vp-c-default-3: var(--vp-c-gray-3);
+  --vp-c-default-soft: var(--vp-c-gray-soft);
+
+  /* Custom brand color: pink/orange */
+  --vp-c-brand-1: var(--vp-c-pink-1);
+  --vp-c-brand-2: var(--vp-c-pink-2);
+  --vp-c-brand-3: var(--vp-c-pink-3);
+  --vp-c-brand-soft: var(--vp-c-pink-soft);
+
+  --vp-c-tip-1: var(--vp-c-brand-1);
+  --vp-c-tip-2: var(--vp-c-brand-2);
+  --vp-c-tip-3: var(--vp-c-brand-3);
+  --vp-c-tip-soft: var(--vp-c-brand-soft);
+
+  --vp-c-warning-1: var(--vp-c-yellow-1);
+  --vp-c-warning-2: var(--vp-c-yellow-2);
+  --vp-c-warning-3: var(--vp-c-yellow-3);
+  --vp-c-warning-soft: var(--vp-c-yellow-soft);
+
+  --vp-c-danger-1: var(--vp-c-red-1);
+  --vp-c-danger-2: var(--vp-c-red-2);
+  --vp-c-danger-3: var(--vp-c-red-3);
+  --vp-c-danger-soft: var(--vp-c-red-soft);
+}
+
+/**
+ * Component: Button
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --vp-button-brand-border: transparent;
+  --vp-button-brand-text: var(--vp-c-white);
+  --vp-button-brand-bg: var(--vp-c-brand-3);
+  --vp-button-brand-hover-border: transparent;
+  --vp-button-brand-hover-text: var(--vp-c-white);
+  --vp-button-brand-hover-bg: var(--vp-c-brand-2);
+  --vp-button-brand-active-border: transparent;
+  --vp-button-brand-active-text: var(--vp-c-white);
+  --vp-button-brand-active-bg: var(--vp-c-brand-1);
+}
+
+/**
+ * Component: Home
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: -webkit-linear-gradient(
+    -30deg,
+    #ff6100,
+    #FA50B5
+  );
+
+  --vp-home-hero-image-background-image: linear-gradient(
+    135deg,
+    #ff6100 50%,
+    #FA50B5 50%
+  );
+  --vp-home-hero-image-filter: blur(44px);
+}
+
+@media (min-width: 640px) {
+  :root {
+    --vp-home-hero-image-filter: blur(56px);
+  }
+}
+
+@media (min-width: 960px) {
+  :root {
+    --vp-home-hero-image-filter: blur(68px);
+  }
+}
+
+/**
+ * Component: Custom Block
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --vp-custom-block-tip-border: transparent;
+  --vp-custom-block-tip-text: var(--vp-c-text-1);
+  --vp-custom-block-tip-bg: var(--vp-c-brand-soft);
+  --vp-custom-block-tip-code-bg: var(--vp-c-brand-soft);
+}
+
+/**
+ * Component: Search
+ * -------------------------------------------------------------------------- */
+
+.DocSearch {
+  --docsearch-primary-color: var(--vp-c-brand-1) !important;
+}
+
+.VPNavBarSearch {
+  justify-content: flex-end;
+}
+
+@media (min-width: 768px) {
+  .VPNavBarSearch {
+    padding-right: 32px;
+  }
+}
+
+.DocSearch-Button {
+  background-color: transparent !important;
+}
+
+/**
+ * Component: Nav Bar
+ * -------------------------------------------------------------------------- */
+
+.VPNavBarTitle .title {
+  border-color: transparent !important;
+}
+
+/**
+ * Component: Side Bar
+ * -------------------------------------------------------------------------- */
+
+.VPSidebar .group + .group {
+  border-color: transparent !important;
+}
+
+/**
+ * Component: Button
+ * -------------------------------------------------------------------------- */
+
+.VPButton.medium {
+  border-radius: 6px !important;
+}
+
+/**
+ * Component: Feature
+ * -------------------------------------------------------------------------- */
+
+.VPFeature .icon {
+  background: none;
+  justify-content: start;
+  margin-bottom: 10px;
+}
+
+.VPFeature svg {
+  color: var(--vp-c-brand-3);
+}
+
+/**
+ * Component: Heading
+ * -------------------------------------------------------------------------- */
+
+.vp-doc :is(h1, h2, h3) code {
+  background-color: transparent;
+  color: inherit;
+}
+
+.vp-doc :is(h1, h2, h3) code:first-child {
+  padding-left: 0;
+}
+
+.vp-doc h2 {
+  border-top: 0;
+}
+
+/**
+ * Component: Code
+ * -------------------------------------------------------------------------- */
+
+.vp-doc a code {
+  background-color: transparent;
+  padding: 0;
+  font-weight: 600;
+}
+
+/**
+ * Component: Code Group
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --vp-code-tab-divider: var(--vp-c-bg);
+  --vp-code-tab-active-bar-color: var(--vp-c-text-3);
+}
+
+.vp-code-group .tabs:has(label:only-of-type) {
+  --vp-code-tab-divider: transparent;
+  user-select: none;
+}
+
+.vp-code-group .tabs label:only-of-type {
+  --vp-code-tab-active-bar-color: transparent !important;
+}
+
+.vp-code-group .tabs label::after {
+  height: 1px;
+}
+
+.vp-doc [class*='language-'] > span.lang {
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  user-select: none;
+  opacity: 0;
+}
+
+/**
+ * Component: Table
+ * -------------------------------------------------------------------------- */
+
+.vp-doc th, .vp-doc td {
+  border-left-width: 0;
+  border-right-width: 0;
+  vertical-align: top;
+}
+
+.vp-doc th:first-child, .vp-doc td:first-child {
+  padding-left: 0;
+}
+
+.vp-doc th:last-child, .vp-doc td:last-child {
+  padding-right: 0;
+}
+
+.vp-doc table thead th {
+  background-color: transparent;
+  border-top-color: transparent;
+  /* color: var(--vp-c-text-3); */
+}
+
+.vp-doc tr {
+  background-color: transparent !important;
+}
+
+.vp-doc table a code {
+  background-color: transparent;
+  padding: 0;
+}
+
+.vp-doc table td > code {
+  color: inherit;
+}
+
+/**
+ * Component: Details
+ * -------------------------------------------------------------------------- */
+
+:root {
+  --vp-custom-block-details-bg: var(--vp-c-bg-alt);
+}
+
+.custom-block.details summary {
+  font-weight: 500;
+}
+
+/**
+ * Component: Badge
+ * -------------------------------------------------------------------------- */
+
+.VPBadge {
+  letter-spacing: .015em;
+}
