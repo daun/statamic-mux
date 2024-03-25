@@ -36,6 +36,10 @@ class ServiceProvider extends AddonServiceProvider
         Tags\MuxTags::class,
     ];
 
+    protected $routes = [
+        'cp' => __DIR__.'/../routes/cp.php',
+    ];
+
     protected $vite = [
         'input' => [
             'resources/js/addon.js',
@@ -55,6 +59,8 @@ class ServiceProvider extends AddonServiceProvider
 
     public function bootAddon()
     {
+        $this->bootAddonViews();
+        $this->bootAddonNav();
         $this->bootPermissions();
     }
 
@@ -114,6 +120,26 @@ class ServiceProvider extends AddonServiceProvider
             __DIR__.'/../config/mux.php' => config_path('statamic/mux.php'),
         ], 'statamic-mux');
     }
+
+    protected function bootAddonViews()
+    {
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'mux');
+    }
+
+    protected function bootAddonNav()
+    {
+        Nav::extend(function ($nav) {
+            $nav->tools('Mux')
+                ->route('mux.index')
+                ->icon('video')
+                ->active('mux')
+                ->can('view mux')
+                ->children([
+                    'Assets' => cp_route('mux.assets.index'),
+                ]);
+        });
+    }
+
 
     protected function bootPermissions()
     {
