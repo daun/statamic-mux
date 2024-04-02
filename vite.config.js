@@ -6,8 +6,8 @@ export default defineConfig({
     plugins: [
         laravel({
             input: [
+                'resources/css/addon.css',
                 'resources/js/addon.js',
-                'resources/css/addon.css'
             ],
             publicDirectory: 'resources/dist',
             refresh: true,
