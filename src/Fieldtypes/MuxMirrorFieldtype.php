@@ -8,12 +8,14 @@ use Statamic\Contracts\Assets\Asset;
 use Statamic\Fields\Fieldtype;
 use Statamic\Fields\Value;
 
-class MuxMirror extends Fieldtype
+class MuxMirrorFieldtype extends Fieldtype
 {
     protected static $handle = 'mux_mirror';
+
     protected static $title = 'Mux Mirror';
 
     protected $categories = ['media', 'special'];
+
     protected $icon = 'video';
 
     protected $validatable = false;
@@ -66,7 +68,7 @@ class MuxMirror extends Fieldtype
 
         // (Re)upload asset if checkbox was checked by editor
         if ($asset && $upload) {
-            CreateMuxAssetJob::dispatch($asset->id(), true);
+            CreateMuxAssetJob::dispatch($asset, true);
         }
 
         return $data;
@@ -74,6 +76,10 @@ class MuxMirror extends Fieldtype
 
     public function augment($value)
     {
-        return new MuxAsset($value ?? [], $this->asset(), $this->field()?->handle());
+        if ($asset = $this->asset()) {
+            return new MuxAsset($value ?? [], $asset, $this->field()?->handle());
+        } else {
+            return $value;
+        }
     }
 }

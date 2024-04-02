@@ -6,7 +6,7 @@ use Daun\StatamicMux\Commands\Concerns\HasOutputStyles;
 use Illuminate\Console\Command;
 use Statamic\Console\RunsInPlease;
 
-class Mirror extends Command
+class MirrorCommand extends Command
 {
     use HasOutputStyles;
     use RunsInPlease;

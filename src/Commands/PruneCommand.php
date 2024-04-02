@@ -11,7 +11,7 @@ use Illuminate\Console\Command;
 use Statamic\Console\RunsInPlease;
 use Statamic\Facades\Asset;
 
-class Prune extends Command
+class PruneCommand extends Command
 {
     use HasOutputStyles;
     use RunsInPlease;

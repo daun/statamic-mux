@@ -7,7 +7,6 @@ use Daun\StatamicMux\Facades\Mux;
 use Daun\StatamicMux\Features\Mirror;
 use Statamic\Assets\Asset;
 use Statamic\Contracts\Data\Augmentable;
-use Statamic\Contracts\Data\Augmented;
 use Statamic\Data\ContainsData;
 use Statamic\Data\HasAugmentedInstance;
 
@@ -73,6 +72,15 @@ class MuxAsset implements Augmentable
     public function playbackIds(): MuxPlaybackIds
     {
         return MuxPlaybackIds::make($this->get('playback_ids', []));
+    }
+
+    public function playbackId(): ?MuxPlaybackId
+    {
+        return tap($this->playbackIds(), function (MuxPlaybackIds $playbackIds) {
+            return $playbackIds->public()
+            ?: $playbackIds->signed()
+            ?: null;
+        });
     }
 
     public function newAugmentedInstance(): AugmentedMuxAsset

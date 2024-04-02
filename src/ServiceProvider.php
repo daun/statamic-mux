@@ -16,9 +16,9 @@ use Statamic\Facades\Permission;
 class ServiceProvider extends AddonServiceProvider
 {
     protected $commands = [
-        Commands\Mirror::class,
-        Commands\Prune::class,
-        Commands\Upload::class,
+        Commands\MirrorCommand::class,
+        Commands\PruneCommand::class,
+        Commands\UploadCommand::class,
     ];
 
     protected $listen = [
@@ -29,7 +29,7 @@ class ServiceProvider extends AddonServiceProvider
     ];
 
     protected $fieldtypes = [
-        Fieldtypes\MuxMirror::class,
+        Fieldtypes\MuxMirrorFieldtype::class,
     ];
 
     protected $tags = [

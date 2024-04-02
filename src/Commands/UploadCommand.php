@@ -12,7 +12,7 @@ use Statamic\Console\RunsInPlease;
 use Statamic\Facades\Asset;
 use Statamic\Facades\AssetContainer;
 
-class Upload extends Command
+class UploadCommand extends Command
 {
     use HasOutputStyles;
     use RunsInPlease;
