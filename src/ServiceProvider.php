@@ -130,4 +130,18 @@ class ServiceProvider extends AddonServiceProvider
             });
         });
     }
+
+    public function provides(): array
+    {
+        return [
+            MuxApi::class,
+            'mux.api',
+            MuxService::class,
+            'mux.service',
+            MuxUrls::class,
+            'mux.urls',
+            PlaceholderService::class,
+            'mux.placeholders',
+        ];
+    }
 }
