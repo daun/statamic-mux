@@ -111,7 +111,7 @@ class ServiceProvider extends AddonServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/mux.php', 'mux');
 
         $this->publishes([
-            __DIR__.'/../config/mux.php' => config_path('statamic/mux.php'),
+            __DIR__.'/../config/mux.php' => config_path('mux.php'),
         ], 'statamic-mux');
     }
 
