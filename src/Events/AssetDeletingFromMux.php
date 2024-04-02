@@ -10,7 +10,8 @@ class AssetDeletingFromMux extends Event
     public function __construct(
         public Asset $asset,
         public string $muxId
-    ) {}
+    ) {
+    }
 
     /**
      * Dispatch and halt on first non-null listener response.

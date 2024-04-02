@@ -25,8 +25,11 @@ class UploadCommand extends Command
     protected $description = 'Upload local video assets to Mux';
 
     protected $container;
+
     protected $force;
+
     protected $dryrun;
+
     protected $sync;
 
     protected $containers;
@@ -38,13 +41,15 @@ class UploadCommand extends Command
         $this->dryrun = $this->option('dry-run');
         $this->sync = Queue::connection() === 'sync';
 
-        if (!MirrorFeature::configured()) {
+        if (! MirrorFeature::configured()) {
             $this->error('Mux is not configured. Please add valid Mux credentials in your .env file.');
+
             return;
         }
 
-        if (!MirrorFeature::enabled()) {
+        if (! MirrorFeature::enabled()) {
             $this->error('The mirror feature is currently disabled.');
+
             return;
         }
 
@@ -53,6 +58,7 @@ class UploadCommand extends Command
             $this->error('No containers found to mirror.');
             $this->newLine();
             $this->line('Please add a `mux_mirror` field to at least one of your asset blueprints.');
+
             return;
         }
 
@@ -62,6 +68,7 @@ class UploadCommand extends Command
                 $this->containers = collect($container);
             } else {
                 $this->error("Asset container '{$this->container}' not found");
+
                 return;
             }
         }
@@ -72,19 +79,21 @@ class UploadCommand extends Command
         }
 
         $assets = $this->containers->flatMap(
-            fn($container) => Asset::whereContainer($container->handle())->filter(
-                fn($asset) => MirrorFeature::enabledForAsset($asset)
+            fn ($container) => Asset::whereContainer($container->handle())->filter(
+                fn ($asset) => MirrorFeature::enabledForAsset($asset)
             )
         );
 
         if ($assets->isEmpty()) {
             $this->line("No videos found in containers: <name>{$this->containers->implode(', ')}</name>");
+
             return;
         }
 
         $assetGroups = $assets->mapToGroups(function ($asset) use ($service) {
             $exists = $service->hasExistingMuxAsset($asset);
-            $action = !$exists ? 'upload' : ($this->force ? 'reupload' : 'skip');
+            $action = ! $exists ? 'upload' : ($this->force ? 'reupload' : 'skip');
+
             return [$action => $asset];
         });
 
@@ -95,28 +104,28 @@ class UploadCommand extends Command
         $assetsToUpload->each(function ($asset) use ($service) {
             if ($this->dryrun) {
                 $this->line("Would upload <name>{$asset->id()}</name>");
-            } else if ($this->sync) {
+            } elseif ($this->sync) {
                 $service->createMuxAsset($asset);
                 $this->line("Uploaded <name>{$asset->id()}</name>");
             } else {
                 CreateMuxAssetJob::dispatch($asset->id());
                 $this->line("Queued upload of <name>{$asset->id()}</name>");
             }
-        })->whenNotEmpty(function() {
+        })->whenNotEmpty(function () {
             $this->newLine();
         });
 
         $assetsToReupload->each(function ($asset) use ($service) {
             if ($this->dryrun) {
                 $this->line("Would reupload <name>{$asset->id()}</name>");
-            } else if ($this->sync) {
+            } elseif ($this->sync) {
                 $service->createMuxAsset($asset, true);
                 $this->line("Reuploaded <name>{$asset->id()}</name>");
             } else {
                 CreateMuxAssetJob::dispatch($asset->id(), true);
                 $this->line("Queued reupload of <name>{$asset->id()}</name>");
             }
-        })->whenNotEmpty(function() {
+        })->whenNotEmpty(function () {
             $this->newLine();
         });
 
@@ -135,7 +144,7 @@ class UploadCommand extends Command
 
         if ($this->dryrun) {
             $this->info("<success>✓ Would have uploaded {$uploaded} videos, skipped {$skipped} videos</success>");
-        } else if ($this->sync) {
+        } elseif ($this->sync) {
             $this->info("<success>✓ Uploaded {$uploaded} videos, skipped {$skipped} videos</success>");
         } else {
             $this->info("<success>✓ Queued {$uploaded} videos for background upload, skipped {$skipped} videos</success>");

@@ -5,7 +5,6 @@ namespace Daun\StatamicMux\Tags;
 use Daun\StatamicMux\Tags\Concerns\GetsAssetFromContext;
 use Daun\StatamicMux\Tags\Concerns\ReadsMuxData;
 use Daun\StatamicMux\Tags\Concerns\RendersHtml;
-use Illuminate\Support\Arr;
 use Statamic\Contracts\Data\Augmentable;
 use Statamic\Tags\Tags;
 
@@ -59,7 +58,9 @@ class MuxTags extends Tags
     public function generate($asset = null): array
     {
         $asset = $this->getAssetFromContext($asset);
-        if (!$asset) return [];
+        if (! $asset) {
+            return [];
+        }
 
         try {
             $muxId = $this->getMuxId($asset);
@@ -95,6 +96,7 @@ class MuxTags extends Tags
         } catch (\Exception $e) {
             \Log::error($e->getMessage());
         }
+
         return [];
     }
 
@@ -107,7 +109,9 @@ class MuxTags extends Tags
     {
         $asset = $this->getAssetFromContext();
         $playbackId = $this->getPlaybackId($asset);
-        if (!$playbackId) return null;
+        if (! $playbackId) {
+            return null;
+        }
 
         if ($token = $this->getPlaybackToken($asset)) {
             $playbackId = "{$playbackId}?token={$token}";
@@ -152,7 +156,9 @@ class MuxTags extends Tags
     {
         $asset = $this->getAssetFromContext();
         $playbackId = $this->getPlaybackId($asset);
-        if (!$playbackId) return null;
+        if (! $playbackId) {
+            return null;
+        }
 
         if ($token = $this->getPlaybackToken($asset)) {
             $playbackAttributes = ['playback-token' => $token];
@@ -218,6 +224,7 @@ class MuxTags extends Tags
     public function thumbnail(): ?string
     {
         $params = collect($this->params->all())->except($this->assetParams)->all();
+
         return $this->getThumbnailUrl(null, $params);
     }
 
@@ -229,6 +236,7 @@ class MuxTags extends Tags
     public function gif(): ?string
     {
         $params = collect($this->params->all())->except($this->assetParams)->all();
+
         return $this->getGifUrl(null, $params);
     }
 
@@ -240,6 +248,7 @@ class MuxTags extends Tags
     public function placeholder(): ?string
     {
         $params = collect($this->params->all())->except($this->assetParams)->all();
+
         return $this->getPlaceholderUri(null, $params);
     }
 }

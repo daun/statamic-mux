@@ -9,19 +9,23 @@ use Firebase\JWT\JWT;
 class MuxUrls
 {
     public const AUDIENCE_GIF = 'g';
+
     public const AUDIENCE_STORYBOARD = 's';
+
     public const AUDIENCE_THUMBNAIL = 't';
+
     public const AUDIENCE_VIDEO = 'v';
 
     public function __construct(
         protected ?string $keyId,
         protected ?string $privateKey,
         protected int|string|null $defaultExpiration = null,
-    ) {}
+    ) {
+    }
 
     public function getToken(string $playbackId, string $audience, ?array $params = null, int|string|null $expiration = null): ?string
     {
-        if (!$this->keyId || !$this->privateKey) {
+        if (! $this->keyId || ! $this->privateKey) {
             throw new \Exception('Missing Mux signing key');
         }
 
@@ -29,7 +33,7 @@ class MuxUrls
             throw new \Exception('Empty Mux playback id');
         }
 
-        if (!$this->isValidAudience($audience)) {
+        if (! $this->isValidAudience($audience)) {
             throw new \Exception("Invalid Mux audience key '{$audience}'");
         }
 
@@ -51,6 +55,7 @@ class MuxUrls
             is_int($expiration) => CarbonInterval::make($expiration, 'seconds'),
             default => CarbonInterval::make(0, 'seconds'),
         };
+
         return Carbon::now()->add($interval)->timestamp;
     }
 

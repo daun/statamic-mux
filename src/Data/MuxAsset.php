@@ -16,6 +16,7 @@ class MuxAsset implements Augmentable
     use HasAugmentedInstance;
 
     public ?Asset $asset;
+
     public ?string $field;
 
     public function __construct(?array $data, ?Asset $asset = null, ?string $field = null)
@@ -29,6 +30,7 @@ class MuxAsset implements Augmentable
     {
         $field = $field ?? Mirror::getMirrorField($asset);
         $data = $field ? $asset->get($field) : [];
+
         return new static($data, $asset, $field);
     }
 
@@ -49,7 +51,9 @@ class MuxAsset implements Augmentable
 
     public function save(): void
     {
-        if (!$this->asset || !$this->field) return;
+        if (! $this->asset || ! $this->field) {
+            return;
+        }
 
         $data = $this->data->toArray();
         $this->asset->set($this->field, $data);
@@ -58,7 +62,9 @@ class MuxAsset implements Augmentable
 
     public function refresh(): void
     {
-        if (!$this->asset || !$this->field) return;
+        if (! $this->asset || ! $this->field) {
+            return;
+        }
 
         $data = $this->asset->get($this->field);
         $this->data = collect($data ?? []);

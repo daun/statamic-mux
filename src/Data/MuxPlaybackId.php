@@ -11,9 +11,10 @@ class MuxPlaybackId implements Arrayable
     use FluentlyGetsAndSets;
 
     public function __construct(
-      protected string $id,
-      protected string $policy
-    ) {}
+        protected string $id,
+        protected string $policy
+    ) {
+    }
 
     public static function make(?array $data = []): ?static
     {

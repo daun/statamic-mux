@@ -15,8 +15,9 @@ class DeleteMuxAssetJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(protected Asset $asset)
-    {
+    public function __construct(
+        protected Asset $asset
+    ) {
         $this->connection = Queue::connection();
         $this->queue = Queue::queue();
     }

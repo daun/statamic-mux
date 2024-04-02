@@ -5,7 +5,8 @@ namespace Daun\StatamicMux\Placeholders;
 use Daun\StatamicMux\Features\Imagick;
 use Thumbhash\Thumbhash as ThumbhashLib;
 
-class Thumbhash {
+class Thumbhash
+{
     protected static int $maxThumbSize = 100;
 
     public static function encode(string $contents): ?string
@@ -13,6 +14,7 @@ class Thumbhash {
         try {
             [$width, $height, $pixels] = static::generatePixelMatrix($contents);
             $hash = ThumbhashLib::RGBAToHash($width, $height, $pixels);
+
             return ThumbhashLib::convertHashToString($hash);
         } catch (\Exception $e) {
             throw new \Exception("Error encoding thumbhash: {$e->getMessage()}");
@@ -21,10 +23,13 @@ class Thumbhash {
 
     public static function decode(string $hash): ?string
     {
-        if (!$hash) return null;
+        if (! $hash) {
+            return null;
+        }
 
         try {
             $hash = ThumbhashLib::convertStringToHash($hash);
+
             return ThumbhashLib::toDataURL($hash);
         } catch (\Exception $e) {
             throw new \Exception("Error decoding thumbhash: {$e->getMessage()}");
@@ -33,7 +38,9 @@ class Thumbhash {
 
     protected static function generatePixelMatrix(?string $contents): array
     {
-        if (!$contents) return [];
+        if (! $contents) {
+            return [];
+        }
 
         if (Imagick::installed()) {
             return static::generatePixelMatrixUsingImagick($contents);
@@ -97,6 +104,7 @@ class Thumbhash {
             $width = floor($max * $ratio);
             $height = $max;
         }
+
         return [$width, $height];
-  }
+    }
 }

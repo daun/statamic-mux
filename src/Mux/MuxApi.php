@@ -21,12 +21,19 @@ use MuxPhp\Models\Upload;
 class MuxApi
 {
     protected Client $client;
+
     protected Configuration $config;
+
     protected AssetsApi $assetsApi;
+
     protected DirectUploadsApi $directUploadsApi;
+
     protected URLSigningKeysApi $urlSigningKeysApi;
+
     protected LiveStreamsApi $liveStreamsApi;
+
     protected PlaybackIDApi $playbackIDApi;
+
     protected DeliveryUsageApi $deliveryUsageApi;
 
     protected const userAgent = 'daun/statamic-mux';
@@ -51,36 +58,42 @@ class MuxApi
     public function assets(): AssetsApi
     {
         $this->assetsApi ??= new AssetsApi($this->client, $this->config);
+
         return $this->assetsApi;
     }
 
     public function directUploads(): DirectUploadsApi
     {
         $this->directUploadsApi ??= new DirectUploadsApi($this->client, $this->config);
+
         return $this->directUploadsApi;
     }
 
     public function liveStreams(): LiveStreamsApi
     {
         $this->liveStreamsApi ??= new LiveStreamsApi($this->client, $this->config);
+
         return $this->liveStreamsApi;
     }
 
     public function urlSigningKeys(): URLSigningKeysApi
     {
         $this->urlSigningKeysApi ??= new URLSigningKeysApi($this->client, $this->config);
+
         return $this->urlSigningKeysApi;
     }
 
     public function playbackIDs(): PlaybackIDApi
     {
         $this->playbackIDApi ??= new PlaybackIDApi($this->client, $this->config);
+
         return $this->playbackIDApi;
     }
 
     public function deliveryUsage(): DeliveryUsageApi
     {
         $this->deliveryUsageApi ??= new DeliveryUsageApi($this->client, $this->config);
+
         return $this->deliveryUsageApi;
     }
 
@@ -140,10 +153,9 @@ class MuxApi
 
     protected function hasPlaybackPolicy(mixed $item, string $policy): bool
     {
-        return (
+        return
             $item === $policy ||
             (is_array($item) && in_array($policy, $item)) ||
-            (is_object($item) && $item?->getPolicy() === $policy)
-        );
+            (is_object($item) && $item?->getPolicy() === $policy);
     }
 }

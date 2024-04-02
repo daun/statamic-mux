@@ -6,7 +6,6 @@ use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Jobs\CreateMuxAssetJob;
 use Statamic\Contracts\Assets\Asset;
 use Statamic\Fields\Fieldtype;
-use Statamic\Fields\Value;
 
 class MuxMirrorFieldtype extends Fieldtype
 {

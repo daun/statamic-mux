@@ -5,13 +5,11 @@ namespace Daun\StatamicMux;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Mux\MuxUrls;
-use Daun\StatamicMux\Fieldtypes;
 use Daun\StatamicMux\Placeholders\PlaceholderService;
 use Illuminate\Foundation\Application;
-use Statamic\Providers\AddonServiceProvider;
 use Statamic\Events;
-use Statamic\Facades\CP\Nav;
 use Statamic\Facades\Permission;
+use Statamic\Providers\AddonServiceProvider;
 
 class ServiceProvider extends AddonServiceProvider
 {
@@ -100,7 +98,7 @@ class ServiceProvider extends AddonServiceProvider
 
     protected function registerPlaceholderService()
     {
-        $this->app->singleton(PlaceholderService::class, function (){
+        $this->app->singleton(PlaceholderService::class, function () {
             return new PlaceholderService();
         });
         $this->app->alias(PlaceholderService::class, 'mux.placeholders');

@@ -13,7 +13,7 @@ class AugmentedMuxAsset extends AbstractAugmented
             'playback_id',
             'playback_policy',
             'playback_ids',
-            'exists'
+            'exists',
         ];
     }
 }

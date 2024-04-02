@@ -15,8 +15,10 @@ class CreateMuxAssetJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(protected Asset $asset, protected bool $force = false)
-    {
+    public function __construct(
+        protected Asset $asset,
+        protected bool $force = false
+    ) {
         $this->connection = Queue::connection();
         $this->queue = Queue::queue();
     }

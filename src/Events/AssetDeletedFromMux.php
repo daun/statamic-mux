@@ -10,5 +10,6 @@ class AssetDeletedFromMux extends Event
     public function __construct(
         public Asset $asset,
         public string $muxId
-    ) {}
+    ) {
+    }
 }

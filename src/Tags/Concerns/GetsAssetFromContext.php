@@ -13,7 +13,7 @@ trait GetsAssetFromContext
      */
     protected function getAssetFromContext($asset = null): ?Asset
     {
-        if (!$asset) {
+        if (! $asset) {
             if ($this->params->hasAny(['src', 'path', 'asset'])) {
                 $asset = $this->params->get(['src', 'path', 'asset']);
             } else {
@@ -23,7 +23,7 @@ trait GetsAssetFromContext
 
         if (is_string($asset)) {
             $asset = AssetFacade::find($asset);
-        } else if ($asset instanceof Value) {
+        } elseif ($asset instanceof Value) {
             $asset = AssetFacade::find($asset->value());
         }
 

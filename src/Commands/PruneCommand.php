@@ -22,6 +22,7 @@ class PruneCommand extends Command
     protected $description = 'Remove orphaned videos from Mux';
 
     protected $dryrun;
+
     protected $sync;
 
     public function handle(MuxService $service): void
@@ -29,13 +30,15 @@ class PruneCommand extends Command
         $this->dryrun = $this->option('dry-run');
         $this->sync = Queue::connection() === 'sync';
 
-        if (!MirrorFeature::configured()) {
+        if (! MirrorFeature::configured()) {
             $this->error('Mux is not configured. Please add valid Mux credentials in your .env file.');
+
             return;
         }
 
-        if (!MirrorFeature::enabled()) {
+        if (! MirrorFeature::enabled()) {
             $this->error('The mirror feature is currently disabled.');
+
             return;
         }
 
@@ -49,29 +52,30 @@ class PruneCommand extends Command
 
         if ($actualMuxIds->isEmpty()) {
             $this->line('No videos found on Mux');
+
             return;
         }
 
         $assets = MirrorFeature::containers()->flatMap(
-            fn($container) => Asset::whereContainer($container->handle())->filter(
-                fn($asset) => MirrorFeature::enabledForAsset($asset)
+            fn ($container) => Asset::whereContainer($container->handle())->filter(
+                fn ($asset) => MirrorFeature::enabledForAsset($asset)
             )
         );
 
-        $localMuxIds = $assets->map(fn($asset) => $service->muxId($asset))->filter();
+        $localMuxIds = $assets->map(fn ($asset) => $service->muxId($asset))->filter();
 
         $orphans = $actualMuxIds->diff($localMuxIds);
         $orphans->each(function ($muxId) use ($service) {
             if ($this->dryrun) {
                 $this->line("Would remove <name>{$muxId}</name>");
-            } else if ($this->sync) {
+            } elseif ($this->sync) {
                 $service->deleteMuxAsset($muxId);
                 $this->line("Removed <name>{$muxId}</name>");
             } else {
                 DeleteMuxAssetJob::dispatch($muxId);
                 $this->line("Queued removal of <name>{$muxId}</name>");
             }
-        })->whenNotEmpty(function() {
+        })->whenNotEmpty(function () {
             $this->newLine();
         });
 
@@ -88,7 +92,7 @@ class PruneCommand extends Command
 
         if ($this->dryrun) {
             $this->info("<success>✓ Would have removed {$orphans->count()} videos, kept {$found->count()} videos</success>");
-        } else if ($this->sync) {
+        } elseif ($this->sync) {
             $this->info("<success>✓ Removed {$orphans->count()} videos, kept {$found->count()} videos</success>");
         } else {
             $this->info("<success>✓ Queued {$orphans->count()} videos for removal, kept {$found->count()} videos</success>");

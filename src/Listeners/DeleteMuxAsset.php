@@ -15,12 +15,17 @@ class DeleteMuxAsset implements ShouldQueue
 
     public function __construct(
         protected MuxService $service
-    ) {}
+    ) {
+    }
 
     public function handle(AssetDeleted $event)
     {
-        if (!Mux::configured()) return;
-        if (!Mirror::shouldMirror($event->asset)) return;
+        if (! Mux::configured()) {
+            return;
+        }
+        if (! Mirror::shouldMirror($event->asset)) {
+            return;
+        }
 
         $this->service->deleteMuxAsset($event->asset);
     }
