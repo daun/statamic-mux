@@ -1,6 +1,7 @@
 {
     "name": "daun/statamic-mux",
     "description": "Upload video assets to Mux and embed them in your Statamic site",
+    "keywords": [ "statamic", "video", "media", "streaming", "mux" ],
     "type": "statamic-addon",
     "homepage": "https://github.com/daun/statamic-mux",
     "license": "proprietary",
@@ -15,36 +16,54 @@
     "support": {
         "email": "post@philippdaun.net"
     },
-    "keywords": [
-        "statamic",
-        "video",
-        "mux"
-    ],
     "require": {
         "php": "^8.0",
         "firebase/php-jwt": "^6.10",
         "guzzlehttp/guzzle": "^7.8",
-        "laravel/framework": "^9.0 || ^10.0",
+        "laravel/framework": "^9.21 || ^10.0",
         "muxinc/mux-php": "^3.14",
         "srwiez/thumbhash": "^1.2",
         "statamic/cms": "^4.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^2.9",
+        "laravel/pint": "^1.14",
+        "mockery/mockery": "^1.6",
+        "orchestra/testbench": "^8.21",
+        "pestphp/pest-plugin-laravel": "^2.3",
+        "spatie/pest-plugin-snapshots": "^2.1",
+        "pestphp/pest": "^2.34"
     },
     "autoload": {
         "psr-4": {
             "Daun\\StatamicMux\\": "src"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+          "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "format": "./vendor/bin/pint",
+        "lint": "./vendor/bin/pint --test",
+        "analyse": "./vendor/bin/phpstan analyse --memory-limit=2G",
+        "test": "./vendor/bin/pest",
+        "test:coverage": "./vendor/bin/pest --coverage",
+        "test:ci": "./vendor/bin/pest --coverage-clover coverage.xml"
+    },
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
         "sort-packages": true,
         "allow-plugins": {
-            "pixelfear/composer-dist-plugin": true
+            "pixelfear/composer-dist-plugin": true,
+            "pestphp/pest-plugin": true
         }
     },
     "extra": {
         "statamic": {
-            "name": "Statamic Mux",
+            "name": "Mux Video Integration",
             "description": "Upload video assets to Mux and embed them in your Statamic site"
         },
         "laravel": {
