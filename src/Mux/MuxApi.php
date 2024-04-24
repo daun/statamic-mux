@@ -135,10 +135,12 @@ class MuxApi
             $policy = preg_split('/\s*,\s*/', $policy);
         }
 
-        return array_filter(
-            $policy ? Arr::wrap($policy) : [],
-            fn ($value) => in_array($value, PlaybackPolicy::getAllowableEnumValues())
-        );
+        return array_filter(Arr::wrap($policy), fn ($item) => $this->isValidPlaybackPolicy($item));
+    }
+
+    public function isValidPlaybackPolicy(string $policy): bool
+    {
+        return in_array($policy, PlaybackPolicy::getAllowableEnumValues());
     }
 
     public function hasPublicPlaybackPolicy(mixed $item): bool
@@ -151,11 +153,11 @@ class MuxApi
         return $this->hasPlaybackPolicy($item, PlaybackPolicy::SIGNED);
     }
 
-    protected function hasPlaybackPolicy(mixed $item, string $policy): bool
+    protected function hasPlaybackPolicy(string|array|object $item, string $policy): bool
     {
         return
             $item === $policy ||
             (is_array($item) && in_array($policy, $item)) ||
-            (is_object($item) && $item?->getPolicy() === $policy);
+            (is_object($item) && $item->getPolicy() === $policy);
     }
 }

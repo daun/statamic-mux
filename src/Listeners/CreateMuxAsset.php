@@ -22,14 +22,14 @@ class CreateMuxAsset implements ShouldQueue
 
     public function handle(AssetSaved|AssetUploaded|AssetReuploaded $event)
     {
-        if (! Mux::configured()) {
-            return;
+        if ($this->shouldHandle($event)) {
+            $force = $event instanceof AssetReuploaded;
+            $this->service->createMuxAsset($event->asset, $force);
         }
-        if (! Mirror::shouldMirror($event->asset)) {
-            return;
-        }
+    }
 
-        $force = $event instanceof AssetReuploaded;
-        $this->service->createMuxAsset($event->asset, $force);
+    protected function shouldHandle(AssetSaved|AssetUploaded|AssetReuploaded $event): bool
+    {
+        return Mux::configured() && Mirror::shouldMirror($event->asset);
     }
 }
