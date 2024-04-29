@@ -153,8 +153,12 @@ class MuxApi
         return $this->hasPlaybackPolicy($item, PlaybackPolicy::SIGNED);
     }
 
-    protected function hasPlaybackPolicy(string|array|object $item, string $policy): bool
+    protected function hasPlaybackPolicy(mixed $item, string $policy): bool
     {
+        if (!$item) {
+            return false;
+        }
+
         return
             $item === $policy ||
             (is_array($item) && in_array($policy, $item)) ||

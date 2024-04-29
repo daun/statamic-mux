@@ -77,16 +77,16 @@ class MuxAsset implements Augmentable
 
     public function playbackIds(): MuxPlaybackIds
     {
-        return MuxPlaybackIds::make($this->get('playback_ids', []));
+        $ids = $this->get('playback_ids') ?? $this->get('playback_id') ?? [];
+        return MuxPlaybackIds::make(collect($ids));
     }
 
     public function playbackId(): ?MuxPlaybackId
     {
-        return tap($this->playbackIds(), function (MuxPlaybackIds $playbackIds) {
-            return $playbackIds->public()
+        $playbackIds = $this->playbackIds();
+        return $playbackIds->public()
             ?: $playbackIds->signed()
             ?: null;
-        });
     }
 
     public function newAugmentedInstance(): AugmentedMuxAsset

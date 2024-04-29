@@ -253,9 +253,7 @@ class MuxService
 
     protected function getPlaybackId(Asset $asset): mixed
     {
-        return MuxAsset::fromAsset($asset)->id();
-
-        return $this->get($asset, 'playback_id');
+        return MuxAsset::fromAsset($asset)->playbackId();
     }
 
     protected function getPlaybackPolicy(Asset $asset): mixed

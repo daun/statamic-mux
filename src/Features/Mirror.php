@@ -3,7 +3,7 @@
 namespace Daun\StatamicMux\Features;
 
 use Daun\StatamicMux\Facades\Mux;
-use Daun\StatamicMux\Fieldtypes\MuxMirror;
+use Daun\StatamicMux\Fieldtypes\MuxMirrorFieldtype;
 use Illuminate\Support\Collection;
 use Statamic\Assets\Asset;
 use Statamic\Assets\AssetContainer;
@@ -45,7 +45,7 @@ class Mirror
     public static function getMirrorField(Asset|AssetContainer|null $asset): ?string
     {
         return $asset?->blueprint()->fields()->all()->first(
-            fn (Field $field) => $field->type() === MuxMirror::handle()
+            fn (Field $field) => $field->type() === MuxMirrorFieldtype::handle()
         )?->handle();
     }
 
