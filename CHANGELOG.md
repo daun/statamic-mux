@@ -1,7 +1,7 @@
 # Changelog
 
-## [1.0.0] - 2024-04-XX
+## [0.1.0] - 2024-04-30
 
-* Initial release
+* Beta release
 
-[1.0.0]: https://github.com/daun/statamic-mux/releases/tag/1.0.0
+[0.1.0]: https://github.com/daun/statamic-mux/releases/tag/0.1.0
