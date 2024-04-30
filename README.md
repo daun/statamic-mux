@@ -10,29 +10,22 @@ using the official `<mux-video>` web component as a drop-in replacement for the 
 
 ## Features
 
-**Direct sync**  
-Mirror locally uploaded videos to your Mux account
-
-**Seamless video upload workflow**  
-Just drop the original video files directly into the backend
-
-**No custom fieldtype required**  
-Handle and display videos like any other asset in Statamic
-
-**Instant playback**  
-Just-in-time encoding ensures videos can be streamed immediately
-
-**Optimized streaming**  
-Smart adaptive bitrates deliver the right resolution for your viewers' bandwith
-
-**Customizable player**  
-Tailor the video player component to match your site's design
-
-**Real-time analytics**  
-Get insights into your audience and video playback performance
-
-**Secure streaming**  
-Protect your content using signed urls
+- **Direct sync**  
+  Mirror locally uploaded videos to your Mux account  
+- **Seamless video upload workflow**  
+  Just drop the original video files directly into the backend
+- **No custom fieldtype required**  
+  Handle and display videos like any other asset in Statamic
+- **Instant playback**  
+  Just-in-time encoding ensures videos can be streamed immediately
+- **Optimized streaming**  
+  Smart adaptive bitrates deliver the right resolution for your viewers' bandwith
+- **Customizable player**  
+  Tailor the video player component to match your site's design
+- **Real-time analytics**  
+  Get insights into your audience and video playback performance
+- **Secure streaming**  
+  Protect your content using signed urls
 
 ## Responsive Video
 
