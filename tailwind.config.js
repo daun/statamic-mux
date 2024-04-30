@@ -1,7 +1,6 @@
 import statamicPreset from './vendor/statamic/cms/tailwind.config.js'
 
 export default {
-    // prefix: 'seo-',
     presets: [
         statamicPreset
     ],
@@ -15,5 +14,6 @@ export default {
     },
     corePlugins: {
         preflight: false,
+        display: false,
     },
 }
