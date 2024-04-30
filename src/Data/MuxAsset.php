@@ -83,6 +83,7 @@ class MuxAsset implements Augmentable
     public function playbackId(): ?MuxPlaybackId
     {
         $playbackIds = $this->playbackIds();
+
         return $playbackIds->public()
             ?: $playbackIds->signed()
             ?: null;
