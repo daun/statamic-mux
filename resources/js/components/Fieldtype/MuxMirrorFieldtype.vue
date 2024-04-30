@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div v-if="!isAsset || !isVideo" class="help-block flex items-center mb-3">
+        <div v-if="!isAsset || !isVideo" class="help-block mb-0 flex items-center">
             <svg-icon name="hidden" class="h-4 mr-2" />
             <span>
                 {{ __('statamic-mux::messages.mirror_fieldtype.not_mirrored') }}:
@@ -13,13 +13,13 @@
             </span>
         </div>
         <div v-else-if="!hasData">
-            <div class="help-block flex items-center mb-3">
+            <div class="help-block mb-0 flex items-center">
                 <svg-icon name="close" class="h-4 mr-2" />
                 <span>
                     {{ __('statamic-mux::messages.mirror_fieldtype.not_uploaded') }}
                 </span>
             </div>
-            <div v-if="allowReuploads" class="flex items-center">
+            <div v-if="allowReuploads" class="flex items-center mt-3">
                 <label for="upload-asset" class="flex items-center cursor-pointer">
                     <input type="checkbox" name="remember" id="upload-asset" v-model="value.upload">
                     <span class="ml-2">{{ __('statamic-mux::messages.mirror_fieldtype.upload_on_save') }}</span>
@@ -27,13 +27,13 @@
             </div>
         </div>
         <div v-else>
-            <div class="help-block flex items-center mb-3">
+            <div class="help-block mb-0 flex items-center">
                 <svg-icon name="synchronize" class="h-4 mr-2" />
                 <span :title="this.value.id">
                     {{ __('statamic-mux::messages.mirror_fieldtype.uploaded') }}
                 </span>
             </div>
-            <div v-if="showDetails" class="mux-table-wrapper mb-3">
+            <div v-if="showDetails" class="mux-table-wrapper mt-3">
                 <table class="mux-table">
                     <tbody>
                         <tr v-for="row in rows" :key="row.key">
@@ -47,7 +47,7 @@
                     </tbody>
                 </table>
             </div>
-            <div v-if="allowReuploads" class="flex items-center">
+            <div v-if="allowReuploads" class="flex items-center mt-3">
                 <label for="upload-asset" class="help-block flex items-center cursor-pointer font-normal">
                     <input type="checkbox" name="remember" id="upload-asset" v-model="value.upload">
                     <span class="ml-2">{{ __('statamic-mux::messages.mirror_fieldtype.reupload_on_save') }}</span>
