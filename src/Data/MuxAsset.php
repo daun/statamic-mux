@@ -77,8 +77,7 @@ class MuxAsset implements Augmentable
 
     public function playbackIds(): MuxPlaybackIds
     {
-        $ids = $this->get('playback_ids') ?? $this->get('playback_id') ?? [];
-        return MuxPlaybackIds::make(collect($ids));
+        return MuxPlaybackIds::make($this->get('playback_ids', []));
     }
 
     public function playbackId(): ?MuxPlaybackId

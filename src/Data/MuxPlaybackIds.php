@@ -3,13 +3,9 @@
 namespace Daun\StatamicMux\Data;
 
 use Illuminate\Support\Collection;
-use Statamic\Contracts\Data\Augmentable;
-use Statamic\Data\HasAugmentedData;
 
-class MuxPlaybackIds extends Collection implements Augmentable
+class MuxPlaybackIds extends Collection
 {
-    use HasAugmentedData;
-
     public function __construct($items = [])
     {
         $items = Collection::make($items)

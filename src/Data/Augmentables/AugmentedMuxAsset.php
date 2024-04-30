@@ -10,9 +10,9 @@ class AugmentedMuxAsset extends AbstractAugmented
     {
         return [
             'id',
+            'playback_ids',
             'playback_id',
             'playback_policy',
-            'playback_ids',
             'exists',
         ];
     }
