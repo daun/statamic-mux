@@ -155,7 +155,7 @@ class MuxApi
 
     protected function hasPlaybackPolicy(mixed $item, string $policy): bool
     {
-        if (!$item) {
+        if (! $item) {
             return false;
         }
 
