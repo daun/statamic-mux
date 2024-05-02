@@ -10,6 +10,7 @@ use Illuminate\Foundation\Application;
 use Statamic\Events;
 use Statamic\Facades\Permission;
 use Statamic\Providers\AddonServiceProvider;
+use Statamic\Statamic;
 
 class ServiceProvider extends AddonServiceProvider
 {
@@ -44,7 +45,6 @@ class ServiceProvider extends AddonServiceProvider
 
     public function register()
     {
-        $this->registerAddonConfig();
         $this->registerMuxApi();
         $this->registerMuxService();
         $this->registerUrlService();
@@ -54,6 +54,7 @@ class ServiceProvider extends AddonServiceProvider
     public function bootAddon()
     {
         $this->bootPermissions();
+        $this->autoPublishConfig();
     }
 
     protected function registerMuxApi()
@@ -104,15 +105,6 @@ class ServiceProvider extends AddonServiceProvider
         $this->app->alias(PlaceholderService::class, 'mux.placeholders');
     }
 
-    protected function registerAddonConfig()
-    {
-        $this->mergeConfigFrom(__DIR__.'/../config/mux.php', 'mux');
-
-        $this->publishes([
-            __DIR__.'/../config/mux.php' => config_path('mux.php'),
-        ], 'statamic-mux');
-    }
-
     protected function bootPermissions()
     {
         Permission::group('mux', 'Mux', function () {
@@ -129,6 +121,38 @@ class ServiceProvider extends AddonServiceProvider
                     ]);
             });
         });
+    }
+
+    /**
+     * Modified version of parent `bootConfig` method to customize
+     * the config file name.
+     */
+    protected function bootConfig()
+    {
+        $filename = 'mux';
+        $directory = $this->getAddon()->directory();
+        $origin = "{$directory}config/{$filename}.php";
+
+        if (! $this->config || ! file_exists($origin)) {
+            return $this;
+        }
+
+        $this->mergeConfigFrom($origin, $filename);
+
+        $this->publishes([
+            $origin => config_path("{$filename}.php"),
+        ], "{$filename}-config");
+
+        return parent::bootConfig();
+    }
+
+    protected function autoPublishConfig(): self
+    {
+        Statamic::afterInstalled(function ($command) {
+            $command->call('vendor:publish', ['--tag' => 'mux-config']);
+        });
+
+        return $this;
     }
 
     public function provides(): array
