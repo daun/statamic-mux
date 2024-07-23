@@ -9,6 +9,7 @@ export default {
         './resources/**/*.js',
         './resources/**/*.vue',
     ],
+    safelist: [],
     theme: {
         extend: {},
     },
@@ -16,4 +17,5 @@ export default {
         preflight: false,
         display: false,
     },
+    important: false
 }
