@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.3] - 2024-07-23
+
+- Fix service argument types
+
 ## [0.1.2] - 2024-07-23
 
 - Reduce addon style specificity
@@ -12,6 +16,7 @@
 
 - Beta release
 
+[0.1.3]: https://github.com/daun/statamic-mux/releases/tag/0.1.3
 [0.1.2]: https://github.com/daun/statamic-mux/releases/tag/0.1.2
 [0.1.1]: https://github.com/daun/statamic-mux/releases/tag/0.1.1
 [0.1.0]: https://github.com/daun/statamic-mux/releases/tag/0.1.0
