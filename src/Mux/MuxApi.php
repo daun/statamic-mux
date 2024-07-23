@@ -143,17 +143,17 @@ class MuxApi
         return in_array($policy, PlaybackPolicy::getAllowableEnumValues());
     }
 
-    public function hasPublicPlaybackPolicy(string | array | object $item): bool
+    public function hasPublicPlaybackPolicy(mixed $item): bool
     {
         return $this->hasPlaybackPolicy($item, PlaybackPolicy::_PUBLIC);
     }
 
-    public function hasSignedPlaybackPolicy(string | array | object $item): bool
+    public function hasSignedPlaybackPolicy(mixed $item): bool
     {
         return $this->hasPlaybackPolicy($item, PlaybackPolicy::SIGNED);
     }
 
-    protected function hasPlaybackPolicy(string | array | object $item, string $policy): bool
+    protected function hasPlaybackPolicy(mixed $item, string $policy): bool
     {
         if (! $item) {
             return false;
