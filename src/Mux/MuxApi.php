@@ -143,17 +143,17 @@ class MuxApi
         return in_array($policy, PlaybackPolicy::getAllowableEnumValues());
     }
 
-    public function hasPublicPlaybackPolicy(mixed $item): bool
+    public function hasPublicPlaybackPolicy(string | array | object $item): bool
     {
         return $this->hasPlaybackPolicy($item, PlaybackPolicy::_PUBLIC);
     }
 
-    public function hasSignedPlaybackPolicy(mixed $item): bool
+    public function hasSignedPlaybackPolicy(string | array | object $item): bool
     {
         return $this->hasPlaybackPolicy($item, PlaybackPolicy::SIGNED);
     }
 
-    protected function hasPlaybackPolicy(mixed $item, string $policy): bool
+    protected function hasPlaybackPolicy(string | array | object $item, string $policy): bool
     {
         if (! $item) {
             return false;
@@ -162,6 +162,6 @@ class MuxApi
         return
             $item === $policy ||
             (is_array($item) && in_array($policy, $item)) ||
-            (is_object($item) && $item->getPolicy() === $policy);
+            (is_object($item) && method_exists($item, 'getPolicy') && $item->getPolicy() === $policy);
     }
 }
