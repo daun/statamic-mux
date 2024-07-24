@@ -313,7 +313,7 @@ class MuxService
         if ($playbackId = $this->getOrRequestPlaybackId($asset)) {
             $params = $params + $this->playbackModifiers();
 
-            return $this->signUrl($asset, "https://stream.mux.com/{$playbackId}.m3u8", MuxAudience::Video, $params);
+            return $this->sign($asset, $this->urls->playback($playbackId), MuxAudience::Video, $params);
         } else {
             return null;
         }
@@ -322,8 +322,11 @@ class MuxService
     public function playbackToken(Asset $asset, ?array $params = []): ?string
     {
         $params = $params + $this->playbackModifiers();
+        $playbackId = $this->getPlaybackId($asset);
 
-        return $this->getAudienceToken($asset, MuxAudience::Video, $params);
+        return ($playbackId && $this->isSigned($asset))
+            ? $this->urls->token($playbackId, MuxAudience::Video, $params)
+            : null;
     }
 
     public function playbackModifiers(): array
@@ -337,7 +340,7 @@ class MuxService
             $format = $params['format'] ?? 'jpg';
             $params = Arr::except($params, 'format');
 
-            return $this->signUrl($asset, "https://image.mux.com/{$playbackId}/thumbnail.{$format}", MuxAudience::Thumbnail, $params);
+            return $this->sign($asset, $this->urls->thumbnail($playbackId, $format), MuxAudience::Thumbnail, $params);
         } else {
             return null;
         }
@@ -349,7 +352,7 @@ class MuxService
             $format = $params['format'] ?? 'gif';
             $params = Arr::except($params, 'format');
 
-            return $this->signUrl($asset, "https://image.mux.com/{$playbackId}/animated.{$format}", MuxAudience::Gif, $params);
+            return $this->sign($asset, $this->urls->animated($playbackId, $format), MuxAudience::Gif, $params);
         } else {
             return null;
         }
@@ -360,7 +363,7 @@ class MuxService
         $fallback = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
         $thumbnail = $this->thumbnail($asset, ['width' => 100] + $params);
         if ($thumbnail) {
-            $key = $this->muxId($asset).'-'.md5(json_encode($params));
+            $key = sprintf('%s-%s', $this->muxId($asset), md5(json_encode($params)));
 
             return $this->placeholders->forUrl($thumbnail, $key);
         } else {
@@ -418,24 +421,12 @@ class MuxService
         return $this->api->hasPublicPlaybackPolicy($this->getPlaybackPolicy($asset));
     }
 
-    protected function signUrl(Asset $asset, string $url, MuxAudience $audience, ?array $params = [], ?int $expiration = null): ?string
+    protected function sign(Asset $asset, string $url, MuxAudience $audience, ?array $params = [], ?int $expiration = null): ?string
     {
-        $token = $this->getAudienceToken($asset, $audience, $params, $expiration);
-        if ($token) {
-            return URL::withQuery($url, ['token' => $token]);
-        } else {
-            return URL::withQuery($url, $params);
-        }
-    }
-
-    protected function getAudienceToken(Asset $asset, MuxAudience $audience, ?array $params, ?int $expiration = null): ?string
-    {
-        if (! $this->isSigned($asset)) {
-            return null;
-        }
-
         $playbackId = $this->getPlaybackId($asset);
 
-        return $this->urls->getToken($playbackId, $audience, $params ?? [], $expiration);
+        return ($playbackId && $this->isSigned($asset))
+            ? $this->urls->sign($url, $playbackId, $audience, $params, $expiration)
+            : null;
     }
 }

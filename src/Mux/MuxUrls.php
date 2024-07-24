@@ -4,6 +4,7 @@ namespace Daun\StatamicMux\Mux;
 
 use Carbon\Carbon;
 use Carbon\CarbonInterval;
+use Daun\StatamicMux\Support\URL;
 use Firebase\JWT\JWT;
 
 class MuxUrls
@@ -15,7 +16,48 @@ class MuxUrls
     ) {
     }
 
-    public function getToken(string $playbackId, MuxAudience $audience, ?array $params = null, int|string|null $expiration = null): ?string
+    /**
+     * Create a URL for a playback stream
+     */
+    public function playback(string $playbackId): string
+    {
+        return "https://stream.mux.com/{$playbackId}.m3u8";
+    }
+
+    /**
+     * Create a URL for generating a thumbnail
+     */
+    public function thumbnail(string $playbackId, string $format): string
+    {
+        return "https://image.mux.com/{$playbackId}/thumbnail.{$format}";
+    }
+
+    /**
+     * Create a URL for generating an animated gif
+     */
+    public function animated(string $playbackId, string $format): string
+    {
+        return "https://image.mux.com/{$playbackId}/animated.{$format}";
+    }
+
+    /**
+     * Sign a URL for a given playback id and params
+     */
+    public function sign(string $url, string $playbackId, MuxAudience $audience, ?array $params = null, int|string|null $expiration = null): ?string
+    {
+        $token = $this->token($playbackId, $audience, $params, $expiration);
+
+        if ($token) {
+            return URL::withQuery($url, ['token' => $token]);
+        } else {
+            return URL::withQuery($url, $params);
+        }
+    }
+
+    /**
+     * Generate a signing token for a Mux playback id and given params
+     */
+    public function token(string $playbackId, MuxAudience $audience, ?array $params = null, int|string|null $expiration = null): ?string
     {
         if (! $this->keyId || ! $this->privateKey) {
             throw new \Exception('Missing Mux signing key');
@@ -25,7 +67,7 @@ class MuxUrls
             throw new \Exception('Empty Mux playback id');
         }
 
-        $timestamp = $this->getExpirationTimestamp($expiration);
+        $timestamp = $this->timestamp($expiration);
 
         $claims = array_merge([
             'sub' => $playbackId,
@@ -37,7 +79,10 @@ class MuxUrls
         return JWT::encode($claims, base64_decode($this->privateKey), 'RS256');
     }
 
-    protected function getExpirationTimestamp(int|string|null $expiration): int
+    /**
+     * Convert a time expression into a Unix timestamp
+     */
+    protected function timestamp(int|string|null $expiration): int
     {
         $expiration = $expiration ?? $this->defaultExpiration ?? 0;
         $interval = match (true) {
