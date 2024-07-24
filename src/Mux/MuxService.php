@@ -313,7 +313,7 @@ class MuxService
         if ($playbackId = $this->getOrRequestPlaybackId($asset)) {
             $params = $params + $this->playbackModifiers();
 
-            return $this->signUrl($asset, "https://stream.mux.com/{$playbackId}.m3u8", MuxUrls::AUDIENCE_VIDEO, $params);
+            return $this->signUrl($asset, "https://stream.mux.com/{$playbackId}.m3u8", MuxAudience::Video, $params);
         } else {
             return null;
         }
@@ -323,7 +323,7 @@ class MuxService
     {
         $params = $params + $this->playbackModifiers();
 
-        return $this->getAudienceToken($asset, MuxUrls::AUDIENCE_VIDEO, $params);
+        return $this->getAudienceToken($asset, MuxAudience::Video, $params);
     }
 
     public function playbackModifiers(): array
@@ -337,7 +337,7 @@ class MuxService
             $format = $params['format'] ?? 'jpg';
             $params = Arr::except($params, 'format');
 
-            return $this->signUrl($asset, "https://image.mux.com/{$playbackId}/thumbnail.{$format}", MuxUrls::AUDIENCE_THUMBNAIL, $params);
+            return $this->signUrl($asset, "https://image.mux.com/{$playbackId}/thumbnail.{$format}", MuxAudience::Thumbnail, $params);
         } else {
             return null;
         }
@@ -349,7 +349,7 @@ class MuxService
             $format = $params['format'] ?? 'gif';
             $params = Arr::except($params, 'format');
 
-            return $this->signUrl($asset, "https://image.mux.com/{$playbackId}/animated.{$format}", MuxUrls::AUDIENCE_GIF, $params);
+            return $this->signUrl($asset, "https://image.mux.com/{$playbackId}/animated.{$format}", MuxAudience::Gif, $params);
         } else {
             return null;
         }
@@ -418,7 +418,7 @@ class MuxService
         return $this->api->hasPublicPlaybackPolicy($this->getPlaybackPolicy($asset));
     }
 
-    protected function signUrl(Asset $asset, string $url, string $audience, ?array $params = [], ?int $expiration = null): ?string
+    protected function signUrl(Asset $asset, string $url, MuxAudience $audience, ?array $params = [], ?int $expiration = null): ?string
     {
         $token = $this->getAudienceToken($asset, $audience, $params, $expiration);
         if ($token) {
@@ -428,7 +428,7 @@ class MuxService
         }
     }
 
-    protected function getAudienceToken(Asset $asset, string $audience, ?array $params, ?int $expiration = null): ?string
+    protected function getAudienceToken(Asset $asset, MuxAudience $audience, ?array $params, ?int $expiration = null): ?string
     {
         if (! $this->isSigned($asset)) {
             return null;
