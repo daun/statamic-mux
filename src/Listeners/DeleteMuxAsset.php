@@ -3,9 +3,9 @@
 namespace Daun\StatamicMux\Listeners;
 
 use Daun\StatamicMux\Facades\Mux;
-use Daun\StatamicMux\Features\Mirror;
 use Daun\StatamicMux\Listeners\Concerns\UsesAddonQueue;
 use Daun\StatamicMux\Mux\MuxService;
+use Daun\StatamicMux\Support\MirrorField;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Statamic\Events\AssetDeleted;
 
@@ -27,6 +27,6 @@ class DeleteMuxAsset implements ShouldQueue
 
     protected function shouldHandle(AssetDeleted $event): bool
     {
-        return Mux::configured() && Mirror::shouldMirror($event->asset);
+        return Mux::configured() && MirrorField::shouldMirror($event->asset);
     }
 }

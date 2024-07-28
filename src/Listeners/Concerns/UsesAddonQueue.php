@@ -2,7 +2,7 @@
 
 namespace Daun\StatamicMux\Listeners\Concerns;
 
-use Daun\StatamicMux\Features\Queue;
+use Daun\StatamicMux\Support\Queue;
 
 trait UsesAddonQueue
 {

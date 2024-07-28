@@ -7,8 +7,8 @@ use Daun\StatamicMux\Events\AssetDeletedFromMux;
 use Daun\StatamicMux\Events\AssetDeletingFromMux;
 use Daun\StatamicMux\Events\AssetUploadedToMux;
 use Daun\StatamicMux\Events\AssetUploadingToMux;
-use Daun\StatamicMux\Features\Mirror;
 use Daun\StatamicMux\Placeholders\PlaceholderService;
+use Daun\StatamicMux\Support\MirrorField;
 use Daun\StatamicMux\Support\URL;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Arr;
@@ -408,7 +408,7 @@ class MuxService
     {
         $container = $asset->container()->handle();
 
-        return Blink::once("mux-namespace-{$container}", fn () => Mirror::getMirrorField($asset));
+        return Blink::once("mux-namespace-{$container}", fn () => MirrorField::getFromBlueprint($asset)?->handle());
     }
 
     public function isSigned(Asset $asset): bool

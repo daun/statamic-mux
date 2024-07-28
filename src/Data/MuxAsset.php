@@ -4,7 +4,7 @@ namespace Daun\StatamicMux\Data;
 
 use Daun\StatamicMux\Data\Augmentables\AugmentedMuxAsset;
 use Daun\StatamicMux\Facades\Mux;
-use Daun\StatamicMux\Features\Mirror;
+use Daun\StatamicMux\Support\MirrorField;
 use Statamic\Assets\Asset;
 use Statamic\Contracts\Data\Augmentable;
 use Statamic\Data\ContainsData;
@@ -23,12 +23,12 @@ class MuxAsset implements Augmentable
     {
         $this->data = collect($data ?? []);
         $this->asset = $asset;
-        $this->field = $field ?? Mirror::getMirrorField($asset);
+        $this->field = $field ?? MirrorField::getFromBlueprint($asset)?->handle();
     }
 
     public static function fromAsset(Asset $asset, ?string $field = null): static
     {
-        $field = $field ?? Mirror::getMirrorField($asset);
+        $field = $field ?? MirrorField::getFromBlueprint($asset)?->handle();
         $data = $field ? $asset->get($field) : [];
 
         return new static($data, $asset, $field);

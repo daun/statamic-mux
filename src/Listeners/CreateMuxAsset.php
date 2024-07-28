@@ -3,7 +3,7 @@
 namespace Daun\StatamicMux\Listeners;
 
 use Daun\StatamicMux\Facades\Mux;
-use Daun\StatamicMux\Features\Mirror;
+use Daun\StatamicMux\Support\MirrorField;
 use Daun\StatamicMux\Listeners\Concerns\UsesAddonQueue;
 use Daun\StatamicMux\Mux\MuxService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -30,6 +30,6 @@ class CreateMuxAsset implements ShouldQueue
 
     protected function shouldHandle(AssetSaved|AssetUploaded|AssetReuploaded $event): bool
     {
-        return Mux::configured() && Mirror::shouldMirror($event->asset);
+        return Mux::configured() && MirrorField::shouldMirror($event->asset);
     }
 }

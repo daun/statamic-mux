@@ -2,8 +2,8 @@
 
 namespace Daun\StatamicMux\Jobs;
 
-use Daun\StatamicMux\Features\Queue;
 use Daun\StatamicMux\Mux\MuxService;
+use Daun\StatamicMux\Support\Queue;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;

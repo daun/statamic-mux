@@ -2,7 +2,7 @@
 
 namespace Daun\StatamicMux\Placeholders;
 
-use Daun\StatamicMux\Features\Imagick;
+use Daun\StatamicMux\Support\Imagick;
 use Thumbhash\Thumbhash as ThumbhashLib;
 
 class Thumbhash
