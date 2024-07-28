@@ -9,7 +9,6 @@ use Daun\StatamicMux\Events\AssetUploadedToMux;
 use Daun\StatamicMux\Events\AssetUploadingToMux;
 use Daun\StatamicMux\Placeholders\PlaceholderService;
 use Daun\StatamicMux\Support\MirrorField;
-use Daun\StatamicMux\Support\URL;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Arr;
 use MuxPhp\ApiException;
