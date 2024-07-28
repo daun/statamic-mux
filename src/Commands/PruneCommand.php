@@ -2,7 +2,7 @@
 
 namespace Daun\StatamicMux\Commands;
 
-use Daun\StatamicMux\Commands\Concerns\HasOutputStyles;
+use Daun\StatamicMux\Concerns\HasCommandOutputStyles;
 use Daun\StatamicMux\Jobs\DeleteMuxAssetJob;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Support\MirrorField;
@@ -13,7 +13,7 @@ use Statamic\Facades\Asset;
 
 class PruneCommand extends Command
 {
-    use HasOutputStyles;
+    use HasCommandOutputStyles;
     use RunsInPlease;
 
     protected $signature = 'mux:prune

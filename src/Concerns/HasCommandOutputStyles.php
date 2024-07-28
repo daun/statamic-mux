@@ -1,12 +1,12 @@
 <?php
 
-namespace Daun\StatamicMux\Commands\Concerns;
+namespace Daun\StatamicMux\Concerns;
 
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-trait HasOutputStyles
+trait HasCommandOutputStyles
 {
     protected function initialize(InputInterface $input, OutputInterface $output)
     {

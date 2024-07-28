@@ -1,6 +1,6 @@
 <?php
 
-namespace Daun\StatamicMux\Listeners\Concerns;
+namespace Daun\StatamicMux\Concerns;
 
 use Daun\StatamicMux\Support\Queue;
 

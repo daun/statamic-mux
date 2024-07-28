@@ -6,8 +6,8 @@ use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Mux\MuxUrls;
 use Daun\StatamicMux\Placeholders\PlaceholderService;
+use Daun\StatamicMux\Subscribers;
 use Illuminate\Foundation\Application;
-use Statamic\Events;
 use Statamic\Facades\Permission;
 use Statamic\Providers\AddonServiceProvider;
 use Statamic\Statamic;
@@ -20,11 +20,8 @@ class ServiceProvider extends AddonServiceProvider
         Commands\UploadCommand::class,
     ];
 
-    protected $listen = [
-        // Events\AssetSaved::class => [Listeners\CreateMuxAsset::class],
-        Events\AssetUploaded::class => [Listeners\CreateMuxAsset::class],
-        Events\AssetReuploaded::class => [Listeners\CreateMuxAsset::class],
-        Events\AssetDeleted::class => [Listeners\DeleteMuxAsset::class],
+    protected $subscribe = [
+        Subscribers\MirrorFieldSubscriber::class,
     ];
 
     protected $fieldtypes = [

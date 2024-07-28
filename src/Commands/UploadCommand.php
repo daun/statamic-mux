@@ -2,7 +2,7 @@
 
 namespace Daun\StatamicMux\Commands;
 
-use Daun\StatamicMux\Commands\Concerns\HasOutputStyles;
+use Daun\StatamicMux\Concerns\HasCommandOutputStyles;
 use Daun\StatamicMux\Jobs\CreateMuxAssetJob;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Support\MirrorField;
@@ -14,7 +14,7 @@ use Statamic\Facades\AssetContainer;
 
 class UploadCommand extends Command
 {
-    use HasOutputStyles;
+    use HasCommandOutputStyles;
     use RunsInPlease;
 
     protected $signature = 'mux:upload
