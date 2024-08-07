@@ -9,6 +9,7 @@ use Daun\StatamicMux\Events\AssetUploadedToMux;
 use Daun\StatamicMux\Events\AssetUploadingToMux;
 use Daun\StatamicMux\Placeholders\PlaceholderService;
 use Daun\StatamicMux\Support\MirrorField;
+use Daun\StatamicMux\Support\URL;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Arr;
 use MuxPhp\ApiException;
@@ -426,6 +427,6 @@ class MuxService
 
         return ($playbackId && $this->isSigned($asset))
             ? $this->urls->sign($url, $playbackId, $audience, $params, $expiration)
-            : $url;
+            : URL::withQuery($url, $params);
     }
 }
