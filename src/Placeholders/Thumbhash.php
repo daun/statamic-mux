@@ -42,7 +42,7 @@ class Thumbhash
             return [];
         }
 
-        if (Imagick::installed()) {
+        if (class_exists('\\Imagick')) {
             return static::generatePixelMatrixUsingImagick($contents);
         } else {
             return static::generatePixelMatrixUsingGD($contents);

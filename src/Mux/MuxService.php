@@ -9,6 +9,7 @@ use Daun\StatamicMux\Events\AssetUploadedToMux;
 use Daun\StatamicMux\Events\AssetUploadingToMux;
 use Daun\StatamicMux\Placeholders\PlaceholderService;
 use Daun\StatamicMux\Support\MirrorField;
+use Daun\StatamicMux\Support\URL;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Arr;
 use MuxPhp\ApiException;
@@ -252,12 +253,12 @@ class MuxService
 
     protected function getPlaybackId(Asset $asset): mixed
     {
-        return MuxAsset::fromAsset($asset)->playbackId();
+        return MuxAsset::fromAsset($asset)->playbackId()?->id();
     }
 
     protected function getPlaybackPolicy(Asset $asset): mixed
     {
-        return $this->get($asset, 'playback_policy');
+        return MuxAsset::fromAsset($asset)->playbackId()?->policy();
     }
 
     protected function getOrRequestPlaybackId(Asset $asset): ?string
@@ -426,6 +427,6 @@ class MuxService
 
         return ($playbackId && $this->isSigned($asset))
             ? $this->urls->sign($url, $playbackId, $audience, $params, $expiration)
-            : null;
+            : URL::withQuery($url, $params);
     }
 }
