@@ -9,7 +9,6 @@ use Daun\StatamicMux\Support\MirrorField;
 use Daun\StatamicMux\Support\Queue;
 use Illuminate\Console\Command;
 use Statamic\Console\RunsInPlease;
-use Statamic\Facades\Asset;
 
 class PruneCommand extends Command
 {
