@@ -91,14 +91,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Encoding Tier
+    | Video Quality
     |--------------------------------------------------------------------------
     |
-    | The encoding tier applied when creating new assets: 'smart' or 'baseline'
+    | The video quality applied when creating new assets: 'basic' or 'plus'.
+    | Set this to `null` to use the default quality setting of your Mux account.
+    |
+    | Learn about qualities at https://docs.mux.com/guides/use-video-quality-levels.
     |
     */
 
-    'encoding_tier' => env('MUX_ENCODING_TIER', 'smart'),
+    'video_quality' => env('MUX_VIDEO_QUALITY', 'plus'),
 
     /*
     |--------------------------------------------------------------------------

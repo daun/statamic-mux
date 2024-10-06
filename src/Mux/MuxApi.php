@@ -44,7 +44,7 @@ class MuxApi
         protected bool $debug = false,
         protected bool $testMode = false,
         protected mixed $playbackPolicy = null,
-        protected ?string $encodingTier = null,
+        protected ?string $videoQuality = null,
     ) {
         $this->client = new Client();
         $this->config = Configuration::getDefaultConfiguration()
@@ -107,7 +107,7 @@ class MuxApi
         return new CreateAssetRequest([
             'test' => $this->testMode,
             'playback_policy' => $this->sanitizePlaybackPolicy($this->playbackPolicy),
-            'encoding_tier' => $this->encodingTier,
+            'video_quality' => $this->videoQuality,
             ...$options,
         ]);
     }

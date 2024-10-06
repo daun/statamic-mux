@@ -63,7 +63,7 @@ class ServiceProvider extends AddonServiceProvider
                 $app['config']->get('app.debug', false),
                 $app['config']->get('mux.test_mode', false),
                 $app['config']->get('mux.playback_policy', null),
-                $app['config']->get('mux.encoding_tier', null),
+                $app['config']->get('mux.video_quality', null),
             );
         });
         $this->app->alias(MuxApi::class, 'mux.api');
