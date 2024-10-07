@@ -3,6 +3,7 @@
 namespace Daun\StatamicMux\Mux;
 
 use Daun\StatamicMux\Data\MuxAsset;
+use Daun\StatamicMux\Data\MuxPlaybackId;
 use Daun\StatamicMux\Mux\Actions\CreateMuxAsset;
 use Daun\StatamicMux\Mux\Actions\DeleteMuxAsset;
 use Daun\StatamicMux\Mux\Actions\RequestPlaybackId;
@@ -15,7 +16,6 @@ use Illuminate\Support\Arr;
 use MuxPhp\ApiException;
 use Statamic\Assets\Asset;
 use Statamic\Facades\Asset as AssetFacade;
-use Statamic\Facades\Blink;
 use Statamic\Support\Traits\Hookable;
 
 class MuxService
@@ -85,20 +85,12 @@ class MuxService
     }
 
     /**
-     * List existing Mux assets
-     */
-    public function listMuxAssets(int $limit = 100, int $page = 1)
-    {
-        return collect($this->api->assets()->listAssets($limit, $page)->getData());
-    }
-
-    /**
      * Check if a video asset exists in Mux.
      */
     public function hasExistingMuxAsset(Asset $asset)
     {
-        $exists = $this->muxAssetExists($this->getMuxId($asset));
-        if ($exists) {
+        $muxId = $this->getMuxId($asset);
+        if ($muxId && $this->muxAssetExists($muxId)) {
             return true;
         } else {
             MuxAsset::fromAsset($asset)->clear()->save();
@@ -110,12 +102,8 @@ class MuxService
     /**
      * Check if an asset with given id exists on Mux.
      */
-    public function muxAssetExists(?string $muxId): bool
+    public function muxAssetExists(string $muxId): bool
     {
-        if (! $muxId) {
-            return false;
-        }
-
         try {
             $muxAssetResponse = $this->api->assets()->getAsset($muxId)->getData();
             $actualMuxId = $muxAssetResponse?->getId();
@@ -132,46 +120,56 @@ class MuxService
         return false;
     }
 
+    /**
+     * List existing Mux assets
+     */
+    public function listMuxAssets(int $limit = 100, int $page = 1)
+    {
+        return collect($this->api->assets()->listAssets($limit, $page)->getData());
+    }
+
     public function getMuxId(Asset $asset): ?string
     {
         return MuxAsset::fromAsset($asset)->id();
     }
 
-    public function getPlaybackId(Asset $asset, ?MuxPlaybackPolicy $policy = null): mixed
+    public function getPlaybackId(Asset $asset, ?MuxPlaybackPolicy $policy = null, bool $requestIfMissing = true): ?MuxPlaybackId
     {
-        return MuxAsset::fromAsset($asset)->playbackId($policy)?->id();
+        return $requestIfMissing
+            ? $this->getOrRequestPlaybackId($asset, $policy)
+            : $this->getExistingPlaybackId($asset, $policy);
     }
 
-    public function getPlaybackPolicy(Asset $asset, ?MuxPlaybackPolicy $policy = null): mixed
+    protected function getExistingPlaybackId(Asset $asset, ?MuxPlaybackPolicy $policy = null): ?MuxPlaybackId
     {
-        return MuxAsset::fromAsset($asset)->playbackId($policy)?->policy();
+        return MuxAsset::fromAsset($asset)->playbackId($policy);
     }
 
-    public function getOrRequestPlaybackId(Asset $asset, ?MuxPlaybackPolicy $policy = null): ?string
+    protected function getOrRequestPlaybackId(Asset $asset, ?MuxPlaybackPolicy $policy = null): ?MuxPlaybackId
     {
-        if ($playbackId = $this->getPlaybackId($asset, $policy)) {
+        if ($playbackId = $this->getExistingPlaybackId($asset, $policy)) {
             return $playbackId;
         }
 
         $result = $this->app->make(RequestPlaybackId::class)->handle($asset, $policy);
         if ($result) {
-            [$playbackId, $playbackPolicy] = $result;
+            [$id, $policy] = $result;
             $muxAsset = MuxAsset::fromAsset($asset);
-            $muxAsset->addPlaybackId($playbackId, $playbackPolicy);
+            $playbackId = $muxAsset->addPlaybackId($id, $policy);
             $muxAsset->save();
 
-            return true;
+            return $playbackId;
         }
 
-        return $playbackId ?: null;
+        return null;
     }
 
     public function getPlaybackUrl(Asset $asset, ?array $params = []): ?string
     {
-        if ($playbackId = $this->getOrRequestPlaybackId($asset)) {
+        if ($playbackId = $this->getPlaybackId($asset)) {
             $params = $params + $this->getDefaultPlaybackModifiers();
 
-            return $this->signUrl($asset, $this->urls->playback($playbackId), MuxAudience::Video, $params);
+            return $this->signUrl($asset, $this->urls->playback($playbackId->id()), MuxAudience::Video, $params);
         } else {
             return null;
         }
@@ -179,26 +177,24 @@ class MuxService
 
     public function getPlaybackToken(Asset $asset, ?array $params = []): ?string
     {
-        $params = $params + $this->getDefaultPlaybackModifiers();
-        $playbackId = $this->getPlaybackId($asset);
+        if ($playbackId = $this->getPlaybackId($asset)) {
+            $params = $params + $this->getDefaultPlaybackModifiers();
 
-        return ($playbackId && $this->isSigned($asset))
-            ? $this->urls->token($playbackId, MuxAudience::Video, $params)
-            : null;
-    }
-
-    public function getDefaultPlaybackModifiers(): array
-    {
-        return Arr::wrap(config('mux.playback_modifiers', []));
+            return $playbackId->isSigned()
+                ? $this->urls->token($playbackId->id(), MuxAudience::Video, $params)
+                : null;
+        } else {
+            return null;
+        }
     }
 
     public function getThumbnailUrl(Asset $asset, array $params = []): ?string
     {
-        if ($playbackId = $this->getOrRequestPlaybackId($asset)) {
+        if ($playbackId = $this->getPlaybackId($asset)) {
             $format = $params['format'] ?? 'jpg';
             $params = Arr::except($params, 'format');
 
-            return $this->signUrl($asset, $this->urls->thumbnail($playbackId, $format), MuxAudience::Thumbnail, $params);
+            return $this->signUrl($asset, $this->urls->thumbnail($playbackId->id(), $format), MuxAudience::Thumbnail, $params);
         } else {
             return null;
         }
@@ -206,11 +202,11 @@ class MuxService
 
     public function getGifUrl(Asset $asset, array $params = []): ?string
     {
-        if ($playbackId = $this->getOrRequestPlaybackId($asset)) {
+        if ($playbackId = $this->getPlaybackId($asset)) {
             $format = $params['format'] ?? 'gif';
             $params = Arr::except($params, 'format');
 
-            return $this->signUrl($asset, $this->urls->animated($playbackId, $format), MuxAudience::Gif, $params);
+            return $this->signUrl($asset, $this->urls->animated($playbackId->id(), $format), MuxAudience::Gif, $params);
         } else {
             return null;
         }
@@ -229,22 +225,19 @@ class MuxService
         }
     }
 
-    public function isSigned(Asset $asset): bool
-    {
-        return $this->api->hasSignedPlaybackPolicy($this->getPlaybackPolicy($asset));
-    }
-
-    public function isPublic(Asset $asset): bool
-    {
-        return $this->api->hasPublicPlaybackPolicy($this->getPlaybackPolicy($asset));
-    }
-
     protected function signUrl(Asset $asset, string $url, MuxAudience $audience, ?array $params = [], ?int $expiration = null): ?string
     {
-        $playbackId = $this->getPlaybackId($asset);
+        if ($playbackId = $this->getPlaybackId($asset)) {
+            return $playbackId->isSigned()
+                ? $this->urls->sign($url, $playbackId->id(), $audience, $params, $expiration)
+                : URL::withQuery($url, $params);
+        } else {
+            return null;
+        }
+    }
 
-        return ($playbackId && $this->isSigned($asset))
-            ? $this->urls->sign($url, $playbackId, $audience, $params, $expiration)
-            : URL::withQuery($url, $params);
+    public function getDefaultPlaybackModifiers(): array
+    {
+        return Arr::wrap(config('mux.playback_modifiers', []));
     }
 }

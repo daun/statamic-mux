@@ -20,6 +20,8 @@ class MuxAsset implements Augmentable
 
     public ?string $field;
 
+    protected ?MuxPlaybackIds $playbackIds = null;
+
     public function __construct(?array $data, ?Asset $asset = null, ?string $field = null)
     {
         $this->data = collect($data ?? []);
@@ -80,7 +82,7 @@ class MuxAsset implements Augmentable
 
     public function playbackIds(): MuxPlaybackIds
     {
-        return MuxPlaybackIds::make($this->get('playback_ids', []));
+        return ($this->playbackIds ??= MuxPlaybackIds::make($this->get('playback_ids', [])));
     }
 
     public function playbackId(?MuxPlaybackPolicy $policy = null): ?MuxPlaybackId
@@ -94,7 +96,9 @@ class MuxAsset implements Augmentable
 
     public function addPlaybackId(string $id, string $policy): ?MuxPlaybackId
     {
-        return $this->playbackIds()->addPlaybackId(['id' => $id, 'policy' => $policy]);
+        $playbackId = $this->playbackIds()->addPlaybackId($id, $policy);
+        $this->set('playback_ids', $this->playbackIds()->toArray());
+        return $playbackId;
     }
 
     public function newAugmentedInstance(): AugmentedMuxAsset

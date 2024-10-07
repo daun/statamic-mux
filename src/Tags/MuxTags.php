@@ -78,7 +78,7 @@ class MuxTags extends Tags
 
             $data = [
                 'mux_id' => $muxId,
-                'playback_id' => $playbackId,
+                'playback_id' => $playbackId->id(),
                 'playback_id_signed' => $playbackIdSigned,
                 'playback_url' => $playbackUrl,
                 'playback_token' => $playbackToken,

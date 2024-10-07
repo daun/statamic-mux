@@ -2,6 +2,7 @@
 
 namespace Daun\StatamicMux\Tags\Concerns;
 
+use Daun\StatamicMux\Data\MuxPlaybackId;
 use Daun\StatamicMux\Facades\Mux;
 
 trait ReadsMuxData
@@ -23,7 +24,7 @@ trait ReadsMuxData
     {
         $asset = $this->getAssetFromContext($asset);
 
-        return $asset ? Mux::getPlaybackId($asset) : null;
+        return $asset ? Mux::getPlaybackId($asset)?->id() : null;
     }
 
     /**
@@ -83,7 +84,7 @@ trait ReadsMuxData
     {
         $asset = $this->getAssetFromContext($asset);
 
-        return $asset ? Mux::isSigned($asset) : false;
+        return $asset ? Mux::getPlaybackId($asset)?->isSigned() : false;
     }
 
     /**
@@ -93,7 +94,7 @@ trait ReadsMuxData
     {
         $asset = $this->getAssetFromContext($asset);
 
-        return $asset ? Mux::isPublic($asset) : false;
+        return $asset ? Mux::getPlaybackId($asset)?->isPublic() : false;
     }
 
     /**
