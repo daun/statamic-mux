@@ -75,9 +75,7 @@ class MuxService
         if ($asset) {
             $deleted = $this->app->make(DeleteMuxAsset::class)->handle($asset);
             if ($deleted) {
-                $muxAsset = new MuxAsset(['id' => null], $asset);
-                $muxAsset->clear();
-                $muxAsset->save();
+                MirrorField::clear($asset);
 
                 return true;
             }
@@ -103,7 +101,7 @@ class MuxService
         if ($exists) {
             return true;
         } else {
-            $this->clear($asset);
+            MirrorField::clear($asset);
 
             return false;
         }
@@ -158,10 +156,6 @@ class MuxService
         if ($result) {
             [$playbackId, $playbackPolicy] = $result;
             $this->set($asset, ['playback_id' => $playbackId, 'playback_policy' => $playbackPolicy]);
-
-            $muxAsset = new MuxAsset(['id' => null], $asset);
-            $muxAsset->clear();
-            $muxAsset->save();
 
             return true;
         }
@@ -264,13 +258,6 @@ class MuxService
     protected function get(Asset $asset, string $key, mixed $default = null): mixed
     {
         return $this->data($asset)[$key] ?? $default;
-    }
-
-    protected function clear(Asset $asset): void
-    {
-        $namespace = $this->namespace($asset);
-        $asset->set($namespace, []);
-        $asset->saveQuietly();
     }
 
     public function namespace(Asset $asset): ?string
