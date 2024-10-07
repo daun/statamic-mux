@@ -172,7 +172,7 @@ class MuxTags extends Tags
         )->whereNotNull()->all();
 
         $script = $this->params->bool('script')
-            ? '<script async src="https://unpkg.com/@mux/mux-player@2"></script>'
+            ? '<script async src="https://unpkg.com/@mux/mux-player@3"></script>'
             : '';
 
         return vsprintf(
