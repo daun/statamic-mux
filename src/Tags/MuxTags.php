@@ -4,16 +4,18 @@ namespace Daun\StatamicMux\Tags;
 
 use Daun\StatamicMux\Tags\Concerns\GetsAssetFromContext;
 use Daun\StatamicMux\Tags\Concerns\ReadsMuxData;
-use Daun\StatamicMux\Tags\Concerns\RendersHtml;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Statamic\Contracts\Data\Augmentable;
+use Statamic\Tags\Concerns\RendersAttributes;
 use Statamic\Tags\Tags;
 
 class MuxTags extends Tags
 {
     use GetsAssetFromContext;
     use ReadsMuxData;
-    use RendersHtml;
+    use RendersAttributes;
 
     protected static $handle = 'mux';
 
@@ -249,5 +251,13 @@ class MuxTags extends Tags
         $params = collect($this->params->all())->except($this->assetParams)->all();
 
         return $this->getPlaceholderDataUri(null, $params);
+    }
+
+    /**
+     * Turn query_params into html-attributes (snake to kebab case)
+     */
+    protected function toHtmlAttributes(mixed $params): Collection
+    {
+        return collect($params)->keyBy(fn ($_, $key) => Str::replace('_', '-', $key));
     }
 }
