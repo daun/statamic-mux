@@ -135,6 +135,8 @@ class MuxService
 
     public function getPlaybackId(Asset $asset, ?MuxPlaybackPolicy $policy = null, bool $requestIfMissing = true): ?MuxPlaybackId
     {
+        $policy = $this->sanitizePlaybackPolicy($policy);
+
         return $requestIfMissing
             ? $this->getOrRequestPlaybackId($asset, $policy)
             : $this->getExistingPlaybackId($asset, $policy);
@@ -142,11 +144,19 @@ class MuxService
 
     protected function getExistingPlaybackId(Asset $asset, ?MuxPlaybackPolicy $policy = null): ?MuxPlaybackId
     {
+        $policy = $this->sanitizePlaybackPolicy($policy);
+
         return MuxAsset::fromAsset($asset)->playbackId($policy);
     }
 
     protected function getOrRequestPlaybackId(Asset $asset, ?MuxPlaybackPolicy $policy = null): ?MuxPlaybackId
     {
+        if (! $this->getMuxId($asset)) {
+            return null;
+        }
+
+        $policy = $this->sanitizePlaybackPolicy($policy);
+
         if ($playbackId = $this->getExistingPlaybackId($asset, $policy)) {
             return $playbackId;
         }
@@ -154,11 +164,13 @@ class MuxService
         $result = $this->app->make(RequestPlaybackId::class)->handle($asset, $policy);
         if ($result) {
             [$id, $policy] = $result;
-            $muxAsset = MuxAsset::fromAsset($asset);
-            $playbackId = $muxAsset->addPlaybackId($id, $policy);
-            $muxAsset->save();
+            if ($id && $policy) {
+                $muxAsset = MuxAsset::fromAsset($asset);
+                $playbackId = $muxAsset->addPlaybackId($id, $policy);
+                $muxAsset->save();
 
-            return $playbackId;
+                return $playbackId;
+            }
         }
 
         return null;
@@ -230,6 +242,18 @@ class MuxService
         return $playbackId->isSigned()
             ? $this->urls->sign($url, $playbackId->id(), $audience, $params, $expiration)
             : URL::withQuery($url, $params);
+    }
+
+    protected function sanitizePlaybackPolicy(?MuxPlaybackPolicy $policy): MuxPlaybackPolicy
+    {
+        $default = $this->getDefaultPlaybackPolicy();
+
+        return MuxPlaybackPolicy::make($policy) ?? MuxPlaybackPolicy::make($default) ?? MuxPlaybackPolicy::Public;
+    }
+
+    public function getDefaultPlaybackPolicy(): ?string
+    {
+        return config('mux.playback_policy', null);
     }
 
     public function getDefaultPlaybackModifiers(): array
