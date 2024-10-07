@@ -4,6 +4,7 @@ namespace Daun\StatamicMux\Data;
 
 use Daun\StatamicMux\Data\Augmentables\AugmentedMuxAsset;
 use Daun\StatamicMux\Facades\Mux;
+use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use Daun\StatamicMux\Support\MirrorField;
 use Statamic\Assets\Asset;
 use Statamic\Contracts\Data\Augmentable;
@@ -46,54 +47,54 @@ class MuxAsset implements Augmentable
 
     public function existsOnMux(): bool
     {
-        return $this->exists() && Mux::muxAssetExists($this->id());
+        return $this->id() && Mux::muxAssetExists($this->id());
     }
 
-    public function save(): void
+    public function save(): self
     {
-        if (! $this->asset || ! $this->field) {
-            return;
+        if ($this->asset && $this->field) {
+            $data = $this->data->toArray();
+            $this->asset->set($this->field, $data);
+            $this->asset->saveQuietly();
         }
 
-        $data = $this->data->toArray();
-        $this->asset->set($this->field, $data);
-        $this->asset->saveQuietly();
+        return $this;
     }
 
-    public function refresh(): void
+    public function refresh(): self
     {
-        if (! $this->asset || ! $this->field) {
-            return;
+        if ($this->asset && $this->field) {
+            $data = $this->asset->get($this->field);
+            $this->data = collect($data ?? []);
         }
 
-        $data = $this->asset->get($this->field);
-        $this->data = collect($data ?? []);
+        return $this;
     }
 
-    public function clear(): void
+    public function clear(): self
     {
         $this->data = collect([]);
+
+        return $this;
     }
 
     public function playbackIds(): MuxPlaybackIds
     {
-        if ($this->get('playback_id')) {
-            return MuxPlaybackIds::make([[
-                'id' => $this->get('playback_id'),
-                'policy' => $this->get('playback_policy'),
-            ]]);
-        }
-
         return MuxPlaybackIds::make($this->get('playback_ids', []));
     }
 
-    public function playbackId(): ?MuxPlaybackId
+    public function playbackId(?MuxPlaybackPolicy $policy = null): ?MuxPlaybackId
     {
         $playbackIds = $this->playbackIds();
 
-        return $playbackIds->public()
-            ?: $playbackIds->signed()
-            ?: null;
+        return $policy
+            ? $playbackIds->findWithPolicy($policy)
+            : ($playbackIds->findPublic() ?? $playbackIds->findSigned());
+    }
+
+    public function addPlaybackId(string $id, string $policy): ?MuxPlaybackId
+    {
+        return $this->playbackIds()->addPlaybackId(['id' => $id, 'policy' => $policy]);
     }
 
     public function newAugmentedInstance(): AugmentedMuxAsset

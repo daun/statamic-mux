@@ -1,6 +1,6 @@
 <?php
 
-namespace Daun\StatamicMux\Mux;
+namespace Daun\StatamicMux\Mux\Enums;
 
 enum MuxAudience: string {
     case Gif = 'g';

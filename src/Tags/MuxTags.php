@@ -5,6 +5,7 @@ namespace Daun\StatamicMux\Tags;
 use Daun\StatamicMux\Tags\Concerns\GetsAssetFromContext;
 use Daun\StatamicMux\Tags\Concerns\ReadsMuxData;
 use Daun\StatamicMux\Tags\Concerns\RendersHtml;
+use Illuminate\Support\Facades\Log;
 use Statamic\Contracts\Data\Augmentable;
 use Statamic\Tags\Tags;
 
@@ -72,7 +73,7 @@ class MuxTags extends Tags
             $public = $this->isPublic($asset);
             $signed = $this->isSigned($asset);
             $thumbnail = $this->getThumbnailUrl($asset);
-            $placeholder = $this->getPlaceholderUri($asset);
+            $placeholder = $this->getPlaceholderDataUri($asset);
             $gif = $this->getGifUrl($asset);
 
             $data = [
@@ -94,7 +95,7 @@ class MuxTags extends Tags
                 return $data;
             }
         } catch (\Exception $e) {
-            \Log::error($e->getMessage());
+            Log::error($e->getMessage());
         }
 
         return [];
@@ -249,6 +250,6 @@ class MuxTags extends Tags
     {
         $params = collect($this->params->all())->except($this->assetParams)->all();
 
-        return $this->getPlaceholderUri(null, $params);
+        return $this->getPlaceholderDataUri(null, $params);
     }
 }

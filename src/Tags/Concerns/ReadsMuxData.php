@@ -13,7 +13,7 @@ trait ReadsMuxData
     {
         $asset = $this->getAssetFromContext($asset);
 
-        return $asset ? Mux::muxId($asset) : null;
+        return $asset ? Mux::getMuxId($asset) : null;
     }
 
     /**
@@ -23,7 +23,7 @@ trait ReadsMuxData
     {
         $asset = $this->getAssetFromContext($asset);
 
-        return $asset ? Mux::playbackId($asset) : null;
+        return $asset ? Mux::getPlaybackId($asset) : null;
     }
 
     /**
@@ -33,7 +33,7 @@ trait ReadsMuxData
     {
         $asset = $this->getAssetFromContext($asset);
 
-        return $asset ? Mux::playbackUrl($asset) : null;
+        return $asset ? Mux::getPlaybackUrl($asset) : null;
     }
 
     /**
@@ -43,7 +43,7 @@ trait ReadsMuxData
     {
         $asset = $this->getAssetFromContext($asset);
 
-        return $asset ? Mux::playbackToken($asset, $params) : null;
+        return $asset ? Mux::getPlaybackToken($asset, $params) : null;
     }
 
     /**
@@ -53,7 +53,7 @@ trait ReadsMuxData
     {
         $asset = $this->getAssetFromContext($asset);
 
-        return $asset ? Mux::thumbnail($asset, $params) : null;
+        return $asset ? Mux::getThumbnailUrl($asset, $params) : null;
     }
 
     /**
@@ -63,17 +63,17 @@ trait ReadsMuxData
     {
         $asset = $this->getAssetFromContext($asset);
 
-        return $asset ? Mux::gif($asset, $params) : null;
+        return $asset ? Mux::getGifUrl($asset, $params) : null;
     }
 
     /**
      * Get the placeholder data uri of a video
      */
-    protected function getPlaceholderUri($asset = null, ?array $params = []): ?string
+    protected function getPlaceholderDataUri($asset = null, ?array $params = []): ?string
     {
         $asset = $this->getAssetFromContext($asset);
 
-        return $asset ? Mux::placeholder($asset, $params) : null;
+        return $asset ? Mux::getPlaceholderDataUri($asset, $params) : null;
     }
 
     /**
@@ -101,6 +101,6 @@ trait ReadsMuxData
      */
     protected function getDefaultPlaybackModifiers(): array
     {
-        return Mux::playbackModifiers();
+        return Mux::getDefaultPlaybackModifiers();
     }
 }

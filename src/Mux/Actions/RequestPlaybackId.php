@@ -2,9 +2,12 @@
 
 namespace Daun\StatamicMux\Mux\Actions;
 
+use Daun\StatamicMux\Data\MuxAsset;
+use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
 use Illuminate\Foundation\Application;
+use MuxPhp\Models\PlaybackID;
 use Statamic\Assets\Asset;
 use Statamic\Support\Traits\Hookable;
 
@@ -22,25 +25,47 @@ class RequestPlaybackId
     /**
      * Request a new playback id for a video asset.
      */
-    public function handle(Asset|string $asset): ?array
+    public function handle(Asset $asset, ?MuxPlaybackPolicy $policy = null): array
     {
-        try {
-            $muxId = $this->service->muxId($asset);
-            $muxAssetResponse = $this->api->assets()->getAsset($muxId)->getData();
-            $playbackInstances = $muxAssetResponse->getPlaybackIds();
-        } catch (\Throwable $th) {
+        $muxId = MuxAsset::fromAsset($asset)->id();
+
+        if ($muxId) {
+            $playbackId = $this->get($muxId, $policy) ?? $this->create($muxId, $policy);
+
+            return [$playbackId?->getId(), $playbackId?->getPolicy()];
         }
 
-        $publicPlaybackInstances = array_filter(
-            $playbackInstances ?? [],
-            fn ($instance) => $this->api->hasPublicPlaybackPolicy($instance)
-        );
+        return [null, null];
+    }
 
-        $playbackInstance = ($publicPlaybackInstances[0] ?? $playbackInstances[0] ?? null);
+    /**
+     * Get an existing playback id if it exists.
+     */
+    protected function get(string $muxId, ?MuxPlaybackPolicy $policy = null): ?PlaybackID
+    {
+        try {
+            $response = $this->api->assets()->getAsset($muxId)->getData();
+            $playbackIds = $response->getPlaybackIds();
+        } catch (\Throwable $th) {
+            return null;
+        }
 
-        $playbackId = $playbackInstance?->getId();
-        $playbackPolicy = $playbackInstance?->getPolicy();
+        return collect($playbackIds ?? [])
+            ->filter(fn ($id) => ! $policy || MuxPlaybackPolicy::make($id)?->is($policy))
+            ->sort(fn ($id) => MuxPlaybackPolicy::make($id)?->isPublic() ? -1 : 0)
+            ->first();
+    }
 
-        return $playbackId ? [$playbackId, $playbackPolicy] : null;
+    /**
+     * Create a new playback id.
+     */
+    protected function create(string $muxId, ?MuxPlaybackPolicy $policy = null): ?PlaybackID
+    {
+        try {
+            $request = $this->api->createPlaybackIdRequest(['policy' => $policy]);
+            return $this->api->assets()->createAssetPlaybackId($muxId, $request)->getData();
+        } catch (\Throwable $th) {
+            return null;
+        }
     }
 }

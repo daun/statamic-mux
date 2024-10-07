@@ -57,7 +57,7 @@ class PruneCommand extends Command
 
         $assets = MirrorField::assets();
 
-        $localMuxIds = $assets->map(fn ($asset) => $service->muxId($asset))->filter();
+        $localMuxIds = $assets->map(fn ($asset) => $service->getMuxId($asset))->filter();
 
         $orphans = $actualMuxIds->diff($localMuxIds);
         $orphans->each(function ($muxId) use ($service) {

@@ -49,7 +49,7 @@ class DeleteMuxAsset
             return false;
         }
 
-        $muxId = $this->service->muxId($asset);
+        $muxId = $this->service->getMuxId($asset);
         if (! $muxId) {
             return false;
         }

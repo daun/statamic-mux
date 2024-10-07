@@ -74,26 +74,4 @@ class MirrorField
             )
         );
     }
-
-    public static function load(Asset $asset): array
-    {
-        if ($field = static::getFromBlueprint($asset)) {
-            return $asset->get($field->handle(), []);
-        } else {
-            return [];
-        }
-    }
-
-    public static function save(Asset $asset, ?array $data): void
-    {
-        if ($field = static::getFromBlueprint($asset)) {
-            $asset->set($field->handle(), $data);
-            $asset->saveQuietly();
-        }
-    }
-
-    public static function clear(Asset $asset): void
-    {
-        static::save($asset, []);
-    }
 }

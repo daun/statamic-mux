@@ -4,6 +4,7 @@ namespace Daun\StatamicMux\Mux;
 
 use Carbon\Carbon;
 use Carbon\CarbonInterval;
+use Daun\StatamicMux\Mux\Enums\MuxAudience;
 use Daun\StatamicMux\Support\URL;
 use Firebase\JWT\JWT;
 

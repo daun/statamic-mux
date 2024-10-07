@@ -10,7 +10,7 @@ class MuxAssetResource extends APIAssetResource
     public function toArray($request)
     {
         $data = parent::toArray($request);
-        $data['mux_id'] = Mux::muxId($this->resource);
+        $data['mux_id'] = Mux::getMuxId($this->resource);
 
         return $data;
     }
