@@ -31,7 +31,7 @@ Setting the tag's `script` attribute will render the required script tag for you
 
 ```html
 <mux-player playback-id="85g23gYz7NmQu02YsY81ihuod6cZMxCp017ZrfglyLCKc"></mux-player>
-<script async src="https://unpkg.com/@mux/mux-player@2"></script> // [!code focus]
+<script async src="https://unpkg.com/@mux/mux-player@3"></script> // [!code focus]
 ```
 
 ## Custom attributes

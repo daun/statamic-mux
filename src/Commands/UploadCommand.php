@@ -2,11 +2,11 @@
 
 namespace Daun\StatamicMux\Commands;
 
-use Daun\StatamicMux\Commands\Concerns\HasOutputStyles;
-use Daun\StatamicMux\Features\Mirror as MirrorFeature;
-use Daun\StatamicMux\Features\Queue;
+use Daun\StatamicMux\Concerns\HasCommandOutputStyles;
 use Daun\StatamicMux\Jobs\CreateMuxAssetJob;
 use Daun\StatamicMux\Mux\MuxService;
+use Daun\StatamicMux\Support\MirrorField;
+use Daun\StatamicMux\Support\Queue;
 use Illuminate\Console\Command;
 use Statamic\Console\RunsInPlease;
 use Statamic\Facades\Asset;
@@ -14,7 +14,7 @@ use Statamic\Facades\AssetContainer;
 
 class UploadCommand extends Command
 {
-    use HasOutputStyles;
+    use HasCommandOutputStyles;
     use RunsInPlease;
 
     protected $signature = 'mux:upload
@@ -41,19 +41,19 @@ class UploadCommand extends Command
         $this->dryrun = $this->option('dry-run');
         $this->sync = Queue::connection() === 'sync';
 
-        if (! MirrorFeature::configured()) {
+        if (! MirrorField::configured()) {
             $this->error('Mux is not configured. Please add valid Mux credentials in your .env file.');
 
             return;
         }
 
-        if (! MirrorFeature::enabled()) {
+        if (! MirrorField::enabled()) {
             $this->error('The mirror feature is currently disabled.');
 
             return;
         }
 
-        $this->containers = MirrorFeature::containers();
+        $this->containers = MirrorField::containers();
         if ($this->containers->isEmpty()) {
             $this->error('No containers found to mirror.');
             $this->newLine();
@@ -80,7 +80,7 @@ class UploadCommand extends Command
 
         $assets = $this->containers->flatMap(
             fn ($container) => Asset::whereContainer($container->handle())->filter(
-                fn ($asset) => MirrorFeature::enabledForAsset($asset)
+                fn ($asset) => MirrorField::shouldMirror($asset)
             )
         );
 

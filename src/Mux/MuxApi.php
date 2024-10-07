@@ -2,6 +2,7 @@
 
 namespace Daun\StatamicMux\Mux;
 
+use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Support\Arr;
@@ -13,6 +14,7 @@ use MuxPhp\Api\PlaybackIDApi;
 use MuxPhp\Api\URLSigningKeysApi;
 use MuxPhp\Configuration;
 use MuxPhp\Models\CreateAssetRequest;
+use MuxPhp\Models\CreatePlaybackIDRequest;
 use MuxPhp\Models\CreateUploadRequest;
 use MuxPhp\Models\InputSettings;
 use MuxPhp\Models\PlaybackPolicy;
@@ -44,7 +46,7 @@ class MuxApi
         protected bool $debug = false,
         protected bool $testMode = false,
         protected mixed $playbackPolicy = null,
-        protected ?string $encodingTier = null,
+        protected ?string $videoQuality = null,
     ) {
         $this->client = new Client();
         $this->config = Configuration::getDefaultConfiguration()
@@ -107,7 +109,7 @@ class MuxApi
         return new CreateAssetRequest([
             'test' => $this->testMode,
             'playback_policy' => $this->sanitizePlaybackPolicy($this->playbackPolicy),
-            'encoding_tier' => $this->encodingTier,
+            'video_quality' => $this->videoQuality,
             ...$options,
         ]);
     }
@@ -129,6 +131,15 @@ class MuxApi
         ]);
     }
 
+    public function createPlaybackIdRequest(array $options = []): CreatePlaybackIDRequest
+    {
+        $policy = (string) ($options['policy'] ?? '');
+
+        return new CreatePlaybackIDRequest([
+            'policy' => $policy ?: $this->playbackPolicy,
+        ]);
+    }
+
     protected function sanitizePlaybackPolicy(mixed $policy): array
     {
         if (is_string($policy)) {
@@ -138,22 +149,22 @@ class MuxApi
         return array_filter(Arr::wrap($policy), fn ($item) => $this->isValidPlaybackPolicy($item));
     }
 
-    public function isValidPlaybackPolicy(string $policy): bool
+    public function isValidPlaybackPolicy(?string $policy): bool
     {
-        return in_array($policy, PlaybackPolicy::getAllowableEnumValues());
+        return $policy && in_array($policy, PlaybackPolicy::getAllowableEnumValues());
     }
 
     public function hasPublicPlaybackPolicy(mixed $item): bool
     {
-        return $this->hasPlaybackPolicy($item, PlaybackPolicy::_PUBLIC);
+        return $this->hasPlaybackPolicy($item, MuxPlaybackPolicy::Public);
     }
 
     public function hasSignedPlaybackPolicy(mixed $item): bool
     {
-        return $this->hasPlaybackPolicy($item, PlaybackPolicy::SIGNED);
+        return $this->hasPlaybackPolicy($item, MuxPlaybackPolicy::Signed);
     }
 
-    protected function hasPlaybackPolicy(mixed $item, string $policy): bool
+    public function hasPlaybackPolicy(mixed $item, MuxPlaybackPolicy $policy): bool
     {
         if (! $item) {
             return false;

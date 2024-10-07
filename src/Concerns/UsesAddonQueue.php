@@ -1,8 +1,8 @@
 <?php
 
-namespace Daun\StatamicMux\Listeners\Concerns;
+namespace Daun\StatamicMux\Concerns;
 
-use Daun\StatamicMux\Features\Queue;
+use Daun\StatamicMux\Support\Queue;
 
 trait UsesAddonQueue
 {

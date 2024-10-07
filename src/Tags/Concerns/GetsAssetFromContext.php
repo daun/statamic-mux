@@ -8,14 +8,16 @@ use Statamic\Fields\Value;
 
 trait GetsAssetFromContext
 {
+    protected $assetParams = ['src', 'path', 'url', 'asset'];
+
     /**
      * Get the asset model from a path or id in the context.
      */
     protected function getAssetFromContext($asset = null): ?Asset
     {
         if (! $asset) {
-            if ($this->params->hasAny(['src', 'path', 'asset'])) {
-                $asset = $this->params->get(['src', 'path', 'asset']);
+            if ($this->params->hasAny($this->assetParams)) {
+                $asset = $this->params->get($this->assetParams);
             } else {
                 $asset = $this->context->value('asset');
             }

@@ -56,17 +56,17 @@ class MuxMirrorFieldtype extends Fieldtype
 
     public function preProcess($data)
     {
-        return ['upload' => false] + ($data ?? []);
+        return ['reupload' => false] + ($data ?? []);
     }
 
     public function process($data)
     {
         $asset = $this->asset();
-        $upload = $data['upload'] ?? false;
-        unset($data['upload']);
+        $reupload = $data['reupload'] ?? false;
+        unset($data['reupload']);
 
         // (Re)upload asset if checkbox was checked by editor
-        if ($asset && $upload) {
+        if ($asset && $reupload) {
             CreateMuxAssetJob::dispatch($asset, true);
         }
 

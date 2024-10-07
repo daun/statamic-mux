@@ -1,6 +1,6 @@
 <?php
 
-namespace Daun\StatamicMux\Features;
+namespace Daun\StatamicMux\Support;
 
 class Queue
 {

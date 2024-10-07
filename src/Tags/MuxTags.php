@@ -4,19 +4,20 @@ namespace Daun\StatamicMux\Tags;
 
 use Daun\StatamicMux\Tags\Concerns\GetsAssetFromContext;
 use Daun\StatamicMux\Tags\Concerns\ReadsMuxData;
-use Daun\StatamicMux\Tags\Concerns\RendersHtml;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Statamic\Contracts\Data\Augmentable;
+use Statamic\Tags\Concerns\RendersAttributes;
 use Statamic\Tags\Tags;
 
 class MuxTags extends Tags
 {
     use GetsAssetFromContext;
     use ReadsMuxData;
-    use RendersHtml;
+    use RendersAttributes;
 
     protected static $handle = 'mux';
-
-    protected $assetParams = ['src', 'path', 'asset'];
 
     /**
      * Tag {{ mux:[field] }}
@@ -68,24 +69,18 @@ class MuxTags extends Tags
             $playbackModifiers = $this->getDefaultPlaybackModifiers();
             $playbackToken = $this->getPlaybackToken($asset, $playbackModifiers);
             $playbackIdSigned = $playbackToken ? "{$playbackId}?token={$playbackToken}" : $playbackId;
-            $playbackUrl = $this->getPlaybackUrl($asset);
-            $public = $this->isPublic($asset);
-            $signed = $this->isSigned($asset);
-            $thumbnail = $this->getThumbnailUrl($asset);
-            $placeholder = $this->getPlaceholderUri($asset);
-            $gif = $this->getGifUrl($asset);
 
             $data = [
                 'mux_id' => $muxId,
                 'playback_id' => $playbackId,
                 'playback_id_signed' => $playbackIdSigned,
-                'playback_url' => $playbackUrl,
                 'playback_token' => $playbackToken,
-                'public' => $public,
-                'signed' => $signed,
-                'thumbnail' => $thumbnail,
-                'placeholder' => $placeholder,
-                'gif' => $gif,
+                'playback_url' => $this->getPlaybackUrl($asset),
+                'thumbnail' => $this->getThumbnailUrl($asset),
+                'placeholder' => $this->getPlaceholderDataUri($asset),
+                'gif' => $this->getGifUrl($asset),
+                'is_public' => $this->isPublic($asset),
+                'is_signed' => $this->isSigned($asset),
             ];
 
             if ($asset instanceof Augmentable) {
@@ -93,8 +88,8 @@ class MuxTags extends Tags
             } else {
                 return $data;
             }
-        } catch (\Exception $e) {
-            \Log::error($e->getMessage());
+        } catch (\Throwable $th) {
+            Log::error($th->getMessage());
         }
 
         return [];
@@ -177,7 +172,7 @@ class MuxTags extends Tags
         )->whereNotNull()->all();
 
         $script = $this->params->bool('script')
-            ? '<script async src="https://unpkg.com/@mux/mux-player@2"></script>'
+            ? '<script async src="https://unpkg.com/@mux/mux-player@3"></script>'
             : '';
 
         return vsprintf(
@@ -249,6 +244,14 @@ class MuxTags extends Tags
     {
         $params = collect($this->params->all())->except($this->assetParams)->all();
 
-        return $this->getPlaceholderUri(null, $params);
+        return $this->getPlaceholderDataUri(null, $params);
+    }
+
+    /**
+     * Turn query_params into html-attributes (snake to kebab case)
+     */
+    protected function toHtmlAttributes(mixed $params): Collection
+    {
+        return collect($params)->keyBy(fn ($_, $key) => Str::replace('_', '-', $key));
     }
 }

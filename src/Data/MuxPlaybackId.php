@@ -2,6 +2,7 @@
 
 namespace Daun\StatamicMux\Data;
 
+use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Arr;
 use Statamic\Support\Traits\FluentlyGetsAndSets;
@@ -40,17 +41,22 @@ class MuxPlaybackId implements Arrayable
         return $this->fluentlyGetOrSet('policy')->args(func_get_args());
     }
 
-    public function public(): bool
+    public function hasPolicy(MuxPlaybackPolicy $policy): bool
     {
-        return $this->policy === 'public';
+        return MuxPlaybackPolicy::make($this->policy)?->is($policy) ?? false;
     }
 
-    public function signed(): bool
+    public function isPublic(): bool
     {
-        return $this->policy === 'signed';
+        return MuxPlaybackPolicy::make($this->policy)?->isPublic() ?? false;
     }
 
-    public function toArray()
+    public function isSigned(): bool
+    {
+        return MuxPlaybackPolicy::make($this->policy)?->isSigned() ?? false;
+    }
+
+    public function toArray(): array
     {
         return [
             'id' => $this->id,

@@ -74,7 +74,7 @@ return [
 ## Playback Policy
 
 Videos uploaded to Mux can restrict access by requiring signed playback urls.
-Learn more about [Secure Playback](/secure-playback).
+Learn more about [Setting Up Secure Playback](/secure-playback).
 
 ```php
 return [
@@ -89,23 +89,28 @@ return [
 ];
 ```
 
-## Encoding Tier
+## Video Quality
 
-Mux offers two encoding tiers: `smart` for high visual quality or `baseline` for apps with simpler quality needs to save on bandwidth.
-Learn more about [Choosing Encoding Tiers](https://docs.mux.com/guides/use-encoding-tiers).
+Mux offers two quality levels: `plus` for high visual quality and `basic` for apps with simpler
+quality needs to save on bandwidth and encoding cost. Learn more about
+[Choosing Video Quality](https://docs.mux.com/guides/use-video-quality-levels).
 
 ```php
 return [
     /*
     |--------------------------------------------------------------------------
-    | Encoding Tier
+    | Video Quality
     |--------------------------------------------------------------------------
     */
 
-    'encoding_tier' => env('MUX_ENCODING_TIER', 'smart'), // [!code focus]
+    'video_quality' => env('MUX_VIDEO_QUALITY', 'plus'), // [!code focus]
 
 ];
 ```
+
+You can set this to `null` to use the default quality setting of your Mux account if you have
+defined one in the [Default Video Quality Settings](https://dashboard.mux.com/organizations/59g3uj/settings/video-quality)
+of your Mux account dashboard.
 
 ## Playback Modifiers
 

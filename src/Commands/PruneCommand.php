@@ -2,18 +2,17 @@
 
 namespace Daun\StatamicMux\Commands;
 
-use Daun\StatamicMux\Commands\Concerns\HasOutputStyles;
-use Daun\StatamicMux\Features\Mirror as MirrorFeature;
-use Daun\StatamicMux\Features\Queue;
+use Daun\StatamicMux\Concerns\HasCommandOutputStyles;
 use Daun\StatamicMux\Jobs\DeleteMuxAssetJob;
 use Daun\StatamicMux\Mux\MuxService;
+use Daun\StatamicMux\Support\MirrorField;
+use Daun\StatamicMux\Support\Queue;
 use Illuminate\Console\Command;
 use Statamic\Console\RunsInPlease;
-use Statamic\Facades\Asset;
 
 class PruneCommand extends Command
 {
-    use HasOutputStyles;
+    use HasCommandOutputStyles;
     use RunsInPlease;
 
     protected $signature = 'mux:prune
@@ -30,13 +29,13 @@ class PruneCommand extends Command
         $this->dryrun = $this->option('dry-run');
         $this->sync = Queue::connection() === 'sync';
 
-        if (! MirrorFeature::configured()) {
+        if (! MirrorField::configured()) {
             $this->error('Mux is not configured. Please add valid Mux credentials in your .env file.');
 
             return;
         }
 
-        if (! MirrorFeature::enabled()) {
+        if (! MirrorField::enabled()) {
             $this->error('The mirror feature is currently disabled.');
 
             return;
@@ -56,13 +55,9 @@ class PruneCommand extends Command
             return;
         }
 
-        $assets = MirrorFeature::containers()->flatMap(
-            fn ($container) => Asset::whereContainer($container->handle())->filter(
-                fn ($asset) => MirrorFeature::enabledForAsset($asset)
-            )
-        );
+        $assets = MirrorField::assets();
 
-        $localMuxIds = $assets->map(fn ($asset) => $service->muxId($asset))->filter();
+        $localMuxIds = $assets->map(fn ($asset) => $service->getMuxId($asset))->filter();
 
         $orphans = $actualMuxIds->diff($localMuxIds);
         $orphans->each(function ($muxId) use ($service) {

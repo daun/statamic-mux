@@ -11,6 +11,6 @@
   },
   "devDependencies": {
     "vite": "^5.1.4",
-    "vitepress": "^1.0.0-rc.44"
+    "vitepress": "^1.4.0"
   }
 }

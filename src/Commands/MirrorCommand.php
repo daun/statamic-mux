@@ -2,13 +2,13 @@
 
 namespace Daun\StatamicMux\Commands;
 
-use Daun\StatamicMux\Commands\Concerns\HasOutputStyles;
+use Daun\StatamicMux\Concerns\HasCommandOutputStyles;
 use Illuminate\Console\Command;
 use Statamic\Console\RunsInPlease;
 
 class MirrorCommand extends Command
 {
-    use HasOutputStyles;
+    use HasCommandOutputStyles;
     use RunsInPlease;
 
     protected $signature = 'mux:mirror

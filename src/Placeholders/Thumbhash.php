@@ -2,7 +2,6 @@
 
 namespace Daun\StatamicMux\Placeholders;
 
-use Daun\StatamicMux\Features\Imagick;
 use Thumbhash\Thumbhash as ThumbhashLib;
 
 class Thumbhash
@@ -42,7 +41,7 @@ class Thumbhash
             return [];
         }
 
-        if (Imagick::installed()) {
+        if (class_exists('\\Imagick')) {
             return static::generatePixelMatrixUsingImagick($contents);
         } else {
             return static::generatePixelMatrixUsingGD($contents);

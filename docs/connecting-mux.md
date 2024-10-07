@@ -6,7 +6,7 @@ Register a Mux account and generate API credentials.
 
 If you haven't already, now is a good time to [register a Mux account](https://dashboard.mux.com/signup).
 Once you have an account, you need to [create an environment](https://dashboard.mux.com/environments).
-It's recommended to have separate Mux environments for each Statamic app environment.
+It's recommended to have separate Mux environments for each Statamic app environment like `development` and `production`.
 
 ## Credentials
 

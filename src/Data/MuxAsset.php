@@ -4,7 +4,8 @@ namespace Daun\StatamicMux\Data;
 
 use Daun\StatamicMux\Data\Augmentables\AugmentedMuxAsset;
 use Daun\StatamicMux\Facades\Mux;
-use Daun\StatamicMux\Features\Mirror;
+use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
+use Daun\StatamicMux\Support\MirrorField;
 use Statamic\Assets\Asset;
 use Statamic\Contracts\Data\Augmentable;
 use Statamic\Data\ContainsData;
@@ -19,16 +20,18 @@ class MuxAsset implements Augmentable
 
     public ?string $field;
 
+    protected ?MuxPlaybackIds $playbackIds = null;
+
     public function __construct(?array $data, ?Asset $asset = null, ?string $field = null)
     {
         $this->data = collect($data ?? []);
         $this->asset = $asset;
-        $this->field = $field ?? Mirror::getMirrorField($asset);
+        $this->field = $field ?? MirrorField::getFromBlueprint($asset)?->handle();
     }
 
     public static function fromAsset(Asset $asset, ?string $field = null): static
     {
-        $field = $field ?? Mirror::getMirrorField($asset);
+        $field = $field ?? MirrorField::getFromBlueprint($asset)?->handle();
         $data = $field ? $asset->get($field) : [];
 
         return new static($data, $asset, $field);
@@ -46,47 +49,56 @@ class MuxAsset implements Augmentable
 
     public function existsOnMux(): bool
     {
-        return $this->exists() && Mux::muxAssetExists($this->id());
+        return $this->id() && Mux::muxAssetExists($this->id());
     }
 
-    public function save(): void
+    public function save(): self
     {
-        if (! $this->asset || ! $this->field) {
-            return;
+        if ($this->asset && $this->field) {
+            $data = $this->data->toArray();
+            $this->asset->set($this->field, $data);
+            $this->asset->saveQuietly();
         }
 
-        $data = $this->data->toArray();
-        $this->asset->set($this->field, $data);
-        $this->asset->saveQuietly();
+        return $this;
     }
 
-    public function refresh(): void
+    public function refresh(): self
     {
-        if (! $this->asset || ! $this->field) {
-            return;
+        if ($this->asset && $this->field) {
+            $data = $this->asset->get($this->field);
+            $this->data = collect($data ?? []);
         }
 
-        $data = $this->asset->get($this->field);
-        $this->data = collect($data ?? []);
+        return $this;
     }
 
-    public function clear(): void
+    public function clear(): self
     {
         $this->data = collect([]);
+
+        return $this;
     }
 
     public function playbackIds(): MuxPlaybackIds
     {
-        return MuxPlaybackIds::make($this->get('playback_ids', []));
+        return ($this->playbackIds ??= MuxPlaybackIds::make($this->get('playback_ids', [])));
     }
 
-    public function playbackId(): ?MuxPlaybackId
+    public function playbackId(?MuxPlaybackPolicy $policy = null): ?MuxPlaybackId
     {
         $playbackIds = $this->playbackIds();
 
-        return $playbackIds->public()
-            ?: $playbackIds->signed()
-            ?: null;
+        return $policy
+            ? $playbackIds->findWithPolicy($policy)
+            : ($playbackIds->findPublic() ?? $playbackIds->findSigned());
+    }
+
+    public function addPlaybackId(string $id, string $policy): ?MuxPlaybackId
+    {
+        $playbackId = $this->playbackIds()->addPlaybackId($id, $policy);
+        $this->set('playback_ids', $this->playbackIds()->toArray());
+        return $playbackId;
     }
 
     public function newAugmentedInstance(): AugmentedMuxAsset

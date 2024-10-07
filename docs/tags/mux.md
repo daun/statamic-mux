@@ -42,5 +42,5 @@ Injects the available Mux video data so you can render custom markup.
 |**`playback_id`**|`string`|A playback id that allows streaming the video|
 |**`playback_url`**|`string`|A playback url pointing to an encoded video playlist|
 |**`playback_token`**|`string`|A signed playback token to enable secure playback|
-|**`public`**|`bool`|Whether the video can be viewed without restrictions|
-|**`signed`**|`bool`|Whether the video requires a signed playback url|
+|**`is_public`**|`bool`|Whether the video can be viewed without restrictions|
+|**`is_signed`**|`bool`|Whether the video requires a signed playback url|
