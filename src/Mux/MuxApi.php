@@ -108,7 +108,7 @@ class MuxApi
     {
         return new CreateAssetRequest([
             'test' => $this->testMode,
-            'playback_policy' => $this->sanitizePlaybackPolicy($this->playbackPolicy),
+            'playback_policy' => $this->sanitizePlaybackPolicies($this->playbackPolicy),
             'video_quality' => $this->videoQuality,
             ...$options,
         ]);
@@ -140,39 +140,14 @@ class MuxApi
         ]);
     }
 
-    protected function sanitizePlaybackPolicy(mixed $policy): array
+    protected function sanitizePlaybackPolicies(mixed $policy): array
     {
         if (is_string($policy)) {
             $policy = preg_split('/\s*,\s*/', $policy);
         }
 
-        return array_filter(Arr::wrap($policy), fn ($item) => $this->isValidPlaybackPolicy($item));
-    }
-
-    public function isValidPlaybackPolicy(?string $policy): bool
-    {
-        return $policy && in_array($policy, PlaybackPolicy::getAllowableEnumValues());
-    }
-
-    public function hasPublicPlaybackPolicy(mixed $item): bool
-    {
-        return $this->hasPlaybackPolicy($item, MuxPlaybackPolicy::Public);
-    }
-
-    public function hasSignedPlaybackPolicy(mixed $item): bool
-    {
-        return $this->hasPlaybackPolicy($item, MuxPlaybackPolicy::Signed);
-    }
-
-    public function hasPlaybackPolicy(mixed $item, MuxPlaybackPolicy $policy): bool
-    {
-        if (! $item) {
-            return false;
-        }
-
-        return
-            $item === $policy ||
-            (is_array($item) && in_array($policy, $item)) ||
-            (is_object($item) && method_exists($item, 'getPolicy') && $item->getPolicy() === $policy);
+        return collect($policy)
+            ->filter(fn ($item) => MuxPlaybackPolicy::isValid($item))
+            ->all();
     }
 }
