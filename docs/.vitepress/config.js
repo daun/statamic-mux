@@ -74,7 +74,11 @@ export default defineConfig({
 
     footer: {
       message: 'Unlicensed commercial plugin',
-      copyright: 'Copyright © 2024-present <a href="https://github.com/daun">Philipp Daun</a>'
+      copyright: `
+        Copyright © 2024-present <a href="https://github.com/daun">Philipp Daun</a><br><br>
+        <small>Mux is a registered trademark of <a href="https://www.mux.com">Mux, Inc</a>.</small>
+        <small>The use of its name is solely for descriptive purposes to denote compatibility with their services.</small>
+      `,
     },
 
     docFooter: {
