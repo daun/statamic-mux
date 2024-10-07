@@ -7,6 +7,7 @@ use Daun\StatamicMux\Events\AssetDeletingFromMux;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Log;
 use Statamic\Assets\Asset;
 use Statamic\Support\Traits\Hookable;
 
@@ -40,6 +41,7 @@ class DeleteMuxAsset
                     return true;
                 }
             } catch (\Throwable $th) {
+                Log::error($th->getMessage());
             }
 
             return false;
@@ -66,6 +68,7 @@ class DeleteMuxAsset
                 return false;
             }
         } catch (\Throwable $th) {
+            Log::error($th->getMessage());
         }
 
         AssetDeletedFromMux::dispatch($asset, $muxId);

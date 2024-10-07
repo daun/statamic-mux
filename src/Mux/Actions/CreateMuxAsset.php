@@ -7,6 +7,7 @@ use Daun\StatamicMux\Events\AssetUploadedToMux;
 use Daun\StatamicMux\Events\AssetUploadingToMux;
 use Daun\StatamicMux\Mux\MuxApi;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Log;
 use Statamic\Assets\Asset;
 use Statamic\Support\Traits\Hookable;
 
@@ -45,6 +46,7 @@ class CreateMuxAsset
                 $muxId = $this->ingestAssetToMux($asset);
             }
         } catch (\Throwable $th) {
+            Log::error($th->getMessage());
             throw new \Exception("Failed to upload video to Mux: {$th->getMessage()}");
         }
 

@@ -164,20 +164,20 @@ class MuxService
         return null;
     }
 
-    public function getPlaybackUrl(Asset $asset, ?array $params = []): ?string
+    public function getPlaybackUrl(Asset $asset, ?MuxPlaybackPolicy $policy = null, array $params = []): ?string
     {
-        if ($playbackId = $this->getPlaybackId($asset)) {
+        if ($playbackId = $this->getPlaybackId($asset, $policy)) {
             $params = $params + $this->getDefaultPlaybackModifiers();
 
-            return $this->signUrl($asset, $this->urls->playback($playbackId->id()), MuxAudience::Video, $params);
+            return $this->signUrl($this->urls->playback($playbackId->id()), $playbackId, MuxAudience::Video, $params);
         } else {
             return null;
         }
     }
 
-    public function getPlaybackToken(Asset $asset, ?array $params = []): ?string
+    public function getPlaybackToken(Asset $asset, ?MuxPlaybackPolicy $policy = null, array $params = []): ?string
     {
-        if ($playbackId = $this->getPlaybackId($asset)) {
+        if ($playbackId = $this->getPlaybackId($asset, $policy)) {
             $params = $params + $this->getDefaultPlaybackModifiers();
 
             return $playbackId->isSigned()
@@ -188,34 +188,34 @@ class MuxService
         }
     }
 
-    public function getThumbnailUrl(Asset $asset, array $params = []): ?string
+    public function getThumbnailUrl(Asset $asset, ?MuxPlaybackPolicy $policy = null, array $params = []): ?string
     {
-        if ($playbackId = $this->getPlaybackId($asset)) {
+        if ($playbackId = $this->getPlaybackId($asset, $policy)) {
             $format = $params['format'] ?? 'jpg';
             $params = Arr::except($params, 'format');
 
-            return $this->signUrl($asset, $this->urls->thumbnail($playbackId->id(), $format), MuxAudience::Thumbnail, $params);
+            return $this->signUrl($this->urls->thumbnail($playbackId->id(), $format), $playbackId, MuxAudience::Thumbnail, $params);
         } else {
             return null;
         }
     }
 
-    public function getGifUrl(Asset $asset, array $params = []): ?string
+    public function getGifUrl(Asset $asset, ?MuxPlaybackPolicy $policy = null, array $params = []): ?string
     {
-        if ($playbackId = $this->getPlaybackId($asset)) {
+        if ($playbackId = $this->getPlaybackId($asset, $policy)) {
             $format = $params['format'] ?? 'gif';
             $params = Arr::except($params, 'format');
 
-            return $this->signUrl($asset, $this->urls->animated($playbackId->id(), $format), MuxAudience::Gif, $params);
+            return $this->signUrl($this->urls->animated($playbackId->id(), $format), $playbackId, MuxAudience::Gif, $params);
         } else {
             return null;
         }
     }
 
-    public function getPlaceholderDataUri(Asset $asset, array $params = []): string
+    public function getPlaceholderDataUri(Asset $asset, ?MuxPlaybackPolicy $policy = null, array $params = []): string
     {
         $fallback = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
-        $thumbnail = $this->getThumbnailUrl($asset, ['width' => 100] + $params);
+        $thumbnail = $this->getThumbnailUrl($asset, $policy, ['width' => 100] + $params);
         if ($thumbnail) {
             $key = sprintf('%s-%s', $this->getMuxId($asset), md5(json_encode($params)));
 
@@ -225,15 +225,11 @@ class MuxService
         }
     }
 
-    protected function signUrl(Asset $asset, string $url, MuxAudience $audience, ?array $params = [], ?int $expiration = null): ?string
+    protected function signUrl(string $url, MuxPlaybackId $playbackId, MuxAudience $audience, array $params = [], ?int $expiration = null): ?string
     {
-        if ($playbackId = $this->getPlaybackId($asset)) {
-            return $playbackId->isSigned()
-                ? $this->urls->sign($url, $playbackId->id(), $audience, $params, $expiration)
-                : URL::withQuery($url, $params);
-        } else {
-            return null;
-        }
+        return $playbackId->isSigned()
+            ? $this->urls->sign($url, $playbackId->id(), $audience, $params, $expiration)
+            : URL::withQuery($url, $params);
     }
 
     public function getDefaultPlaybackModifiers(): array

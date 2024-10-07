@@ -7,6 +7,7 @@ use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Log;
 use MuxPhp\Models\PlaybackID;
 use Statamic\Assets\Asset;
 use Statamic\Support\Traits\Hookable;
@@ -47,6 +48,7 @@ class RequestPlaybackId
             $response = $this->api->assets()->getAsset($muxId)->getData();
             $playbackIds = $response->getPlaybackIds();
         } catch (\Throwable $th) {
+            Log::error($th->getMessage());
             return null;
         }
 
@@ -62,9 +64,10 @@ class RequestPlaybackId
     protected function create(string $muxId, ?MuxPlaybackPolicy $policy = null): ?PlaybackID
     {
         try {
-            $request = $this->api->createPlaybackIdRequest(['policy' => $policy]);
+            $request = $this->api->createPlaybackIdRequest(['policy' => $policy?->value]);
             return $this->api->assets()->createAssetPlaybackId($muxId, $request)->getData();
         } catch (\Throwable $th) {
+            Log::error($th->getMessage());
             return null;
         }
     }

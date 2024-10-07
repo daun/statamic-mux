@@ -17,8 +17,6 @@ class MuxTags extends Tags
 
     protected static $handle = 'mux';
 
-    protected $assetParams = ['src', 'path', 'asset'];
-
     /**
      * Tag {{ mux:[field] }}
      *
@@ -78,7 +76,7 @@ class MuxTags extends Tags
 
             $data = [
                 'mux_id' => $muxId,
-                'playback_id' => $playbackId->id(),
+                'playback_id' => $playbackId,
                 'playback_id_signed' => $playbackIdSigned,
                 'playback_url' => $playbackUrl,
                 'playback_token' => $playbackToken,
@@ -94,8 +92,8 @@ class MuxTags extends Tags
             } else {
                 return $data;
             }
-        } catch (\Exception $e) {
-            Log::error($e->getMessage());
+        } catch (\Throwable $th) {
+            Log::error($th->getMessage());
         }
 
         return [];
