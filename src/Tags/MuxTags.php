@@ -69,24 +69,18 @@ class MuxTags extends Tags
             $playbackModifiers = $this->getDefaultPlaybackModifiers();
             $playbackToken = $this->getPlaybackToken($asset, $playbackModifiers);
             $playbackIdSigned = $playbackToken ? "{$playbackId}?token={$playbackToken}" : $playbackId;
-            $playbackUrl = $this->getPlaybackUrl($asset);
-            $public = $this->isPublic($asset);
-            $signed = $this->isSigned($asset);
-            $thumbnail = $this->getThumbnailUrl($asset);
-            $placeholder = $this->getPlaceholderDataUri($asset);
-            $gif = $this->getGifUrl($asset);
 
             $data = [
                 'mux_id' => $muxId,
                 'playback_id' => $playbackId,
                 'playback_id_signed' => $playbackIdSigned,
-                'playback_url' => $playbackUrl,
                 'playback_token' => $playbackToken,
-                'public' => $public,
-                'signed' => $signed,
-                'thumbnail' => $thumbnail,
-                'placeholder' => $placeholder,
-                'gif' => $gif,
+                'playback_url' => $this->getPlaybackUrl($asset),
+                'thumbnail' => $this->getThumbnailUrl($asset),
+                'placeholder' => $this->getPlaceholderDataUri($asset),
+                'gif' => $this->getGifUrl($asset),
+                'is_public' => $this->isPublic($asset),
+                'is_signed' => $this->isSigned($asset),
             ];
 
             if ($asset instanceof Augmentable) {
