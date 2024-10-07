@@ -62,6 +62,7 @@ Any other attributes will be passed along to the the web component itself:
 ```html
 <mux-video
   playback-id="85g23gYz7NmQu02YsY81ihuod6cZMxCp017ZrfglyLCKc"
-  autoplay loop muted class="mt-3"
+  autoplay loop muted
+  class="mt-3"
 ></mux-video>
 ```

@@ -14,8 +14,8 @@ Extends the native `video` element with support for streaming Mux videos. Attrib
 and `loop` or events like `playing` will continue to work as expected.
 
 ```diff
-- <video src="/assets/video.mp4">
-+ <mux-video playback-id="DS00Spx1CV902M"></mux-video>
+- <video src="/assets/video.mp4" autoplay>
++ <mux-video playback-id="DS00Spx1CV902M" autoplay></mux-video>
 ```
 
 ### `mux-player`
