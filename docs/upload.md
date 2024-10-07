@@ -33,6 +33,10 @@ tabs:
 
 :::
 
+When editing the asset in the control panel, the Mux Mirror field will display the upload
+status of the asset, e.g. "Video uploaded to Mux". If you'd rather hide the field from
+editors, you can set its `visibility` to `hidden`.
+
 ## Uploading Existing Videos
 
 Adding a Mux Mirror field will enable automatic sync for videos uploaded **from that point onwards**.
