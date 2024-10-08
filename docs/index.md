@@ -4,16 +4,13 @@ layout: home
 
 hero:
   name: "Statamic Mux"
-  text: "Seamless video encoding and streaming"
-  tagline: Integrate Mux with your Statamic site
+  text: "Seamless video encoding & streaming"
+  tagline: "Integrate Mux with your Statamic site"
   image: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMi4yNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0ibHVjaWRlIGx1Y2lkZS1wbGF5Ij48cG9seWdvbiBwb2ludHM9IjUgMyAxOSAxMiA1IDIxIDUgMyIvPjwvc3ZnPg=='
   actions:
     - theme: brand
       text: Get Started  →
       link: /installation
-    - theme: alt
-      text: View on GitHub
-      link: https://github.com/daun/statamic-mux
     - theme: alt
       text: Open in Marketplace
       link: https://statamic.com/addons/daun/mux

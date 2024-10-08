@@ -318,3 +318,14 @@
 .VPBadge {
   letter-spacing: .015em;
 }
+
+/**
+ * Component: Footer
+ * -------------------------------------------------------------------------- */
+
+.VPFooter small {
+  display: inline-block;
+  color: var(--vp-c-text-3);
+  line-height: 18px;
+  font-size: 12px;
+}

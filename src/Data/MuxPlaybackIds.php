@@ -11,7 +11,7 @@ class MuxPlaybackIds extends Collection implements Arrayable
     public function __construct($items = [])
     {
         $items = Collection::make($items)
-            ->map(fn ($item) => MuxPlaybackId::make($item))
+            ->map(fn ($id, $policy) => MuxPlaybackId::make($id, $policy))
             ->filter();
 
         parent::__construct($items);
@@ -38,8 +38,8 @@ class MuxPlaybackIds extends Collection implements Arrayable
             return $existing;
         }
 
-        if ($playbackId = MuxPlaybackId::make(['id' => $id, 'policy' => $policy])) {
-            $this->push($playbackId);
+        if ($playbackId = MuxPlaybackId::make($id, $policy)) {
+            $this->put($policy, $playbackId);
         }
 
         return $playbackId ?? null;
@@ -47,6 +47,10 @@ class MuxPlaybackIds extends Collection implements Arrayable
 
     public function toArray(): array
     {
-        return array_map(fn ($item) => $item->toArray(), $this->all());
+        return array_reduce(
+            $this->all(),
+            fn ($all, $id) => [...$all, $id->policy() => $id->id()],
+            []
+        );
     }
 }

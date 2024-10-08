@@ -8,6 +8,6 @@ composer require daun/statamic-mux
 
 ## Requirements
 
-- PHP 8.1
-- Laravel 10
-- Statamic 4
+- PHP 8.1+
+- Laravel 10+
+- Statamic 4+

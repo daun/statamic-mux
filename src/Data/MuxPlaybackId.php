@@ -17,18 +17,13 @@ class MuxPlaybackId implements Arrayable
     ) {
     }
 
-    public static function make(mixed $data = []): ?static
+    public static function make(string $id, string $policy): ?static
     {
-        if (static::validate($data)) {
-            return new static($data['id'], $data['policy']);
+        if ($id && $policy) {
+            return new static($id, $policy);
         } else {
             return null;
         }
-    }
-
-    public static function validate(mixed $data): bool
-    {
-        return is_array($data) && Arr::has($data, ['id', 'policy']);
     }
 
     public function id($id = null)
