@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.0] - 2024-10-08
+
+- Public release
+- Support multiple playback ids
+- Clean up public facade
+- Upgrade to `mux-player` v3
+- Support new `video_quality` param
+
 ## [0.1.3] - 2024-07-23
 
 - Fix service argument types
@@ -16,6 +24,7 @@
 
 - Beta release
 
+[1.0.0]: https://github.com/daun/statamic-mux/releases/tag/1.0.0
 [0.1.3]: https://github.com/daun/statamic-mux/releases/tag/0.1.3
 [0.1.2]: https://github.com/daun/statamic-mux/releases/tag/0.1.2
 [0.1.1]: https://github.com/daun/statamic-mux/releases/tag/0.1.1
