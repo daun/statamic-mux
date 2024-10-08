@@ -1,6 +1,8 @@
 # Statamic Mux
 
-Enable seamless video encoding and streaming with this [Mux](https://www.mux.com/) integration for Statamic sites.
+**Enable seamless video encoding and streaming with this [Mux](https://www.mux.com/) integration for Statamic sites.**
+
+[Documentation](https://statamic-mux.daun.ltd) · [Getting Started](https://statamic-mux.daun.ltd/installation) · [Releases](https://github.com/daun/statamic-mux/releases)
 
 ## Philosophy
 
@@ -10,7 +12,7 @@ using the official `<mux-video>` web component as a drop-in replacement for the 
 
 ## Features
 
-- **Direct sync**  
+- **Automatic sync**  
   Mirror locally uploaded videos to your Mux account  
 - **Seamless video upload workflow**  
   Just drop the original video files directly into the backend
@@ -26,6 +28,11 @@ using the official `<mux-video>` web component as a drop-in replacement for the 
   Get insights into your audience and video playback performance
 - **Secure streaming**  
   Protect your content using signed urls
+
+## Getting Started
+
+Read the docs on [Installation](https://statamic-mux.daun.ltd/installation) and
+[Connecting Mux](https://statamic-mux.daun.ltd/connecting-mux).
 
 ## Responsive Video
 
