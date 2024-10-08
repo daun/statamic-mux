@@ -50,7 +50,7 @@ developer productivity, as well as its official web components for creating rich
 ## License
 
 Statamic Mux is paid software with an open-source codebase. To use it in production, you'll need
-to [buy a license](https://statamic.com/addons/daun/statamic-mux) from the Statamic Marketplace.
+to [buy a license](https://statamic.com/addons/daun/mux) from the Statamic Marketplace.
 
 ## Credits
 
