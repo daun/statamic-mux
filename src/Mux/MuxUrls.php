@@ -82,9 +82,10 @@ class MuxUrls
     /**
      * Convert a time expression into a Unix timestamp
      */
-    protected function timestamp(int|string|null $expiration): int
+    public function timestamp(int|string|null $expiration = null): int
     {
         $expiration = $expiration ?? $this->defaultExpiration ?? 0;
+
         $interval = match (true) {
             is_string($expiration) => CarbonInterval::make($expiration),
             is_int($expiration) => CarbonInterval::make($expiration, 'seconds'),
