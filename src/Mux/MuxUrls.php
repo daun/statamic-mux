@@ -27,7 +27,7 @@ class MuxUrls
     /**
      * Create a URL for generating a thumbnail
      */
-    public function thumbnail(string $playbackId, string $format): string
+    public function thumbnail(string $playbackId, string $format = 'jpg'): string
     {
         return "https://image.mux.com/{$playbackId}/thumbnail.{$format}";
     }
@@ -35,7 +35,7 @@ class MuxUrls
     /**
      * Create a URL for generating an animated gif
      */
-    public function animated(string $playbackId, string $format): string
+    public function animated(string $playbackId, string $format = 'gif'): string
     {
         return "https://image.mux.com/{$playbackId}/animated.{$format}";
     }
