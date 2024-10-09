@@ -64,3 +64,22 @@ test('checks for existence of field in asset blueprint', function () {
     $this->addMirrorFieldToAssetBlueprint();
     expect(MirrorField::existsInBlueprint($asset))->toBeTrue();
 });
+
+test('returns containers with mirror field', function () {
+    $this->createAssetContainer('without');
+    $this->createAssetContainer('with');
+    $this->addMirrorFieldToAssetBlueprint(container: 'with');
+
+    expect(MirrorField::containers()->map->handle()->all())->toEqual(['test_container_with']);
+});
+
+test('returns enabled assets with mirror field', function () {
+    $mp4 = $this->uploadTestFileToTestContainer('test.mp4');
+    $webm = $this->uploadTestFileToTestContainer('test.webm');
+    $jpg = $this->uploadTestFileToTestContainer('test.jpg');
+
+    expect(MirrorField::assets()->map->basename()->all())->toEqual([]);
+
+    $this->addMirrorFieldToAssetBlueprint(container: 'with');
+    expect(MirrorField::assets()->map->basename()->all())->toEqual(['test.mp4', 'test.webm']);
+});

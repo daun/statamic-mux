@@ -7,8 +7,8 @@ use Daun\StatamicMux\Fieldtypes\MuxMirrorFieldtype;
 use Illuminate\Support\Collection;
 use Statamic\Assets\Asset;
 use Statamic\Assets\AssetContainer;
-use Statamic\Facades\Asset as AssetFacade;
-use Statamic\Facades\AssetContainer as AssetContainerFacade;
+use Statamic\Facades\Asset as Assets;
+use Statamic\Facades\AssetContainer as AssetContainers;
 use Statamic\Fields\Field;
 
 class MirrorField
@@ -52,18 +52,18 @@ class MirrorField
 
     public static function containers(): Collection
     {
-        return AssetContainerFacade::all()->filter(
+        return AssetContainers::all()->filter(
             fn (AssetContainer $container) => static::existsInBlueprint($container)
-        );
+        )->values();
     }
 
     public static function assets(): Collection
     {
         return static::containers()->flatMap(
-            fn ($container) => AssetFacade::whereContainer($container->handle())->filter(
+            fn ($container) => Assets::whereContainer($container->handle())->filter(
                 fn ($asset) => MirrorField::enabledForAsset($asset)
             )
-        );
+        )->values();
     }
 
     public static function clear(Asset $asset): void

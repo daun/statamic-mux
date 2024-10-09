@@ -3,7 +3,7 @@
 namespace Daun\StatamicMux\Tags\Concerns;
 
 use Statamic\Assets\Asset;
-use Statamic\Facades\Asset as AssetFacade;
+use Statamic\Facades\Asset as Assets;
 use Statamic\Fields\Value;
 
 trait GetsAssetFromContext
@@ -24,9 +24,9 @@ trait GetsAssetFromContext
         }
 
         if (is_string($asset)) {
-            $asset = AssetFacade::find($asset);
+            $asset = Assets::find($asset);
         } elseif ($asset instanceof Value) {
-            $asset = AssetFacade::find($asset->value());
+            $asset = Assets::find($asset->value());
         }
 
         if ($asset && $asset instanceof Asset) {
