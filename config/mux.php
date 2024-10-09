@@ -138,7 +138,7 @@ return [
 
         'connection' => env('MUX_QUEUE_CONNECTION', null),
 
-        'queue' => env('MUX_QUEUE', null),
+        'queue' => env('MUX_QUEUE', 'default'),
 
     ],
 ];
