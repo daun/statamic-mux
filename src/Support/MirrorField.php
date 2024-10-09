@@ -20,7 +20,7 @@ class MirrorField
 
     public static function enabled(): bool
     {
-        return config('mux.mirror.enabled', true);
+        return (bool) config('mux.mirror.enabled', true);
     }
 
     protected static function enabledForAsset(Asset $asset): bool
@@ -28,7 +28,7 @@ class MirrorField
         return static::supportsAssetType($asset) && static::existsInBlueprint($asset);
     }
 
-    protected static function supportsAssetType(Asset $asset): bool
+    public static function supportsAssetType(Asset $asset): bool
     {
         return $asset->isVideo();
     }
@@ -41,15 +41,6 @@ class MirrorField
     public static function existsInBlueprint(Asset|AssetContainer $asset): bool
     {
         return (bool) static::getFromBlueprint($asset);
-    }
-
-    public static function assertExistsInBlueprint(Asset $asset): bool
-    {
-        if (static::existsInBlueprint($asset)) {
-            return true;
-        } else {
-            throw new \Exception('This asset does not have a mux mirror field in its blueprint.');
-        }
     }
 
     public static function getFromBlueprint(Asset|AssetContainer|null $asset): ?Field
@@ -73,5 +64,12 @@ class MirrorField
                 fn ($asset) => MirrorField::enabledForAsset($asset)
             )
         );
+    }
+
+    public static function clear(Asset $asset): void
+    {
+        if ($field = static::getFromBlueprint($asset)) {
+            $asset->set($field->handle(), null);
+        }
     }
 }

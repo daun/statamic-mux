@@ -55,6 +55,11 @@ trait DealsWithAssets
         });
     }
 
+    protected function getAssetContainer(): AssetContainer
+    {
+        return $this->assetContainer;
+    }
+
     protected function createAssetContainer(): void
     {
         config(['filesystems.disks.assets' => [
@@ -145,19 +150,6 @@ trait DealsWithAssets
         $this->setAssetContainerBlueprint([
             'alt' => [
                 'type' => 'text',
-            ],
-        ]);
-    }
-
-    protected function addPlaceholderFieldToAssetBlueprint(array $params = [])
-    {
-        $this->setAssetContainerBlueprint([
-            'alt' => [
-                'type' => 'text',
-            ],
-            'placeholder' => [
-                ...$params,
-                'type' => MuxMirrorFieldtype::handle(),
             ],
         ]);
     }
