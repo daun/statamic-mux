@@ -2,7 +2,7 @@
 
 namespace Daun\StatamicMux\Events;
 
-use Statamic\Contracts\Assets\Asset;
+use Statamic\Assets\Asset;
 use Statamic\Events\Event;
 
 class AssetUploadedToMux extends Event

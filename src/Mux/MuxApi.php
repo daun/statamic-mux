@@ -4,8 +4,6 @@ namespace Daun\StatamicMux\Mux;
 
 use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use GuzzleHttp\Client;
-use GuzzleHttp\Psr7\Response;
-use Illuminate\Support\Arr;
 use MuxPhp\Api\AssetsApi;
 use MuxPhp\Api\DeliveryUsageApi;
 use MuxPhp\Api\DirectUploadsApi;
@@ -17,8 +15,8 @@ use MuxPhp\Models\CreateAssetRequest;
 use MuxPhp\Models\CreatePlaybackIDRequest;
 use MuxPhp\Models\CreateUploadRequest;
 use MuxPhp\Models\InputSettings;
-use MuxPhp\Models\PlaybackPolicy;
 use MuxPhp\Models\Upload;
+use Psr\Http\Message\ResponseInterface;
 
 class MuxApi
 {
@@ -123,7 +121,7 @@ class MuxApi
         ]);
     }
 
-    public function handleDirectUpload(Upload $upload, string $contents): Response
+    public function handleDirectUpload(Upload $upload, string $contents): ResponseInterface
     {
         return $this->client->put($upload->getUrl(), [
             'headers' => ['Content-Type' => 'application/octet-stream'],

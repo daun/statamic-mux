@@ -83,11 +83,7 @@ class MuxTags extends Tags
                 'is_signed' => $this->isSigned($asset),
             ];
 
-            if ($asset instanceof Augmentable) {
-                return array_merge($asset->toAugmentedArray(), $data);
-            } else {
-                return $data;
-            }
+            return array_merge($asset->toAugmentedArray(), $data);
         } catch (\Throwable $th) {
             Log::error($th->getMessage());
         }

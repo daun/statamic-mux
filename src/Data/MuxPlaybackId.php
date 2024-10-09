@@ -4,7 +4,6 @@ namespace Daun\StatamicMux\Data;
 
 use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Support\Arr;
 use Statamic\Support\Traits\FluentlyGetsAndSets;
 
 class MuxPlaybackId implements Arrayable

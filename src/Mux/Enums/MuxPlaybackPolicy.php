@@ -13,7 +13,7 @@ enum MuxPlaybackPolicy: string {
         return array_column(self::cases(), 'value');
     }
 
-    public static function make(self|string|null $policy): ?self
+    public static function make(object|string|null $policy): ?self
     {
         if (! $policy) {
             return null;
