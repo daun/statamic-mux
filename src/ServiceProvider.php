@@ -55,7 +55,7 @@ class ServiceProvider extends AddonServiceProvider
 
     protected function registerMuxApi()
     {
-        $this->app->singleton(MuxApi::class, function (Application $app) {
+        $this->app->bind(MuxApi::class, function (Application $app) {
             return new MuxApi(
                 $app['config']->get('mux.credentials.token_id'),
                 $app['config']->get('mux.credentials.token_secret'),
@@ -70,7 +70,7 @@ class ServiceProvider extends AddonServiceProvider
 
     protected function registerMuxService()
     {
-        $this->app->singleton(MuxService::class, function (Application $app) {
+        $this->app->bind(MuxService::class, function (Application $app) {
             return new MuxService(
                 $app,
                 $app['mux.api'],
@@ -83,7 +83,7 @@ class ServiceProvider extends AddonServiceProvider
 
     protected function registerUrlService()
     {
-        $this->app->singleton(MuxUrls::class, function (Application $app) {
+        $this->app->bind(MuxUrls::class, function (Application $app) {
             return new MuxUrls(
                 $app['config']->get('mux.signing_key.key_id'),
                 $app['config']->get('mux.signing_key.private_key'),
@@ -95,7 +95,7 @@ class ServiceProvider extends AddonServiceProvider
 
     protected function registerPlaceholderService()
     {
-        $this->app->singleton(PlaceholderService::class, function () {
+        $this->app->bind(PlaceholderService::class, function () {
             return new PlaceholderService;
         });
         $this->app->alias(PlaceholderService::class, 'mux.placeholders');
