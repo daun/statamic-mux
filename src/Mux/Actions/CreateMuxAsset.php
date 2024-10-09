@@ -18,8 +18,7 @@ class CreateMuxAsset
     public function __construct(
         protected Application $app,
         protected MuxApi $api,
-    ) {
-    }
+    ) {}
 
     /**
      * Upload a video asset to Mux.
@@ -47,6 +46,7 @@ class CreateMuxAsset
             }
         } catch (\Throwable $th) {
             Log::error($th->getMessage());
+
             throw new \Exception("Failed to upload video to Mux: {$th->getMessage()}");
         }
 

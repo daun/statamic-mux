@@ -13,8 +13,7 @@ class MuxPlaybackId implements Arrayable
     public function __construct(
         protected string $id,
         protected string $policy
-    ) {
-    }
+    ) {}
 
     public static function make(string $id, string $policy): ?static
     {

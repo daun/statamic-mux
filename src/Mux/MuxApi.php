@@ -46,7 +46,7 @@ class MuxApi
         protected mixed $playbackPolicy = null,
         protected ?string $videoQuality = null,
     ) {
-        $this->client = new Client();
+        $this->client = new Client;
         $this->config = Configuration::getDefaultConfiguration()
             ->setUsername($this->tokenId)
             ->setPassword($this->tokenSecret)

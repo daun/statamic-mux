@@ -9,8 +9,7 @@ class AssetUploadingToMux extends Event
 {
     public function __construct(
         public Asset $asset
-    ) {
-    }
+    ) {}
 
     /**
      * Dispatch and halt on first non-null listener response.

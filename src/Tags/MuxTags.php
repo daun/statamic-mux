@@ -7,7 +7,6 @@ use Daun\StatamicMux\Tags\Concerns\ReadsMuxData;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Statamic\Contracts\Data\Augmentable;
 use Statamic\Tags\Concerns\RendersAttributes;
 use Statamic\Tags\Tags;
 

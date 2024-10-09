@@ -4,7 +4,8 @@ namespace Daun\StatamicMux\Mux\Enums;
 
 use MuxPhp\Models\PlaybackPolicy;
 
-enum MuxPlaybackPolicy: string {
+enum MuxPlaybackPolicy: string
+{
     case Public = PlaybackPolicy::_PUBLIC;
     case Signed = PlaybackPolicy::SIGNED;
 
@@ -32,7 +33,7 @@ enum MuxPlaybackPolicy: string {
 
     public static function isValid(self|string|null $policy): bool
     {
-        return !! self::make($policy);
+        return (bool) self::make($policy);
     }
 
     public function is(self $check): bool

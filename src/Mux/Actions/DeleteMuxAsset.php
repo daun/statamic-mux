@@ -19,8 +19,7 @@ class DeleteMuxAsset
         protected Application $app,
         protected MuxApi $api,
         protected MuxService $service,
-    ) {
-    }
+    ) {}
 
     /**
      * Delete a video asset from Mux.
@@ -33,6 +32,7 @@ class DeleteMuxAsset
 
         if (is_string($asset)) {
             $muxId = $asset;
+
             try {
                 $muxAssetResponse = $this->api->assets()->getAsset($muxId)->getData();
                 if ($this->wasAssetCreatedByAddon($muxAssetResponse)) {

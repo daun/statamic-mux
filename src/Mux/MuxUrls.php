@@ -14,8 +14,7 @@ class MuxUrls
         protected ?string $keyId,
         protected ?string $privateKey,
         protected int|string|null $defaultExpiration = null,
-    ) {
-    }
+    ) {}
 
     /**
      * Create a URL for a playback stream

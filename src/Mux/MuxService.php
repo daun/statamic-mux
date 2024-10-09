@@ -27,8 +27,7 @@ class MuxService
         protected MuxApi $api,
         protected MuxUrls $urls,
         protected PlaceholderService $placeholders,
-    ) {
-    }
+    ) {}
 
     /**
      * Get the Mux API client.

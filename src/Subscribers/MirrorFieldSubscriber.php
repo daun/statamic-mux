@@ -18,8 +18,7 @@ class MirrorFieldSubscriber implements ShouldQueue
 
     public function __construct(
         protected MuxService $service
-    ) {
-    }
+    ) {}
 
     public function subscribe(Dispatcher $events): array
     {
