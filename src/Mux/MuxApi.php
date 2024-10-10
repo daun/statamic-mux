@@ -20,8 +20,6 @@ use Psr\Http\Message\ResponseInterface;
 
 class MuxApi
 {
-    protected Client $client;
-
     protected Configuration $config;
 
     protected AssetsApi $assetsApi;
@@ -39,6 +37,7 @@ class MuxApi
     protected const userAgent = 'daun/statamic-mux';
 
     public function __construct(
+        protected Client $client,
         protected ?string $tokenId,
         protected ?string $tokenSecret,
         protected bool $debug = false,
@@ -46,13 +45,22 @@ class MuxApi
         protected mixed $playbackPolicy = null,
         protected ?string $videoQuality = null,
     ) {
-        $this->client = new Client;
         $this->config = Configuration::getDefaultConfiguration()
             ->setUsername($this->tokenId)
             ->setPassword($this->tokenSecret)
             ->setDebug($this->debug)
             ->setDebugFile(storage_path('logs/mux.log'))
             ->setUserAgent(self::userAgent);
+    }
+
+    public function client(): Client
+    {
+        return $this->client;
+    }
+
+    public function config(): Configuration
+    {
+        return $this->config;
     }
 
     public function assets(): AssetsApi

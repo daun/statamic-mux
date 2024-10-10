@@ -6,6 +6,7 @@ use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Mux\MuxUrls;
 use Daun\StatamicMux\Placeholders\PlaceholderService;
+use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
 use Statamic\Facades\Permission;
 use Statamic\Providers\AddonServiceProvider;
@@ -57,6 +58,7 @@ class ServiceProvider extends AddonServiceProvider
     {
         $this->app->bind(MuxApi::class, function (Application $app) {
             return new MuxApi(
+                new Client,
                 $app['config']->get('mux.credentials.token_id'),
                 $app['config']->get('mux.credentials.token_secret'),
                 $app['config']->get('app.debug', false),
