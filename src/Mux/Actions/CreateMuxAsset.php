@@ -70,7 +70,10 @@ class CreateMuxAsset
         $muxUpload = $this->api->directUploads()->createDirectUpload($request)->getData();
         $uploadId = $muxUpload->getId();
 
-        $this->api->handleDirectUpload($muxUpload, $asset->contents());
+        $this->api->client()->put($muxUpload->getUrl(), [
+            'headers' => ['Content-Type' => 'application/octet-stream'],
+            'body' => $asset->contents(),
+        ]);
 
         $muxUpload = $this->api->directUploads()->getDirectUpload($uploadId)->getData();
         $muxId = $muxUpload?->getAssetId();
@@ -91,17 +94,6 @@ class CreateMuxAsset
         $muxId = $muxAssetResponse?->getId();
 
         return $muxId;
-    }
-
-    /**
-     * Send direct upload request to Mux.
-     */
-    protected function handleDirectUpload(Upload $upload, string $contents): ResponseInterface
-    {
-        return $this->api->client()->put($upload->getUrl(), [
-            'headers' => ['Content-Type' => 'application/octet-stream'],
-            'body' => $contents,
-        ]);
     }
 
     /**
