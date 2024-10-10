@@ -2,7 +2,9 @@
 
 namespace Daun\StatamicMux\Mux\Enums;
 
+use Illuminate\Support\Collection;
 use MuxPhp\Models\PlaybackPolicy;
+use Illuminate\Support\Str;
 
 enum MuxPlaybackPolicy: string
 {
@@ -11,7 +13,7 @@ enum MuxPlaybackPolicy: string
 
     public static function values(): array
     {
-        return array_column(self::cases(), 'value');
+        return array_column(static::cases(), 'value');
     }
 
     public static function make(object|string|null $policy): ?self
@@ -28,12 +30,21 @@ enum MuxPlaybackPolicy: string
             $policy = $policy->getPolicy();
         }
 
-        return self::tryFrom($policy);
+        return static::tryFrom($policy);
+    }
+
+    public static function makeMany(array|string|null $policy): Collection
+    {
+        if (is_string($policy)) {
+            $policy = Str::of($policy)->split('/\s*,\s*/')->map(fn ($item) => trim($item));
+        }
+
+        return collect($policy)->map(fn ($item) => static::make($item))->filter()->unique()->values();
     }
 
     public static function isValid(self|string|null $policy): bool
     {
-        return (bool) self::make($policy);
+        return (bool) static::make($policy);
     }
 
     public function is(self $check): bool
@@ -43,11 +54,11 @@ enum MuxPlaybackPolicy: string
 
     public function isPublic(): bool
     {
-        return $this->is(self::Public);
+        return $this->is(static::Public);
     }
 
     public function isSigned(): bool
     {
-        return $this->is(self::Signed);
+        return $this->is(static::Signed);
     }
 }
