@@ -114,7 +114,7 @@ class MuxApi
     {
         return new CreateAssetRequest([
             'test' => $this->testMode,
-            'playback_policy' => $this->sanitizePlaybackPolicies($this->playbackPolicy),
+            'playback_policy' => MuxPlaybackPolicy::makeMany($this->playbackPolicy)->map->value()->all(),
             'video_quality' => $this->videoQuality,
             ...$options,
         ]);
@@ -144,16 +144,5 @@ class MuxApi
         return new CreatePlaybackIDRequest([
             'policy' => $policy ?: $this->playbackPolicy,
         ]);
-    }
-
-    protected function sanitizePlaybackPolicies(mixed $policy): array
-    {
-        if (is_string($policy)) {
-            $policy = preg_split('/\s*,\s*/', $policy);
-        }
-
-        return collect($policy)
-            ->filter(fn ($item) => MuxPlaybackPolicy::isValid($item))
-            ->all();
     }
 }
