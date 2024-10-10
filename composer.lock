@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "301bb567cf4a6ab48b8650e13fc97f65",
+    "content-hash": "3c3df6d1491d4fdda444be1be06f08cf",
     "packages": [
         {
             "name": "ajthinking/archetype",
@@ -8178,6 +8178,37 @@
             "time": "2024-07-06T17:46:02+00:00"
         },
         {
+            "name": "laravel/facade-documenter",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/laravel/facade-documenter.git",
+                "reference": "b88e099a444119b8ce01497b101249c2a7d66668"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/laravel/facade-documenter/zipball/b88e099a444119b8ce01497b101249c2a7d66668",
+                "reference": "b88e099a444119b8ce01497b101249c2a7d66668",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/support": "^9.51|^10.0|^11.0|^12.0",
+                "phpstan/phpdoc-parser": "^1.16"
+            },
+            "default-branch": true,
+            "bin": [
+                "facade.php"
+            ],
+            "type": "library",
+            "license": [
+                "MIT"
+            ],
+            "support": {
+                "source": "https://github.com/laravel/facade-documenter/tree/main"
+            },
+            "time": "2024-09-12T01:52:34+00:00"
+        },
+        {
             "name": "laravel/pint",
             "version": "v1.18.1",
             "source": {
@@ -12561,7 +12592,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "laravel/facade-documenter": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

@@ -33,6 +33,7 @@
     },
     "require-dev": {
         "larastan/larastan": "^2.9",
+        "laravel/facade-documenter": "dev-main",
         "laravel/pint": "^1.14",
         "mockery/mockery": "^1.6",
         "orchestra/testbench": "^9.5",
@@ -77,5 +78,11 @@
         "test": "./vendor/bin/pest",
         "test:ci": "./vendor/bin/pest --coverage-clover coverage.xml",
         "test:coverage": "./vendor/bin/pest --coverage"
+    },
+    "repositories": {
+        "facade-documenter": {
+            "type": "vcs",
+            "url": "git@github.com:laravel/facade-documenter.git"
+        }
     }
 }
