@@ -129,14 +129,6 @@ class MuxApi
         ]);
     }
 
-    public function handleDirectUpload(Upload $upload, string $contents): ResponseInterface
-    {
-        return $this->client->put($upload->getUrl(), [
-            'headers' => ['Content-Type' => 'application/octet-stream'],
-            'body' => $contents,
-        ]);
-    }
-
     public function createPlaybackIdRequest(array $options = []): CreatePlaybackIDRequest
     {
         $policy = (string) ($options['policy'] ?? '');

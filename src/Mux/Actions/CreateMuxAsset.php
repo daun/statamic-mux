@@ -8,6 +8,8 @@ use Daun\StatamicMux\Events\AssetUploadingToMux;
 use Daun\StatamicMux\Mux\MuxApi;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Log;
+use MuxPhp\Models\Upload;
+use Psr\Http\Message\ResponseInterface;
 use Statamic\Assets\Asset;
 use Statamic\Support\Traits\Hookable;
 
@@ -89,6 +91,17 @@ class CreateMuxAsset
         $muxId = $muxAssetResponse?->getId();
 
         return $muxId;
+    }
+
+    /**
+     * Send direct upload request to Mux.
+     */
+    protected function handleDirectUpload(Upload $upload, string $contents): ResponseInterface
+    {
+        return $this->api->client()->put($upload->getUrl(), [
+            'headers' => ['Content-Type' => 'application/octet-stream'],
+            'body' => $contents,
+        ]);
     }
 
     /**
