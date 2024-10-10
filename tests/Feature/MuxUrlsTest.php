@@ -4,16 +4,20 @@ use Carbon\Carbon;
 use Daun\StatamicMux\Mux\Enums\MuxAudience;
 use Daun\StatamicMux\Mux\MuxUrls;
 use Firebase\JWT\JWT;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 beforeEach(function () {
     Carbon::setTestNow('2021-01-01 00:00:00');
     JWT::$timestamp = Carbon::now()->timestamp;
 
-    $this->urls = $this->app->make(MuxUrls::class);
+    $this->keyId = trim(File::get(fixtures_path('/keys/public.txt')));
+    $this->privateKey = trim(File::get(fixtures_path('/keys/private.txt')));
 
-    $this->keyId = 'key-id';
-    $this->privateKey = 'private-key';
+    config(['mux.signing_key.key_id' => $this->keyId]);
+    config(['mux.signing_key.private_key' => $this->privateKey]);
+
+    $this->urls = $this->app->make(MuxUrls::class);
 });
 
 test('converts expiration to timestamp', function () {
@@ -27,14 +31,32 @@ test('converts expiration to timestamp', function () {
 });
 
 test('token throws when missing key id', function () {
+    expect(fn() => $this->urls->token('playback-id', MuxAudience::Gif))->not->toThrow(\Exception::class);
+
+    config(['mux.signing_key.key_id' => null]);
+    config(['mux.signing_key.private_key' => null]);
     $urls = $this->app->make(MuxUrls::class);
+
     expect(fn() => $urls->token('playback-id', MuxAudience::Gif))->toThrow(\Exception::class);
+});
 
-    // config(['mux.signing_key.key_id' => $this->keyId]);
-    // config(['mux.signing_key.private_key' => base64_encode($this->privateKey)]);
+test('token returns string', function () {
+    expect($this->urls->token('playback-id', MuxAudience::Gif))->toBeString();
+});
 
-    // $urls = $this->app->make(MuxUrls::class);
-    // expect($urls->token('playback-id', MuxAudience::Gif))->toBeString();
+test('token returns null for bad private keys', function () {
+    config(['mux.signing_key.private_key' => 'bad-key']);
+    $urls = $this->app->make(MuxUrls::class);
+
+    expect($urls->token('playback-id', MuxAudience::Gif))->toBeNull();
+});
+
+test('signs urls and removes params', function () {
+    expect($this->urls->sign('/url', 'playback-id', MuxAudience::Thumbnail, ['width' => 10]))
+        ->toBeString()
+        ->toStartWith('/url?token=')
+        ->not->toContain('playback-id')
+        ->not->toContain('width');
 });
 
 test('generates playback url', function () {

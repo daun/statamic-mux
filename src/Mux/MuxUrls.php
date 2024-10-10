@@ -7,6 +7,7 @@ use Carbon\CarbonInterval;
 use Daun\StatamicMux\Mux\Enums\MuxAudience;
 use Daun\StatamicMux\Support\URL;
 use Firebase\JWT\JWT;
+use Illuminate\Support\Facades\Log;
 
 class MuxUrls
 {
@@ -60,7 +61,7 @@ class MuxUrls
     public function token(string $playbackId, MuxAudience $audience, ?array $params = null, int|string|null $expiration = null): ?string
     {
         if (! $this->keyId || ! $this->privateKey) {
-            throw new \Exception('Missing Mux signing key');
+            throw new \Exception('Missing Mux signing keys');
         }
 
         if (empty($playbackId)) {
@@ -76,7 +77,13 @@ class MuxUrls
             'kid' => $this->keyId,
         ], $params ?? []);
 
-        return JWT::encode($claims, base64_decode($this->privateKey), 'RS256');
+        try {
+            return JWT::encode($claims, base64_decode($this->privateKey), 'RS256');
+        } catch (\Throwable $th) {
+            Log::error($th->getMessage());
+            return null;
+        }
+
     }
 
     /**
