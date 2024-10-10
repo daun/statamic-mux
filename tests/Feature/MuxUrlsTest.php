@@ -52,9 +52,11 @@ test('token returns null for bad private keys', function () {
 });
 
 test('signs urls and removes params', function () {
+    $token = $this->urls->token('playback-id', MuxAudience::Thumbnail, ['width' => 10]);
+
     expect($this->urls->sign('/url', 'playback-id', MuxAudience::Thumbnail, ['width' => 10]))
         ->toBeString()
-        ->toStartWith('/url?token=')
+        ->toStartWith("/url?token={$token}")
         ->not->toContain('playback-id')
         ->not->toContain('width');
 });
