@@ -7,7 +7,6 @@ use Daun\StatamicMux\Tags\Concerns\ReadsMuxData;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Statamic\Contracts\Data\Augmentable;
 use Statamic\Tags\Concerns\RendersAttributes;
 use Statamic\Tags\Tags;
 
@@ -83,11 +82,7 @@ class MuxTags extends Tags
                 'is_signed' => $this->isSigned($asset),
             ];
 
-            if ($asset instanceof Augmentable) {
-                return array_merge($asset->toAugmentedArray(), $data);
-            } else {
-                return $data;
-            }
+            return array_merge($asset->toAugmentedArray(), $data);
         } catch (\Throwable $th) {
             Log::error($th->getMessage());
         }

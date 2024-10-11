@@ -16,8 +16,7 @@ use Statamic\Statamic;
 
 trait DealsWithAssets
 {
-    /** @var \Statamic\Assets\AssetContainer */
-    public $assetContainer;
+    public array $assetContainers;
 
     protected function setUpAssetTest(): void
     {
@@ -55,18 +54,33 @@ trait DealsWithAssets
         });
     }
 
-    protected function createAssetContainer(): void
+    protected function getAssetContainer(mixed $name = null): ?AssetContainer
     {
-        config(['filesystems.disks.assets' => [
+        if ($name instanceof AssetContainer) {
+            $name = $name->handle();
+        }
+
+        if (is_string($name)) {
+            return $this->assetContainers[$name] ?? $this->getAssetContainer();
+        }
+
+        return  $this->assetContainers['assets'] ?? null;
+    }
+
+    protected function createAssetContainer(string $name = 'assets'): AssetContainer
+    {
+        config(["filesystems.disks.assets_{$name}" => [
             'driver' => 'local',
-            'root' => $this->getTempDirectory('assets'),
-            'url' => '/test',
+            'root' => $this->getTempDirectory("assets_{$name}"),
+            'url' => "/assets/{$name}",
         ]]);
 
-        $this->assetContainer = (new AssetContainer)
-            ->handle('test_container')
-            ->disk('assets')
+        $this->assetContainers[$name] = (new AssetContainer)
+            ->handle("test_container_{$name}")
+            ->disk("assets_{$name}")
             ->save();
+
+        return $this->assetContainers[$name];
     }
 
     protected function setUpTempTestFiles()
@@ -100,8 +114,10 @@ trait DealsWithAssets
         return file_get_contents(fixtures_path("testfiles/{$filename}"));
     }
 
-    public function uploadTestFileToTestContainer(string $path, ?string $filename = null)
+    public function uploadTestFileToTestContainer(string $path, ?string $filename = null, mixed $container = null): Asset
     {
+        $container = $this->getAssetContainer($container);
+
         $path = $this->getTestFilesDirectory($path);
         $filename ??= basename($path);
 
@@ -111,7 +127,7 @@ trait DealsWithAssets
         $file = new UploadedFile($duplicate, $filename);
         $path = ltrim('/'.$file->getClientOriginalName(), '/');
 
-        return $this->assetContainer->makeAsset($path)->upload($file);
+        return $container->makeAsset($path)->upload($file);
     }
 
     protected function createFileDuplicate(string $path): string
@@ -122,17 +138,21 @@ trait DealsWithAssets
         return $duplicate;
     }
 
-    protected function makeEmptyAsset(string $path): Asset
+    protected function makeEmptyAsset(string $path, mixed $container = null): Asset
     {
-        return (new Asset)->path($path)->container($this->assetContainer->handle());
+        $container = $this->getAssetContainer($container);
+
+        return (new Asset)->path($path)->container($container->handle());
     }
 
-    protected function setAssetContainerBlueprint(array $fields)
+    protected function setAssetContainerBlueprint(array $fields, mixed $container = null)
     {
-        $this->assetContainer->blueprint()->delete();
+        $container = $this->getAssetContainer($container);
+
+        $container->blueprint()->delete();
 
         Blueprint::makeFromFields($fields)
-            ->setHandle($this->assetContainer->handle())
+            ->setHandle($container->handle())
             ->setNamespace('assets')
             ->save();
 
@@ -140,25 +160,12 @@ trait DealsWithAssets
         Blink::flush();
     }
 
-    protected function restoreDefaultAssetBlueprint()
+    protected function restoreDefaultAssetBlueprint(mixed $container = null)
     {
         $this->setAssetContainerBlueprint([
             'alt' => [
                 'type' => 'text',
             ],
-        ]);
-    }
-
-    protected function addPlaceholderFieldToAssetBlueprint(array $params = [])
-    {
-        $this->setAssetContainerBlueprint([
-            'alt' => [
-                'type' => 'text',
-            ],
-            'placeholder' => [
-                ...$params,
-                'type' => MuxMirrorFieldtype::handle(),
-            ],
-        ]);
+        ], $container);
     }
 }

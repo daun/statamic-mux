@@ -1,10 +1,8 @@
 {
   "preset": "laravel",
   "rules": {
-      "blank_line_before_statement": [
-        "declare",
-        "throw",
-        "try"
-    ]
+    "blank_line_before_statement": {
+      "statements": ["declare", "throw", "try"]
+    }
   }
 }

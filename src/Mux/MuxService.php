@@ -15,7 +15,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Arr;
 use MuxPhp\ApiException;
 use Statamic\Assets\Asset;
-use Statamic\Facades\Asset as AssetFacade;
+use Statamic\Facades\Asset as Assets;
 use Statamic\Support\Traits\Hookable;
 
 class MuxService
@@ -27,8 +27,7 @@ class MuxService
         protected MuxApi $api,
         protected MuxUrls $urls,
         protected PlaceholderService $placeholders,
-    ) {
-    }
+    ) {}
 
     /**
      * Get the Mux API client.
@@ -52,19 +51,16 @@ class MuxService
     public function createMuxAsset(Asset|string $asset, bool $force = false): ?string
     {
         if (is_string($asset)) {
-            $asset = AssetFacade::find($asset);
+            $asset = Assets::find($asset);
         }
 
         if ($asset) {
-            $muxId = $this->app->make(CreateMuxAsset::class)->handle($asset, $force);
-            if ($muxId) {
+            if ($muxId = $this->app->make(CreateMuxAsset::class)->handle($asset, $force)) {
                 MuxAsset::fromAsset($asset)->set('id', $muxId)->save();
-
-                return $muxId;
             }
-        } else {
-            return null;
         }
+
+        return $muxId ?? null;
     }
 
     /**
@@ -79,9 +75,9 @@ class MuxService
 
                 return true;
             }
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     /**
@@ -116,8 +112,6 @@ class MuxService
                 throw $e;
             }
         }
-
-        return false;
     }
 
     /**
@@ -246,14 +240,12 @@ class MuxService
 
     protected function sanitizePlaybackPolicy(?MuxPlaybackPolicy $policy): MuxPlaybackPolicy
     {
-        $default = $this->getDefaultPlaybackPolicy();
-
-        return MuxPlaybackPolicy::make($policy) ?? MuxPlaybackPolicy::make($default) ?? MuxPlaybackPolicy::Public;
+        return $policy ?? $this->getDefaultPlaybackPolicy() ?? MuxPlaybackPolicy::Public;
     }
 
-    public function getDefaultPlaybackPolicy(): ?string
+    public function getDefaultPlaybackPolicy(): ?MuxPlaybackPolicy
     {
-        return config('mux.playback_policy', null);
+        return MuxPlaybackPolicy::make(config('mux.playback_policy'));
     }
 
     public function getDefaultPlaybackModifiers(): array

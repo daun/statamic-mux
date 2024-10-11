@@ -72,7 +72,7 @@ class Thumbhash
 
     protected static function generatePixelMatrixUsingImagick(string $contents): array
     {
-        $image = new \Imagick();
+        $image = new \Imagick;
         $image->readImageBlob($contents);
         [$width, $height] = static::contain($image->getImageWidth(), $image->getImageHeight(), static::$maxThumbSize);
         $image->resizeImage($width, $height, \Imagick::FILTER_LANCZOS, 1);

@@ -4,7 +4,7 @@ namespace Daun\StatamicMux\Fieldtypes;
 
 use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Jobs\CreateMuxAssetJob;
-use Statamic\Contracts\Assets\Asset;
+use Statamic\Assets\Asset;
 use Statamic\Fields\Fieldtype;
 
 class MuxMirrorFieldtype extends Fieldtype

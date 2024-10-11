@@ -7,6 +7,7 @@ use Carbon\CarbonInterval;
 use Daun\StatamicMux\Mux\Enums\MuxAudience;
 use Daun\StatamicMux\Support\URL;
 use Firebase\JWT\JWT;
+use Illuminate\Support\Facades\Log;
 
 class MuxUrls
 {
@@ -14,8 +15,7 @@ class MuxUrls
         protected ?string $keyId,
         protected ?string $privateKey,
         protected int|string|null $defaultExpiration = null,
-    ) {
-    }
+    ) {}
 
     /**
      * Create a URL for a playback stream
@@ -28,7 +28,7 @@ class MuxUrls
     /**
      * Create a URL for generating a thumbnail
      */
-    public function thumbnail(string $playbackId, string $format): string
+    public function thumbnail(string $playbackId, string $format = 'jpg'): string
     {
         return "https://image.mux.com/{$playbackId}/thumbnail.{$format}";
     }
@@ -36,7 +36,7 @@ class MuxUrls
     /**
      * Create a URL for generating an animated gif
      */
-    public function animated(string $playbackId, string $format): string
+    public function animated(string $playbackId, string $format = 'gif'): string
     {
         return "https://image.mux.com/{$playbackId}/animated.{$format}";
     }
@@ -61,7 +61,7 @@ class MuxUrls
     public function token(string $playbackId, MuxAudience $audience, ?array $params = null, int|string|null $expiration = null): ?string
     {
         if (! $this->keyId || ! $this->privateKey) {
-            throw new \Exception('Missing Mux signing key');
+            throw new \Exception('Missing Mux signing keys');
         }
 
         if (empty($playbackId)) {
@@ -77,15 +77,22 @@ class MuxUrls
             'kid' => $this->keyId,
         ], $params ?? []);
 
-        return JWT::encode($claims, base64_decode($this->privateKey), 'RS256');
+        try {
+            return JWT::encode($claims, base64_decode($this->privateKey), 'RS256');
+        } catch (\Throwable $th) {
+            Log::error($th->getMessage());
+            return null;
+        }
+
     }
 
     /**
      * Convert a time expression into a Unix timestamp
      */
-    protected function timestamp(int|string|null $expiration): int
+    public function timestamp(int|string|null $expiration = null): int
     {
         $expiration = $expiration ?? $this->defaultExpiration ?? 0;
+
         $interval = match (true) {
             is_string($expiration) => CarbonInterval::make($expiration),
             is_int($expiration) => CarbonInterval::make($expiration, 'seconds'),

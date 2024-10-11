@@ -20,8 +20,7 @@ class RequestPlaybackId
         protected Application $app,
         protected MuxApi $api,
         protected MuxService $service,
-    ) {
-    }
+    ) {}
 
     /**
      * Request a new playback id for a video asset.

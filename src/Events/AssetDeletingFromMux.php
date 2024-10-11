@@ -2,7 +2,7 @@
 
 namespace Daun\StatamicMux\Events;
 
-use Statamic\Contracts\Assets\Asset;
+use Statamic\Assets\Asset;
 use Statamic\Events\Event;
 
 class AssetDeletingFromMux extends Event
@@ -10,8 +10,7 @@ class AssetDeletingFromMux extends Event
     public function __construct(
         public Asset $asset,
         public string $muxId
-    ) {
-    }
+    ) {}
 
     /**
      * Dispatch and halt on first non-null listener response.

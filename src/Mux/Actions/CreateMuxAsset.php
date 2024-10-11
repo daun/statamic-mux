@@ -18,8 +18,7 @@ class CreateMuxAsset
     public function __construct(
         protected Application $app,
         protected MuxApi $api,
-    ) {
-    }
+    ) {}
 
     /**
      * Upload a video asset to Mux.
@@ -47,6 +46,7 @@ class CreateMuxAsset
             }
         } catch (\Throwable $th) {
             Log::error($th->getMessage());
+
             throw new \Exception("Failed to upload video to Mux: {$th->getMessage()}");
         }
 
@@ -68,7 +68,10 @@ class CreateMuxAsset
         $muxUpload = $this->api->directUploads()->createDirectUpload($request)->getData();
         $uploadId = $muxUpload->getId();
 
-        $this->api->handleDirectUpload($muxUpload, $asset->contents());
+        $this->api->client()->put($muxUpload->getUrl(), [
+            'headers' => ['Content-Type' => 'application/octet-stream'],
+            'body' => $asset->contents(),
+        ]);
 
         $muxUpload = $this->api->directUploads()->getDirectUpload($uploadId)->getData();
         $muxId = $muxUpload?->getAssetId();

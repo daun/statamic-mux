@@ -4,7 +4,6 @@ namespace Daun\StatamicMux\Data;
 
 use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Support\Arr;
 use Statamic\Support\Traits\FluentlyGetsAndSets;
 
 class MuxPlaybackId implements Arrayable
@@ -14,8 +13,7 @@ class MuxPlaybackId implements Arrayable
     public function __construct(
         protected string $id,
         protected string $policy
-    ) {
-    }
+    ) {}
 
     public static function make(string $id, string $policy): ?static
     {

@@ -33,11 +33,12 @@
     },
     "require-dev": {
         "larastan/larastan": "^2.9",
+        "laravel/facade-documenter": "dev-main",
         "laravel/pint": "^1.14",
         "mockery/mockery": "^1.6",
-        "orchestra/testbench": "^8.21",
-        "pestphp/pest": "^2.34",
-        "pestphp/pest-plugin-laravel": "^2.3",
+        "orchestra/testbench": "^9.5",
+        "pestphp/pest": "^3.3",
+        "pestphp/pest-plugin-laravel": "^3.0",
         "spatie/pest-plugin-snapshots": "^2.1"
     },
     "autoload": {
@@ -77,5 +78,11 @@
         "test": "./vendor/bin/pest",
         "test:ci": "./vendor/bin/pest --coverage-clover coverage.xml",
         "test:coverage": "./vendor/bin/pest --coverage"
+    },
+    "repositories": {
+        "facade-documenter": {
+            "type": "vcs",
+            "url": "git@github.com:laravel/facade-documenter.git"
+        }
     }
 }
