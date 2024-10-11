@@ -8,8 +8,6 @@ use Daun\StatamicMux\Events\AssetUploadingToMux;
 use Daun\StatamicMux\Mux\MuxApi;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Log;
-use MuxPhp\Models\Upload;
-use Psr\Http\Message\ResponseInterface;
 use Statamic\Assets\Asset;
 use Statamic\Support\Traits\Hookable;
 
