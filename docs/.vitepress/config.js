@@ -61,8 +61,9 @@ export default defineConfig({
               { text: 'mux:mirror', link: '/commands/mux-mirror' },
             ],
           },
-          { text: 'Configuration', link: '/configuration' },
+          { text: 'GraphQL Types', link: '/graphql' },
           { text: 'Secure Playback', link: '/secure-playback' },
+          { text: 'Configuration', link: '/configuration' },
           { text: 'Events', link: '/events' },
         ]
       }
