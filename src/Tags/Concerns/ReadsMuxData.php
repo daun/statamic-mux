@@ -2,6 +2,7 @@
 
 namespace Daun\StatamicMux\Tags\Concerns;
 
+use Daun\StatamicMux\Data\MuxPlaybackId;
 use Daun\StatamicMux\Facades\Mux;
 use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 
@@ -29,31 +30,29 @@ trait ReadsMuxData
      */
     protected function getMuxId($asset = null): ?string
     {
-        $asset = $this->getAssetFromContext($asset);
-
-        return $asset ? Mux::getMuxId($asset) : null;
+        return ($asset = $this->getAssetFromContext($asset))
+            ? Mux::getMuxId($asset)
+            : null;
     }
 
     /**
-     * Get the playback id of a video
+     * Get the playback id instance of a video
      */
-    protected function getPlaybackId($asset = null): ?string
+    protected function getPlaybackId($asset = null): ?MuxPlaybackId
     {
-        $asset = $this->getAssetFromContext($asset);
-        $policy = $this->guessRequestedPolicy();
-
-        return $asset ? Mux::getPlaybackId($asset, policy: $policy)?->id() : null;
+        return ($asset = $this->getAssetFromContext($asset))
+            ? Mux::getPlaybackId($asset, policy: $this->guessRequestedPolicy())
+            : null;
     }
 
     /**
      * Get the playback url of a video
      */
-    protected function getPlaybackUrl($asset = null): ?string
+    protected function getPlaybackUrl($asset = null, ?array $params = []): ?string
     {
-        $asset = $this->getAssetFromContext($asset);
-        $policy = $this->guessRequestedPolicy();
-
-        return $asset ? Mux::getPlaybackUrl($asset, policy: $policy) : null;
+        return ($playbackId = $this->getPlaybackId($asset))
+            ? Mux::getPlaybackUrl($playbackId, params: $params)
+            : null;
     }
 
     /**
@@ -61,10 +60,9 @@ trait ReadsMuxData
      */
     protected function getPlaybackToken($asset = null, ?array $params = []): ?string
     {
-        $asset = $this->getAssetFromContext($asset);
-        $policy = $this->guessRequestedPolicy();
-
-        return $asset ? Mux::getPlaybackToken($asset, policy: $policy, params: $params) : null;
+        return ($playbackId = $this->getPlaybackId($asset))
+            ? Mux::getPlaybackToken($playbackId, params: $params)
+            : null;
     }
 
     /**
@@ -72,10 +70,9 @@ trait ReadsMuxData
      */
     protected function getThumbnailUrl($asset = null, ?array $params = []): ?string
     {
-        $asset = $this->getAssetFromContext($asset);
-        $policy = $this->guessRequestedPolicy();
-
-        return $asset ? Mux::getThumbnailUrl($asset, policy: $policy, params: $params) : null;
+        return ($playbackId = $this->getPlaybackId($asset))
+            ? Mux::getThumbnailUrl($playbackId, params: $params)
+            : null;
     }
 
     /**
@@ -83,10 +80,9 @@ trait ReadsMuxData
      */
     protected function getGifUrl($asset = null, ?array $params = []): ?string
     {
-        $asset = $this->getAssetFromContext($asset);
-        $policy = $this->guessRequestedPolicy();
-
-        return $asset ? Mux::getGifUrl($asset, policy: $policy, params: $params) : null;
+        return ($playbackId = $this->getPlaybackId($asset))
+            ? Mux::getGifUrl($playbackId, params: $params)
+            : null;
     }
 
     /**
@@ -94,32 +90,9 @@ trait ReadsMuxData
      */
     protected function getPlaceholderDataUri($asset = null, ?array $params = []): ?string
     {
-        $asset = $this->getAssetFromContext($asset);
-        $policy = $this->guessRequestedPolicy();
-
-        return $asset ? Mux::getPlaceholderDataUri($asset, policy: $policy, params: $params) : null;
-    }
-
-    /**
-     * Whether this video requires signed playback urls
-     */
-    protected function isSigned($asset = null): bool
-    {
-        $asset = $this->getAssetFromContext($asset);
-        $policy = $this->guessRequestedPolicy();
-
-        return $asset ? Mux::getPlaybackId($asset, policy: $policy)?->isSigned() : false;
-    }
-
-    /**
-     * Whether this video generates public playback urls
-     */
-    protected function isPublic($asset = null): bool
-    {
-        $asset = $this->getAssetFromContext($asset);
-        $policy = $this->guessRequestedPolicy();
-
-        return $asset ? Mux::getPlaybackId($asset, policy: $policy)?->isPublic() : false;
+        return ($playbackId = $this->getPlaybackId($asset))
+            ? Mux::getPlaceholderDataUri($playbackId, params: $params)
+            : null;
     }
 
     /**

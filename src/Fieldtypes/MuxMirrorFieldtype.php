@@ -3,8 +3,11 @@
 namespace Daun\StatamicMux\Fieldtypes;
 
 use Daun\StatamicMux\Data\MuxAsset;
+use Daun\StatamicMux\GraphQL\MuxMirrorType;
+use Daun\StatamicMux\GraphQL\MuxPlaybackIdType;
 use Daun\StatamicMux\Jobs\CreateMuxAssetJob;
 use Statamic\Assets\Asset;
+use Statamic\Facades\GraphQL;
 use Statamic\Fields\Fieldtype;
 
 class MuxMirrorFieldtype extends Fieldtype
@@ -80,5 +83,16 @@ class MuxMirrorFieldtype extends Fieldtype
         } else {
             return $value;
         }
+    }
+
+    public function toGqlType()
+    {
+        return GraphQL::type(MuxMirrorType::NAME);
+    }
+
+    public function addGqlTypes()
+    {
+        GraphQL::addType(MuxMirrorType::class);
+        GraphQL::addType(MuxPlaybackIdType::class);
     }
 }

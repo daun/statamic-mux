@@ -48,6 +48,12 @@ Learn more about the [available Antlers tags](/tags).
 ></mux-player>
 ```
 
+:::
+
+## Headless Frontends
+
+For headless setups, the addon exposes custom [GraphQL Types](/graphql) you can query.
+
 ## Secure Playback
 
 By default, videos uploaded by this addon are public and can be watched without restrictions. If
