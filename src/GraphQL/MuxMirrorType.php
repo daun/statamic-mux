@@ -42,7 +42,7 @@ class MuxMirrorType extends \Rebing\GraphQL\Support\Type
     public function fields(): array
     {
         return [
-            'id' => [
+            'mux_id' => [
                 'type' => GraphQL::string(),
                 'description' => 'Mux asset ID',
                 'resolve' => fn (MuxAsset $item) => $item->augmentedValue('id'),
