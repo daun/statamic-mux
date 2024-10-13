@@ -65,21 +65,20 @@ class MuxTags extends Tags
         try {
             $muxId = $this->getMuxId($asset);
             $playbackId = $this->getPlaybackId($asset);
-            $playbackModifiers = $this->getDefaultPlaybackModifiers();
-            $playbackToken = $this->getPlaybackToken($asset, $playbackModifiers);
-            $playbackIdSigned = $playbackToken ? "{$playbackId}?token={$playbackToken}" : $playbackId;
 
             $data = [
                 'mux_id' => $muxId,
-                'playback_id' => $playbackId,
-                'playback_id_signed' => $playbackIdSigned,
-                'playback_token' => $playbackToken,
+                'playback_id' => $playbackId?->id(),
+                'playback_policy' => $playbackId?->policy(),
+                'playback_modifiers' => ($playbackModifiers = $this->getDefaultPlaybackModifiers()),
+                'playback_token' => ($playbackToken = $this->getPlaybackToken($asset, $playbackModifiers)),
+                'playback_id_signed' => $playbackToken ? "{$playbackId->id()}?token={$playbackToken}" : $playbackId?->id(),
                 'playback_url' => $this->getPlaybackUrl($asset),
                 'thumbnail' => $this->getThumbnailUrl($asset),
                 'placeholder' => $this->getPlaceholderDataUri($asset),
                 'gif' => $this->getGifUrl($asset),
-                'is_public' => $this->isPublic($asset),
-                'is_signed' => $this->isSigned($asset),
+                'is_public' => $playbackId?->isPublic(),
+                'is_signed' => $playbackId?->isSigned(),
             ];
 
             return array_merge($asset->toAugmentedArray(), $data);
@@ -98,7 +97,7 @@ class MuxTags extends Tags
     public function video(): ?string
     {
         $asset = $this->getAssetFromContext();
-        $playbackId = $this->getPlaybackId($asset);
+        $playbackId = $this->getPlaybackId($asset)?->id();
         if (! $playbackId) {
             return null;
         }
@@ -145,7 +144,7 @@ class MuxTags extends Tags
     public function player(): ?string
     {
         $asset = $this->getAssetFromContext();
-        $playbackId = $this->getPlaybackId($asset);
+        $playbackId = $this->getPlaybackId($asset)?->id();
         if (! $playbackId) {
             return null;
         }
@@ -193,7 +192,7 @@ class MuxTags extends Tags
      */
     public function playbackId(): ?string
     {
-        return $this->getPlaybackId();
+        return $this->getPlaybackId()?->id();
     }
 
     /**
@@ -213,9 +212,7 @@ class MuxTags extends Tags
      */
     public function thumbnail(): ?string
     {
-        $params = collect($this->params->all())->except($this->assetParams)->all();
-
-        return $this->getThumbnailUrl(null, $params);
+        return $this->getThumbnailUrl(params: $this->getNonAssetParams());
     }
 
     /**
@@ -225,9 +222,7 @@ class MuxTags extends Tags
      */
     public function gif(): ?string
     {
-        $params = collect($this->params->all())->except($this->assetParams)->all();
-
-        return $this->getGifUrl(null, $params);
+        return $this->getGifUrl(params: $this->getNonAssetParams());
     }
 
     /**
@@ -237,9 +232,7 @@ class MuxTags extends Tags
      */
     public function placeholder(): ?string
     {
-        $params = collect($this->params->all())->except($this->assetParams)->all();
-
-        return $this->getPlaceholderDataUri(null, $params);
+        return $this->getPlaceholderDataUri(params: $this->getNonAssetParams());
     }
 
     /**
