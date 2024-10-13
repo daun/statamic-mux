@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.0] - 2024-10-13
+
+- Add GraphQL types
+
 ## [1.0.1] - 2024-10-11
 
 - Extend test coverage
@@ -29,6 +33,7 @@
 
 - Beta release
 
+[1.1.0]: https://github.com/daun/statamic-mux/releases/tag/1.1.0
 [1.0.1]: https://github.com/daun/statamic-mux/releases/tag/1.0.1
 [1.0.0]: https://github.com/daun/statamic-mux/releases/tag/1.0.0
 [0.1.3]: https://github.com/daun/statamic-mux/releases/tag/0.1.3
