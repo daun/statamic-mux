@@ -2,7 +2,7 @@
 
 ## [1.1.0] - 2024-10-13
 
-- Add GraphQL types
+- Add GraphQL support
 
 ## [1.0.1] - 2024-10-11
 
