@@ -71,7 +71,9 @@ class MuxService
         if ($asset) {
             $deleted = $this->app->make(DeleteMuxAsset::class)->handle($asset);
             if ($deleted) {
-                MuxAsset::fromAsset($asset)->clear()->save();
+                if ($asset instanceof Asset) {
+                    MuxAsset::fromAsset($asset)->clear()->save();
+                }
 
                 return true;
             }
