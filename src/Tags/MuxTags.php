@@ -96,44 +96,7 @@ class MuxTags extends Tags
      */
     public function video(): ?string
     {
-        $asset = $this->getAssetFromContext();
-        $playbackId = $this->getPlaybackId($asset)?->id();
-        if (! $playbackId) {
-            return null;
-        }
-
-        if ($token = $this->getPlaybackToken($asset)) {
-            $playbackId = "{$playbackId}?token={$token}";
-        } else {
-            $playbackAttributes = $this->toHtmlAttributes($this->getDefaultPlaybackModifiers());
-        }
-
-        $attributes = collect([
-            'playsinline' => true,
-            'preload' => 'metadata',
-            'poster' => $this->getThumbnailUrl($asset),
-            'width' => $asset->width(),
-            'height' => $asset->height(),
-        ])->merge(
-            $this->params->bool('background') ? [
-                'autoplay' => true,
-                'loop' => true,
-                'muted' => true,
-            ] : []
-        )->merge(
-            $playbackAttributes ?? []
-        )->merge(
-            collect($this->params->all())->except([...$this->assetParams, 'background', 'script'])
-        )->whereNotNull()->all();
-
-        $script = $this->params->bool('script')
-            ? '<script async src="https://unpkg.com/@mux/mux-video@0"></script>'
-            : '';
-
-        return vsprintf(
-            '<mux-video playback-id="%s" %s></mux-video> %s',
-            [$playbackId, $this->renderAttributes($attributes), $script]
-        );
+        return $this->component('mux-video');
     }
 
     /**
@@ -143,36 +106,45 @@ class MuxTags extends Tags
      */
     public function player(): ?string
     {
+        return $this->component('mux-player');
+    }
+
+    /**
+     * Render a custom-element view.
+     *
+     */
+    protected function component(string $view): ?string
+    {
         $asset = $this->getAssetFromContext();
         $playbackId = $this->getPlaybackId($asset)?->id();
         if (! $playbackId) {
             return null;
         }
 
-        if ($token = $this->getPlaybackToken($asset)) {
-            $playbackAttributes = ['playback-token' => $token];
-        } else {
-            $playbackAttributes = $this->toHtmlAttributes($this->getDefaultPlaybackModifiers());
-        }
+        $data = $this->generate($asset);
 
-        $attributes = collect([
-            'preload' => 'metadata',
-            'width' => $asset->width(),
-            'height' => $asset->height(),
-        ])->merge(
-            $playbackAttributes
-        )->merge(
-            collect($this->params->all())->except([...$this->assetParams, 'script'])
-        )->whereNotNull()->all();
+        $params = collect([
+            'autoplay' => $this->params->bool('autoplay', false),
+            'loop' => $this->params->bool('loop', false),
+            'muted' => $this->params->bool('muted', false),
+            'background' => $this->params->bool('background', false),
+            'script' => $this->params->bool('script', false),
+        ]);
 
-        $script = $this->params->bool('script')
-            ? '<script async src="https://unpkg.com/@mux/mux-player@3"></script>'
-            : '';
+        $attributes = collect($this->params->all())
+            ->except($this->assetParams)
+            ->except($params->keys());
 
-        return vsprintf(
-            '<mux-player playback-id="%s" %s></mux-player> %s',
-            [$playbackId, $this->renderAttributes($attributes), $script]
-        );
+        $playbackAttributes = collect($data['playback_modifiers'])
+            ->except($attributes->keys());
+
+        $viewdata = $this->context
+            ->merge($this->generate($asset))
+            ->merge($params)
+            ->merge(['attributes' => $this->toHtmlAttributes($attributes)])
+            ->merge(['playback_attributes' => $this->toHtmlAttributes($playbackAttributes)]);
+
+        return view("statamic-mux::{$view}", $viewdata)->render();
     }
 
     /**

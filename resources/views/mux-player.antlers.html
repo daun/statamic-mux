@@ -1,0 +1,24 @@
+<mux-player
+  playback-id="{{ playback_id }}"
+  {{ if is_signed }}
+    playback-token="{{ playback_token }}"
+  {{ else }}
+    {{ foreach:playback_attributes as="attr|value" }}
+      {{ attr }}="{{ value }}"
+    {{ /foreach:playback_attributes }}
+  {{ /if }}
+  poster="{{ poster }}"
+  preload="metadata"
+  width="{{ width }}"
+  height="{{ height }}"
+  {{ autoplay | attribute:autoplay }}
+  {{ loop | attribute:loop }}
+  {{ muted | attribute:muted }}
+  {{ foreach:attributes as="attr|value" }}
+    {{ attr }}="{{ value }}"
+  {{ /foreach:attributes }}
+></mux-player>
+
+{{ if script }}
+  <script async src="https://unpkg.com/@mux/mux-player@3"></script>
+{{ /if }}

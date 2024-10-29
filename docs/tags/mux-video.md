@@ -56,13 +56,22 @@ to allow using the video as a background element:
 Any other attributes will be passed along to the the web component itself:
 
 ```antlers
-{{ mux:video src="assets::video.mp4" autoplay loop muted class="mt-3" }}
+{{ mux:video src="assets::video.mp4" class="mt-3" }}
 ```
 
 ```html
 <mux-video
   playback-id="85g23gYz7NmQu02YsY81ihuod6cZMxCp017ZrfglyLCKc"
-  autoplay loop muted
   class="mt-3"
 ></mux-video>
+```
+
+## Customizing the view
+
+If you need to adjust the rendered html beyond what's possible with the standard parameters, you can
+publish the addon's views and make them your own. To do that, run the following command in your
+console. You'll then find the views in `resources/views/vendor/statamic-mux/`.
+
+```sh
+php artisan vendor:publish --tag=statamic-mux-views
 ```
