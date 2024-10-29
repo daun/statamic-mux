@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2024-10-29
+
+- Customizable Antlers views for video components
+- Add examples for disabling tracking
+- Fix error when pruning orphaned videos
+
 ## [1.1.0] - 2024-10-13
 
 - Add GraphQL support
@@ -33,6 +39,7 @@
 
 - Beta release
 
+[1.2.0]: https://github.com/daun/statamic-mux/releases/tag/1.2.0
 [1.1.0]: https://github.com/daun/statamic-mux/releases/tag/1.1.0
 [1.0.1]: https://github.com/daun/statamic-mux/releases/tag/1.0.1
 [1.0.0]: https://github.com/daun/statamic-mux/releases/tag/1.0.0
