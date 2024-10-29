@@ -52,6 +52,7 @@ class ServiceProvider extends AddonServiceProvider
     {
         $this->bootPermissions();
         $this->autoPublishConfig();
+        $this->publishViews();
     }
 
     protected function registerMuxApi()
@@ -142,6 +143,17 @@ class ServiceProvider extends AddonServiceProvider
         ], "{$filename}-config");
 
         return parent::bootConfig();
+    }
+
+    protected function publishViews(): self
+    {
+        $addon = $this->getAddon()->slug();
+
+        $this->publishes([
+            __DIR__.'/../resources/views' => resource_path('views/vendor/statamic-mux')
+        ], "{$addon}-views");
+
+        return $this;
     }
 
     protected function autoPublishConfig(): self
