@@ -71,7 +71,6 @@ class MuxTags extends Tags
                 'playback_id' => $playbackId?->id(),
                 'playback_policy' => $playbackId?->policy(),
                 'playback_modifiers' => ($playbackModifiers = $this->getDefaultPlaybackModifiers()),
-                'playback_attributes' => $this->toHtmlAttributes($playbackModifiers),
                 'playback_token' => ($playbackToken = $this->getPlaybackToken($asset, $playbackModifiers)),
                 'playback_id_signed' => $playbackToken ? "{$playbackId->id()}?token={$playbackToken}" : $playbackId?->id(),
                 'playback_url' => $this->getPlaybackUrl($asset),
@@ -97,17 +96,7 @@ class MuxTags extends Tags
      */
     public function video(): ?string
     {
-        $asset = $this->getAssetFromContext();
-        $playbackId = $this->getPlaybackId($asset)?->id();
-        if (! $playbackId) {
-            return null;
-        }
-
-        $params = collect($this->generate($asset))
-            ->merge(collect($this->params->all())
-            ->except([...$this->assetParams]));
-
-        return view('statamic-mux::mux-video', $params)->render();
+        return $this->component('mux-video');
     }
 
     /**
@@ -117,17 +106,45 @@ class MuxTags extends Tags
      */
     public function player(): ?string
     {
+        return $this->component('mux-player');
+    }
+
+    /**
+     * Render a custom-element view.
+     *
+     */
+    protected function component(string $view): ?string
+    {
         $asset = $this->getAssetFromContext();
         $playbackId = $this->getPlaybackId($asset)?->id();
         if (! $playbackId) {
             return null;
         }
 
-        $params = collect($this->generate($asset))
-            ->merge(collect($this->params->all())
-            ->except([...$this->assetParams]));
+        $data = $this->generate($asset);
 
-        return view('statamic-mux::mux-player', $params)->render();
+        $params = collect([
+            'autoplay' => $this->params->bool('autoplay', false),
+            'loop' => $this->params->bool('loop', false),
+            'muted' => $this->params->bool('muted', false),
+            'background' => $this->params->bool('background', false),
+            'script' => $this->params->bool('script', false),
+        ]);
+
+        $attributes = collect($this->params->all())
+            ->except($this->assetParams)
+            ->except($params->keys());
+
+        $playbackAttributes = collect($data['playback_modifiers'])
+            ->except($attributes->keys());
+
+        $viewdata = $this->context
+            ->merge($this->generate($asset))
+            ->merge($params)
+            ->merge(['attributes' => $this->toHtmlAttributes($attributes)])
+            ->merge(['playback_attributes' => $this->toHtmlAttributes($playbackAttributes)]);
+
+        return view("statamic-mux::{$view}", $viewdata)->render();
     }
 
     /**

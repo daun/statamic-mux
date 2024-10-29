@@ -3,8 +3,8 @@
     playback-id="{{ playback_id_signed }}"
   {{ else }}
     playback-id="{{ playback_id }}"
-    {{ foreach:playback_attributes as="modifier|value" }}
-      {{ modifier }}="{{ value }}"
+    {{ foreach:playback_attributes as="attr|value" }}
+      {{ attr }}="{{ value }}"
     {{ /foreach:playback_attributes }}
   {{ /if }}
   poster="{{ poster }}"
@@ -19,6 +19,9 @@
     {{ loop | attribute:loop }}
     {{ muted | attribute:muted }}
   {{ /if }}
+  {{ foreach:attributes as="attr|value" }}
+    {{ attr }}="{{ value }}"
+  {{ /foreach:attributes }}
 ></mux-video>
 
 {{ if script }}
