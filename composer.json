@@ -41,6 +41,12 @@
         "pestphp/pest-plugin-laravel": "^3.0",
         "spatie/pest-plugin-snapshots": "^2.1"
     },
+    "repositories": {
+        "facade-documenter": {
+            "type": "vcs",
+            "url": "git@github.com:laravel/facade-documenter.git"
+        }
+    },
     "autoload": {
         "psr-4": {
             "Daun\\StatamicMux\\": "src"
@@ -73,17 +79,11 @@
     },
     "scripts": {
         "analyse": "./vendor/bin/phpstan analyse --memory-limit=2G",
+        "facade": "php -f vendor/bin/facade.php -- \\\\Daun\\\\StatamicMux\\\\Facades\\\\Mux",
         "format": "./vendor/bin/pint",
         "lint": "./vendor/bin/pint --test",
-        "facade": "php -f vendor/bin/facade.php -- \\\\Daun\\\\StatamicMux\\\\Facades\\\\Mux",
         "test": "./vendor/bin/pest",
         "test:ci": "./vendor/bin/pest --coverage-clover coverage.xml",
         "test:coverage": "./vendor/bin/pest --coverage"
-    },
-    "repositories": {
-        "facade-documenter": {
-            "type": "vcs",
-            "url": "git@github.com:laravel/facade-documenter.git"
-        }
     }
 }
