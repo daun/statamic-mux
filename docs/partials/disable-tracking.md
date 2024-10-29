@@ -1,5 +1,6 @@
-To disable any tracking and allow playback without asking for explicit consent in the EU,
-you'll need to disable cookies and tracking via two separate parameters.
+To disable any tracking and allow playback without asking for explicit consent, you'll need to
+disable cookies and tracking via two separate parameters. With those set, usage of Mux should be
+GDPR-compliant in most cases.
 
 ```html
 <mux-video
