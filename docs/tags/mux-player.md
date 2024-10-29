@@ -60,3 +60,6 @@ console. You'll then find the views in `resources/views/vendor/statamic-mux/`.
 ```sh
 php artisan vendor:publish --tag=statamic-mux-views
 ```
+## Disabling tracking
+
+<!--@include: ../partials/disable-tracking.md-->
