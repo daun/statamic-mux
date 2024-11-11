@@ -39,7 +39,7 @@ jobs:
         with:
           timeout_minutes: 3
           max_attempts: 3
-          command: composer require "laravel/framework:9.*" "orchestra/testbench:^7.40" "pestphp/pest:^1.22" "pestphp/pest-plugin-laravel:^1.4" --no-update --no-interaction
+          command: composer require "laravel/framework:9.*" "orchestra/testbench:^7.40" "pestphp/pest:^1.22" "pestphp/pest-plugin-laravel:^1.4" "spatie/pest-plugin-snapshots:^1.1" --no-update --no-interaction
 
       - name: Select Laravel 10
         uses: nick-invision/retry@v3
@@ -47,7 +47,7 @@ jobs:
         with:
           timeout_minutes: 3
           max_attempts: 3
-          command: composer require "laravel/framework:10.*" "orchestra/testbench:^8.0" "pestphp/pest:^2.0" "pestphp/pest-plugin-laravel:^2.0" --no-update --no-interaction
+          command: composer require "laravel/framework:10.*" "orchestra/testbench:^8.0" "pestphp/pest:^2.0" "pestphp/pest-plugin-laravel:^2.0" "spatie/pest-plugin-snapshots:^2.1" --no-update --no-interaction
 
       - name: Select Laravel 11
         uses: nick-invision/retry@v3
@@ -55,7 +55,7 @@ jobs:
         with:
           timeout_minutes: 3
           max_attempts: 3
-          command: composer require "laravel/framework:11.*" "orchestra/testbench:^9.0" "pestphp/pest:^3.0" "pestphp/pest-plugin-laravel:^3.0" --no-update --no-interaction
+          command: composer require "laravel/framework:11.*" "orchestra/testbench:^9.0" "pestphp/pest:^3.0" "pestphp/pest-plugin-laravel:^3.0" "spatie/pest-plugin-snapshots:^2.1" --no-update --no-interaction
 
       - name: Install PHP Dependencies
         uses: nick-invision/retry@v3
