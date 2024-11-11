@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.1] - 2024-11-11
+
+- Update docs for new `premium` quality level
+- Add CI workflow
+
 ## [1.2.0] - 2024-10-29
 
 - Customizable Antlers views for video components
@@ -39,6 +44,7 @@
 
 - Beta release
 
+[1.2.1]: https://github.com/daun/statamic-mux/releases/tag/1.2.1
 [1.2.0]: https://github.com/daun/statamic-mux/releases/tag/1.2.0
 [1.1.0]: https://github.com/daun/statamic-mux/releases/tag/1.1.0
 [1.0.1]: https://github.com/daun/statamic-mux/releases/tag/1.0.1
