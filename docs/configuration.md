@@ -91,9 +91,12 @@ return [
 
 ## Video Quality
 
-Mux offers two quality levels: `plus` for high visual quality and `basic` for apps with simpler
-quality needs to save on bandwidth and encoding cost. Learn more about
+Mux offers three quality levels. Learn more at
 [Choosing Video Quality](https://docs.mux.com/guides/use-video-quality-levels).
+
+- `basic` for apps with simpler quality needs that need to save on bandwidth and encoding cost
+- `plus` for conistently high quality output, but incurs encoding cost
+- `premium` for premium high-detail content like sports broadcasts
 
 ```php
 return [
