@@ -31,13 +31,13 @@ test('converts expiration to timestamp', function () {
 });
 
 test('token throws when missing key id', function () {
-    expect(fn() => $this->urls->token('playback-id', MuxAudience::Gif))->not->toThrow(\Exception::class);
+    expect(fn () => $this->urls->token('playback-id', MuxAudience::Gif))->not->toThrow(\Exception::class);
 
     config(['mux.signing_key.key_id' => null]);
     config(['mux.signing_key.private_key' => null]);
     $urls = $this->app->make(MuxUrls::class);
 
-    expect(fn() => $urls->token('playback-id', MuxAudience::Gif))->toThrow(\Exception::class);
+    expect(fn () => $urls->token('playback-id', MuxAudience::Gif))->toThrow(\Exception::class);
 });
 
 test('token returns string', function () {

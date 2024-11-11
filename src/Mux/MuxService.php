@@ -204,7 +204,7 @@ class MuxService
         return $this->signUrl($this->urls->animated($playbackId->id(), $format), $playbackId, MuxAudience::Gif, $params);
     }
 
-    public function getPlaceholderDataUri(MuxPlaybackId $playbackId, array $params = []):?string
+    public function getPlaceholderDataUri(MuxPlaybackId $playbackId, array $params = []): ?string
     {
         $fallback = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
         $thumbnail = $this->getThumbnailUrl($playbackId, ['width' => 100] + $params);

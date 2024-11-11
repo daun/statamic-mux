@@ -7,7 +7,7 @@ use Illuminate\Contracts\Support\Arrayable;
 use Statamic\Support\Traits\FluentlyGetsAndSets;
 use Stringable;
 
-class MuxPlaybackId implements Stringable, Arrayable
+class MuxPlaybackId implements Arrayable, Stringable
 {
     use FluentlyGetsAndSets;
 
