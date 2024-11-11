@@ -150,7 +150,7 @@ class ServiceProvider extends AddonServiceProvider
         $addon = $this->getAddon()->slug();
 
         $this->publishes([
-            __DIR__.'/../resources/views' => resource_path('views/vendor/statamic-mux')
+            __DIR__.'/../resources/views' => resource_path('views/vendor/statamic-mux'),
         ], "{$addon}-views");
 
         return $this;

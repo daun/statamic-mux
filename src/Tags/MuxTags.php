@@ -111,7 +111,6 @@ class MuxTags extends Tags
 
     /**
      * Render a custom-element view.
-     *
      */
     protected function component(string $view): ?string
     {

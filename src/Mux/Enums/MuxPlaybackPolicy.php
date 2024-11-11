@@ -3,8 +3,8 @@
 namespace Daun\StatamicMux\Mux\Enums;
 
 use Illuminate\Support\Collection;
-use MuxPhp\Models\PlaybackPolicy;
 use Illuminate\Support\Str;
+use MuxPhp\Models\PlaybackPolicy;
 
 enum MuxPlaybackPolicy: string
 {
@@ -13,7 +13,7 @@ enum MuxPlaybackPolicy: string
 
     public static function values(): array
     {
-        return array_column(static::cases(), 'value');
+        return array_column(self::cases(), 'value');
     }
 
     public static function make(object|string|null $policy): ?self
@@ -30,7 +30,7 @@ enum MuxPlaybackPolicy: string
             $policy = $policy->getPolicy();
         }
 
-        return static::tryFrom($policy);
+        return self::tryFrom($policy);
     }
 
     public static function makeMany(array|string|null $policy): Collection
@@ -39,12 +39,12 @@ enum MuxPlaybackPolicy: string
             $policy = Str::of($policy)->split('/\s*,\s*/')->map(fn ($item) => trim($item));
         }
 
-        return collect($policy)->map(fn ($item) => static::make($item))->filter()->unique()->values();
+        return collect($policy)->map(fn ($item) => self::make($item))->filter()->unique()->values();
     }
 
     public static function isValid(self|string|null $policy): bool
     {
-        return (bool) static::make($policy);
+        return (bool) self::make($policy);
     }
 
     public function is(self $check): bool
@@ -54,11 +54,11 @@ enum MuxPlaybackPolicy: string
 
     public function isPublic(): bool
     {
-        return $this->is(static::Public);
+        return $this->is(self::Public);
     }
 
     public function isSigned(): bool
     {
-        return $this->is(static::Signed);
+        return $this->is(self::Signed);
     }
 }
