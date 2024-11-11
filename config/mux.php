@@ -94,10 +94,13 @@ return [
     | Video Quality
     |--------------------------------------------------------------------------
     |
-    | The video quality applied when creating new assets: 'basic' or 'plus'.
-    | Set this to `null` to use the default quality setting of your Mux account.
+    | The video quality applied when creating new assets. Set this to `null` to
+    | use the default quality setting of your Mux account. Learn about quality
+    | levels at https://docs.mux.com/guides/use-video-quality-levels.
     |
-    | Learn about qualities at https://docs.mux.com/guides/use-video-quality-levels.
+    | Options: - basic: simple use cases, no encoding cost (max 1080p)
+    |          - plus: consistent quality, incurs encoding cost (max 2160p)
+    |          - premium: optimized for premium content, highest cost (max 2160p)
     |
     */
 
