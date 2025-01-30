@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.2] - 2025-01-30
+
+- Fix access error on upload
+
 ## [1.2.1] - 2024-11-11
 
 - Update docs for new `premium` quality level
@@ -44,6 +48,7 @@
 
 - Beta release
 
+[1.2.2]: https://github.com/daun/statamic-mux/releases/tag/1.2.2
 [1.2.1]: https://github.com/daun/statamic-mux/releases/tag/1.2.1
 [1.2.0]: https://github.com/daun/statamic-mux/releases/tag/1.2.0
 [1.1.0]: https://github.com/daun/statamic-mux/releases/tag/1.1.0
