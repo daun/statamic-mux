@@ -114,7 +114,7 @@ class MuxApi
     {
         return new CreateAssetRequest([
             'test' => $this->testMode,
-            'playback_policy' => MuxPlaybackPolicy::makeMany($this->playbackPolicy)->map->value()->all(),
+            'playback_policy' => MuxPlaybackPolicy::makeMany($this->playbackPolicy)->pluck('value')->all(),
             'video_quality' => $this->videoQuality,
             ...$options,
         ]);
