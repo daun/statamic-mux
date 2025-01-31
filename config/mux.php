@@ -125,6 +125,25 @@ return [
 
         // 'redundant_streams' => true,
 
+        // 'default_subtitles_lang' => 'fr',
+
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Optimize Storage
+    |--------------------------------------------------------------------------
+    |
+    | To save server space, the addon can store low-quality placeholders after
+    | uploading the original video files to Mux. A short clip of the video will
+    | remain available in the control panel for previewing.
+    |
+    */
+
+    'storage' => [
+
+        'store_placeholders' => false,
+
     ],
 
     /*
