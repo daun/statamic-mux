@@ -8,21 +8,19 @@ for details on each available config option.
 The required Mux API credentials. Learn more about [Connecting Mux](/connecting-mux).
 
 ```php
-return [
-    /*
-    |--------------------------------------------------------------------------
-    | Credentials
-    |--------------------------------------------------------------------------
-    */
+/*
+|--------------------------------------------------------------------------
+| Credentials
+|--------------------------------------------------------------------------
+*/
 
-    'credentials' => [
+'credentials' => [
 
-        'token_id' => env('MUX_TOKEN_ID'), // [!code focus]
+    'token_id' => env('MUX_TOKEN_ID'), // [!code focus]
 
-        'token_secret' => env('MUX_TOKEN_SECRET'), // [!code focus]
+    'token_secret' => env('MUX_TOKEN_SECRET'), // [!code focus]
 
-    ]
-];
+]
 ```
 
 ## Signing Keys
@@ -34,23 +32,21 @@ The `expiration` setting accepts either `int`s for seconds, a human duration str
 like `1 hour` and `2 days`, or an ISO date interval like `P3M` for 3 months.
 
 ```php
-return [
-    /*
-    |--------------------------------------------------------------------------
-    | Signing keys
-    |--------------------------------------------------------------------------
-    */
+/*
+|--------------------------------------------------------------------------
+| Signing keys
+|--------------------------------------------------------------------------
+*/
 
-    'signing_key' => [
+'signing_key' => [
 
-        'key_id' => env('MUX_SIGNING_KEY_ID'), // [!code focus]
+    'key_id' => env('MUX_SIGNING_KEY_ID'), // [!code focus]
 
-        'private_key' => env('MUX_SIGNING_PRIVATE_KEY'), // [!code focus]
+    'private_key' => env('MUX_SIGNING_PRIVATE_KEY'), // [!code focus]
 
-        'expiration' => env('MUX_SIGNED_URL_EXPIRATION', '72 hours'), // [!code focus]
+    'expiration' => env('MUX_SIGNED_URL_EXPIRATION', '72 hours'), // [!code focus]
 
-    ]
-];
+]
 ```
 
 ## Test Mode
@@ -59,16 +55,13 @@ Mux offers a test mode for evaluating their service without incurring charges fo
 All videos uploaded in test mode are watermarked and deleted after 24 hours.
 
 ```php
-return [
-    /*
-    |--------------------------------------------------------------------------
-    | Test Mode
-    |--------------------------------------------------------------------------
-    */
+/*
+|--------------------------------------------------------------------------
+| Test Mode
+|--------------------------------------------------------------------------
+*/
 
-    'test_mode' => env('MUX_TEST_MODE', false), // [!code focus]
-    
-];
+'test_mode' => env('MUX_TEST_MODE', false), // [!code focus]
 ```
 
 ## Playback Policy
@@ -77,16 +70,13 @@ Videos uploaded to Mux can restrict access by requiring signed playback urls.
 Learn more about [Setting Up Secure Playback](/secure-playback).
 
 ```php
-return [
-    /*
-    |--------------------------------------------------------------------------
-    | Playback Policy
-    |--------------------------------------------------------------------------
-    */
+/*
+|--------------------------------------------------------------------------
+| Playback Policy
+|--------------------------------------------------------------------------
+*/
 
-    'playback_policy' => env('MUX_PLAYBACK_POLICY', 'public'), // [!code focus]
-
-];
+'playback_policy' => env('MUX_PLAYBACK_POLICY', 'public'), // [!code focus]
 ```
 
 ## Video Quality
@@ -99,16 +89,13 @@ Mux offers three quality levels. Learn more at
 - `premium` for premium high-detail content like sports broadcasts
 
 ```php
-return [
-    /*
-    |--------------------------------------------------------------------------
-    | Video Quality
-    |--------------------------------------------------------------------------
-    */
+/*
+|--------------------------------------------------------------------------
+| Video Quality
+|--------------------------------------------------------------------------
+*/
 
-    'video_quality' => env('MUX_VIDEO_QUALITY', 'plus'), // [!code focus]
-
-];
+'video_quality' => env('MUX_VIDEO_QUALITY', 'plus'), // [!code focus]
 ```
 
 You can set this to `null` to use the default quality setting of your Mux account if you have
@@ -122,19 +109,41 @@ Applies to any videos or players rendered using the built-in Antlers tags.
 Learn more in the Mux docs on [Modifying Playback Behavior](https://docs.mux.com/guides/modify-playback-behavior).
 
 ```php
-return [
-    /*
-    |--------------------------------------------------------------------------
-    | Playback Modifiers
-    |--------------------------------------------------------------------------
-    */
+/*
+|--------------------------------------------------------------------------
+| Playback Modifiers
+|--------------------------------------------------------------------------
+*/
 
-    'playback_modifiers' => [ // [!code focus]
-        'min_resolution' => '720p', // [!code focus]
-        'max_resolution' => '1440p', // [!code focus]
-    ],
+'playback_modifiers' => [ // [!code focus]
+    'min_resolution' => '720p', // [!code focus]
+    'max_resolution' => '1440p', // [!code focus]
+    'default_subtitles_lang' => 'fr', // [!code focus]
+] // [!code focus]
+```
 
-];
+## Storage Optimization
+
+Define how the addon handles original video files. In most cases, you'll want to
+stick with the default behavior and keep the original MP4 files around to ensure
+long-term independence from any one video provider.
+
+If you need to save storage space on the web server and are fine with having the
+original files on Mux, you can configure the addon to only store low-quality
+placeholders on disk. This will save a small placeholder video that can be
+previewed in the backend, but requires Mux to properly stream high-quality
+videos from your frontend.
+
+```php
+/*
+|--------------------------------------------------------------------------
+| Optimize Storage
+|--------------------------------------------------------------------------
+*/
+
+'storage' => [ // [!code focus]
+    'store_placeholders' => true, // [!code focus]
+] // [!code focus]
 ```
 
 ## Queue Driver
