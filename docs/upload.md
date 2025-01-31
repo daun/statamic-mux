@@ -29,6 +29,8 @@ tabs:
             field: // [!code focus]
               type: mux_mirror // [!code focus]
               display: Mux // [!code focus]
+              if: // [!code focus]
+                extension: mp4 // [!code focus]
 ```
 
 :::
