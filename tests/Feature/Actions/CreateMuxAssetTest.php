@@ -13,13 +13,16 @@ beforeEach(function () {
     $this->api = Mockery::mock(MuxApi::class);
     $this->service = Mockery::mock(MuxService::class);
     $this->asset = Mockery::mock(Asset::class);
-    $this->createMuxAsset = new CreateMuxAsset($this->app, $this->service, $this->api);
+    $this->createMuxAsset = Mockery::spy(fn() => new CreateMuxAsset($this->app, $this->service, $this->api))->makePartial();
 
     Event::fake([AssetUploadingToMux::class, AssetUploadedToMux::class]);
 })->only();
 
 it('ignores non-video asset', function () {
     $this->asset->shouldReceive('isVideo')->andReturn(false);
+
+    $this->createMuxAsset->shouldNotReceive('uploadAssetToMux');
+    $this->createMuxAsset->shouldNotReceive('ingestAssetToMux');
 
     $result = $this->createMuxAsset->handle($this->asset);
 
@@ -30,14 +33,16 @@ it('ignores non-video asset', function () {
 
 it('ignores existing mux asset', function () {
     $this->asset->shouldReceive('isVideo')->andReturn(true);
-    $muxAsset = Mockery::mock(MuxAsset::class);
-    $muxAsset->shouldReceive('existsOnMux')->andReturn(true);
+    $this->service->shouldReceive('hasExistingMuxAsset')->andReturn(true);
 
-    MuxAsset::shouldReceive('fromAsset')->with($this->asset)->andReturn($muxAsset);
+    $this->createMuxAsset->shouldNotReceive('uploadAssetToMux');
+    $this->createMuxAsset->shouldNotReceive('ingestAssetToMux');
 
     $result = $this->createMuxAsset->handle($this->asset);
 
     expect($result)->toBeNull();
+    Event::assertNotDispatched(AssetUploadingToMux::class);
+    Event::assertNotDispatched(AssetUploadedToMux::class);
 });
 
 it('handles uploading event stopped', function () {
