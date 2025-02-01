@@ -6,7 +6,6 @@ use Daun\StatamicMux\Events\AssetUploadingToMux;
 use Daun\StatamicMux\Mux\Actions\CreateMuxAsset;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Event;
 use Statamic\Assets\Asset;
 
