@@ -71,7 +71,9 @@ class MuxService
         if ($asset) {
             $deleted = $this->app->make(DeleteMuxAsset::class)->handle($asset);
             if ($deleted) {
-                MuxAsset::fromAsset($asset)->clear()->save();
+                if ($asset instanceof Asset) {
+                    MuxAsset::fromAsset($asset)->clear()->save();
+                }
 
                 return true;
             }
@@ -202,7 +204,7 @@ class MuxService
         return $this->signUrl($this->urls->animated($playbackId->id(), $format), $playbackId, MuxAudience::Gif, $params);
     }
 
-    public function getPlaceholderDataUri(MuxPlaybackId $playbackId, array $params = []):?string
+    public function getPlaceholderDataUri(MuxPlaybackId $playbackId, array $params = []): ?string
     {
         $fallback = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
         $thumbnail = $this->getThumbnailUrl($playbackId, ['width' => 100] + $params);

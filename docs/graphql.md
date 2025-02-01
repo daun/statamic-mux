@@ -1,10 +1,10 @@
 # GraphQL Types
 
-Any Mux data available in the [Antlers tags](./tags/) can also be queried via GraphQL.
+Any Mux data available in the [Antlers tags](./tags) can also be queried via GraphQL.
 
 ## Example
 
-Assuming you've added a [mirror field](/uploading/) called `mux` to your default asset container
+Assuming you've added a [mirror field](/upload) called `mux` to your default asset container
 blueprint, you can query Mux data from the existing fieldname at `mux`. In your frontend, you can
 plug the returned data into  one of the official [Mux video components](/display#video-components).
 

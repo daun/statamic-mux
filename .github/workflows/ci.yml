@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: true
+      matrix:
+        php: [ '8.2', '8.3' ]
+        laravel: [ '9', '10', '11' ]
+        exclude:
+          - php: '8.1'
+            laravel: '11'
+
+    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer:v2
+          coverage: xdebug
+
+      - name: Setup Problem Matchers
+        run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+
+      - name: Select Laravel 9
+        uses: nick-invision/retry@v3
+        if: ${{ matrix.laravel == '9' }}
+        with:
+          timeout_minutes: 3
+          max_attempts: 3
+          command: composer require "laravel/framework:9.*" "orchestra/testbench:^7.40" "pestphp/pest:^1.22" "pestphp/pest-plugin-laravel:^1.4" "spatie/pest-plugin-snapshots:^1.1" --no-update --no-interaction
+
+      - name: Select Laravel 10
+        uses: nick-invision/retry@v3
+        if: ${{ matrix.laravel == '10' }}
+        with:
+          timeout_minutes: 3
+          max_attempts: 3
+          command: composer require "laravel/framework:10.*" "orchestra/testbench:^8.0" "pestphp/pest:^2.0" "pestphp/pest-plugin-laravel:^2.0" "spatie/pest-plugin-snapshots:^2.1" --no-update --no-interaction
+
+      - name: Select Laravel 11
+        uses: nick-invision/retry@v3
+        if: ${{ matrix.laravel == '11' }}
+        with:
+          timeout_minutes: 3
+          max_attempts: 3
+          command: composer require "laravel/framework:11.*" "orchestra/testbench:^9.0" "pestphp/pest:^3.0" "pestphp/pest-plugin-laravel:^3.0" "spatie/pest-plugin-snapshots:^2.1" --no-update --no-interaction
+
+      - name: Install PHP Dependencies
+        uses: nick-invision/retry@v3
+        with:
+          timeout_minutes: 3
+          max_attempts: 3
+          command: composer update --no-interaction --no-progress
+
+      - name: Check code style
+        run: composer run lint
+
+      - name: Execute tests
+        run: composer run test:ci
+
+      - name: Check code coverage
+        uses: codecov/codecov-action@v4
+        if: ${{ matrix.php == '8.3' && matrix.laravel == '11' }}
+        with:
+          file: ./coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}

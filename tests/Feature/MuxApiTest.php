@@ -1,6 +1,5 @@
 <?php
 
-use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use Daun\StatamicMux\Mux\MuxApi;
 use GuzzleHttp\Client;
 use MuxPhp\Api\AssetsApi;

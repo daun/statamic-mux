@@ -50,3 +50,11 @@ Learn more about [customizing the look and feel of Mux Player](https://docs.mux.
   start-time="10"
 ></mux-player>
 ```
+
+## Customizing the view
+
+<!--@include: ../partials/vendor-views.md-->
+
+## Disabling tracking
+
+<!--@include: ../partials/disable-tracking.md-->

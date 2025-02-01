@@ -15,8 +15,6 @@ use MuxPhp\Models\CreateAssetRequest;
 use MuxPhp\Models\CreatePlaybackIDRequest;
 use MuxPhp\Models\CreateUploadRequest;
 use MuxPhp\Models\InputSettings;
-use MuxPhp\Models\Upload;
-use Psr\Http\Message\ResponseInterface;
 
 class MuxApi
 {

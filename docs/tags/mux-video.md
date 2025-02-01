@@ -56,13 +56,20 @@ to allow using the video as a background element:
 Any other attributes will be passed along to the the web component itself:
 
 ```antlers
-{{ mux:video src="assets::video.mp4" autoplay loop muted class="mt-3" }}
+{{ mux:video src="assets::video.mp4" class="mt-3" }}
 ```
 
 ```html
 <mux-video
   playback-id="85g23gYz7NmQu02YsY81ihuod6cZMxCp017ZrfglyLCKc"
-  autoplay loop muted
   class="mt-3"
 ></mux-video>
 ```
+
+## Customizing the view
+
+<!--@include: ../partials/vendor-views.md-->
+
+## Disabling tracking
+
+<!--@include: ../partials/disable-tracking.md-->

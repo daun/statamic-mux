@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.2.3] - 2025-01-30
+
+- Fix reupload when using sync queue
+
+## [1.2.2] - 2025-01-30
+
+- Fix access error on upload
+
+## [1.2.1] - 2024-11-11
+
+- Update docs for new `premium` quality level
+- Add CI workflow
+
+## [1.2.0] - 2024-10-29
+
+- Customizable Antlers views for video components
+- Add examples for disabling tracking
+- Fix error when pruning orphaned videos
+
+## [1.1.0] - 2024-10-13
+
+- Add GraphQL support
+
+## [1.0.1] - 2024-10-11
+
+- Extend test coverage
+- Refactor for improved testability
+
 ## [1.0.0] - 2024-10-08
 
 - Public release
@@ -24,6 +52,12 @@
 
 - Beta release
 
+[1.2.3]: https://github.com/daun/statamic-mux/releases/tag/1.2.3
+[1.2.2]: https://github.com/daun/statamic-mux/releases/tag/1.2.2
+[1.2.1]: https://github.com/daun/statamic-mux/releases/tag/1.2.1
+[1.2.0]: https://github.com/daun/statamic-mux/releases/tag/1.2.0
+[1.1.0]: https://github.com/daun/statamic-mux/releases/tag/1.1.0
+[1.0.1]: https://github.com/daun/statamic-mux/releases/tag/1.0.1
 [1.0.0]: https://github.com/daun/statamic-mux/releases/tag/1.0.0
 [0.1.3]: https://github.com/daun/statamic-mux/releases/tag/0.1.3
 [0.1.2]: https://github.com/daun/statamic-mux/releases/tag/0.1.2
