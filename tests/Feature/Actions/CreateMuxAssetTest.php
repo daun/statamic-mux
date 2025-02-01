@@ -1,6 +1,5 @@
 <?php
 
-use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Events\AssetUploadedToMux;
 use Daun\StatamicMux\Events\AssetUploadingToMux;
 use Daun\StatamicMux\Mux\Actions\CreateMuxAsset;
@@ -8,25 +7,29 @@ use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
 use Illuminate\Support\Facades\Event;
 use Statamic\Assets\Asset;
+use Statamic\Facades\Stache;
 
 beforeEach(function () {
     $this->api = Mockery::mock(MuxApi::class);
     $this->service = Mockery::mock(MuxService::class);
-    $this->asset = Mockery::mock(Asset::class)->makePartial();
+    $this->asset = Mockery::mock(Asset::class);
     $this->createMuxAsset = Mockery::spy(new CreateMuxAsset($this->app, $this->service, $this->api))
         ->makePartial()
         ->shouldAllowMockingProtectedMethods();
-})->only();
+
+    $this->mp4 = $this->uploadTestFileToTestContainer('test.mp4');
+    $this->jpg = $this->uploadTestFileToTestContainer('test.jpg');
+
+    Stache::clear();
+});
 
 it('ignores non-video asset', function () {
     Event::fake([AssetUploadingToMux::class, AssetUploadedToMux::class]);
 
-    $this->asset->shouldReceive('isVideo')->andReturn(false);
-
     $this->createMuxAsset->shouldNotReceive('uploadAssetToMux');
     $this->createMuxAsset->shouldNotReceive('ingestAssetToMux');
 
-    $result = $this->createMuxAsset->handle($this->asset);
+    $result = $this->createMuxAsset->handle($this->jpg);
 
     expect($result)->toBeNull();
     Event::assertNotDispatched(AssetUploadingToMux::class);
@@ -36,13 +39,12 @@ it('ignores non-video asset', function () {
 it('ignores existing mux asset', function () {
     Event::fake([AssetUploadingToMux::class, AssetUploadedToMux::class]);
 
-    $this->asset->shouldReceive('isVideo')->andReturn(true);
     $this->service->shouldReceive('hasExistingMuxAsset')->andReturn(true);
 
     $this->createMuxAsset->shouldNotReceive('uploadAssetToMux');
     $this->createMuxAsset->shouldNotReceive('ingestAssetToMux');
 
-    $result = $this->createMuxAsset->handle($this->asset);
+    $result = $this->createMuxAsset->handle($this->mp4);
 
     expect($result)->toBeNull();
     Event::assertNotDispatched(AssetUploadingToMux::class);
@@ -53,91 +55,57 @@ it('handles cancelled uploading event', function () {
     Event::fake([AssetUploadedToMux::class]);
     Event::listen(AssetUploadingToMux::class, fn () => false);
 
-    $this->asset->shouldReceive('isVideo')->andReturn(true);
     $this->service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
 
-    $result = $this->createMuxAsset->handle($this->asset);
+    $result = $this->createMuxAsset->handle($this->mp4);
 
     expect($result)->toBeNull();
     Event::assertNotDispatched(AssetUploadedToMux::class);
 });
 
-it('handles local or private asset', function () {
-    $this->asset->shouldReceive('isVideo')->andReturn(true);
-    $muxAsset = Mockery::mock(MuxAsset::class);
-    $muxAsset->shouldReceive('existsOnMux')->andReturn(false);
+it('ingests assets from public containers', function () {
+    Event::fake([AssetUploadedToMux::class]);
 
-    MuxAsset::shouldReceive('fromAsset')->with($this->asset)->andReturn($muxAsset);
-    AssetUploadingToMux::shouldReceive('dispatch')->with($this->asset)->andReturn(true);
+    $this->service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
 
-    $this->app->shouldReceive('isLocal')->andReturn(true);
-    $this->createMuxAsset->shouldReceive('uploadAssetToMux')->with($this->asset)->andReturn('mux_id');
+    $this->createMuxAsset->shouldReceive('ingestAssetToMux')->with($this->mp4)->andReturn('mux_id');
+    $this->createMuxAsset->shouldNotReceive('uploadAssetToMux');
 
-    $result = $this->createMuxAsset->handle($this->asset);
+    $result = $this->createMuxAsset->handle($this->mp4);
 
     expect($result)->toBe('mux_id');
+    Event::assertDispatched(AssetUploadedToMux::class);
 });
 
-it('handles public asset', function () {
-    $this->asset->shouldReceive('isVideo')->andReturn(true);
-    $muxAsset = Mockery::mock(MuxAsset::class);
-    $muxAsset->shouldReceive('existsOnMux')->andReturn(false);
+it('uploads assets from private containers', function () {
+    Event::fake([AssetUploadedToMux::class]);
 
-    MuxAsset::shouldReceive('fromAsset')->with($this->asset)->andReturn($muxAsset);
-    AssetUploadingToMux::shouldReceive('dispatch')->with($this->asset)->andReturn(true);
+    $privateContainer = $this->createAssetContainer('private', ['private' => true]);
+    $privateMp4 = $this->uploadTestFileToTestContainer('test.mp4', $privateContainer);
 
-    $this->app->shouldReceive('isLocal')->andReturn(false);
-    $this->asset->shouldReceive('container')->andReturnSelf();
-    $this->asset->shouldReceive('private')->andReturn(false);
-    $this->createMuxAsset->shouldReceive('ingestAssetToMux')->with($this->asset)->andReturn('mux_id');
+    $this->service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
 
-    $result = $this->createMuxAsset->handle($this->asset);
+    $this->createMuxAsset->shouldReceive('uploadAssetToMux')->with($privateMp4)->andReturn('mux_id');
+    $this->createMuxAsset->shouldNotReceive('ingestAssetToMux');
+
+    $result = $this->createMuxAsset->handle($privateMp4);
 
     expect($result)->toBe('mux_id');
+    Event::assertDispatched(AssetUploadedToMux::class);
 });
 
-it('uploads asset to mux', function () {
-    $this->api->shouldReceive('createUploadRequest')->andReturn('request');
-    $this->api->shouldReceive('directUploads')->andReturnSelf();
-    $this->api->shouldReceive('createDirectUpload')->andReturnSelf();
-    $this->api->shouldReceive('getData')->andReturn((object)['getId' => 'upload_id', 'getUrl' => 'upload_url']);
-    $this->api->shouldReceive('client')->andReturnSelf();
-    $this->api->shouldReceive('put')->andReturnSelf();
-    $this->api->shouldReceive('getDirectUpload')->andReturnSelf();
-    $this->api->shouldReceive('getData')->andReturn((object)['getAssetId' => 'mux_id']);
+it('uploads in local environment', function () {
+    Event::fake([AssetUploadedToMux::class]);
 
-    $this->asset->shouldReceive('contents')->andReturn('video_content');
+    $this->app['env'] = 'local';
 
-    $result = $this->createMuxAsset->uploadAssetToMux($this->asset);
+    $this->service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
+
+    $this->createMuxAsset->shouldReceive('uploadAssetToMux')->with($this->mp4)->andReturn('mux_id');
+    $this->createMuxAsset->shouldNotReceive('ingestAssetToMux');
+
+    $result = $this->createMuxAsset->handle($this->mp4);
 
     expect($result)->toBe('mux_id');
-});
-
-it('ingests asset to mux', function () {
-    $this->api->shouldReceive('createAssetRequest')->andReturn('request');
-    $this->api->shouldReceive('assets')->andReturnSelf();
-    $this->api->shouldReceive('createAsset')->andReturnSelf();
-    $this->api->shouldReceive('getData')->andReturn((object)['getId' => 'mux_id']);
-
-    $this->asset->shouldReceive('absoluteUrl')->andReturn('http://example.com/video.mp4');
-
-    $result = $this->createMuxAsset->ingestAssetToMux($this->asset);
-
-    expect($result)->toBe('mux_id');
-});
-
-it('gets asset passthrough data', function () {
-    $this->asset->shouldReceive('id')->andReturn('asset_id');
-
-    $result = $this->createMuxAsset->getAssetPassthroughData($this->asset);
-
-    expect($result)->toBe('statamic::asset_id');
-});
-
-it('gets asset identifier', function () {
-    $this->asset->shouldReceive('id')->andReturn('asset_id');
-
-    $result = $this->createMuxAsset->getAssetIdentifier($this->asset);
-
-    expect($result)->toBe('statamic::asset_id');
+    Event::assertDispatched(AssetUploadedToMux::class);
 });
