@@ -12,13 +12,15 @@ use Statamic\Assets\Asset;
 beforeEach(function () {
     $this->api = Mockery::mock(MuxApi::class);
     $this->service = Mockery::mock(MuxService::class);
-    $this->asset = Mockery::mock(Asset::class);
-    $this->createMuxAsset = Mockery::spy(fn() => new CreateMuxAsset($this->app, $this->service, $this->api))->makePartial();
-
-    Event::fake([AssetUploadingToMux::class, AssetUploadedToMux::class]);
+    $this->asset = Mockery::mock(Asset::class)->makePartial();
+    $this->createMuxAsset = Mockery::spy(new CreateMuxAsset($this->app, $this->service, $this->api))
+        ->makePartial()
+        ->shouldAllowMockingProtectedMethods();
 })->only();
 
 it('ignores non-video asset', function () {
+    Event::fake([AssetUploadingToMux::class, AssetUploadedToMux::class]);
+
     $this->asset->shouldReceive('isVideo')->andReturn(false);
 
     $this->createMuxAsset->shouldNotReceive('uploadAssetToMux');
@@ -32,6 +34,8 @@ it('ignores non-video asset', function () {
 });
 
 it('ignores existing mux asset', function () {
+    Event::fake([AssetUploadingToMux::class, AssetUploadedToMux::class]);
+
     $this->asset->shouldReceive('isVideo')->andReturn(true);
     $this->service->shouldReceive('hasExistingMuxAsset')->andReturn(true);
 
@@ -45,17 +49,17 @@ it('ignores existing mux asset', function () {
     Event::assertNotDispatched(AssetUploadedToMux::class);
 });
 
-it('handles uploading event stopped', function () {
-    $this->asset->shouldReceive('isVideo')->andReturn(true);
-    $muxAsset = Mockery::mock(MuxAsset::class);
-    $muxAsset->shouldReceive('existsOnMux')->andReturn(false);
+it('handles cancelled uploading event', function () {
+    Event::fake([AssetUploadedToMux::class]);
+    Event::listen(AssetUploadingToMux::class, fn () => false);
 
-    MuxAsset::shouldReceive('fromAsset')->with($this->asset)->andReturn($muxAsset);
-    AssetUploadingToMux::shouldReceive('dispatch')->with($this->asset)->andReturn(false);
+    $this->asset->shouldReceive('isVideo')->andReturn(true);
+    $this->service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
 
     $result = $this->createMuxAsset->handle($this->asset);
 
     expect($result)->toBeNull();
+    Event::assertNotDispatched(AssetUploadedToMux::class);
 });
 
 it('handles local or private asset', function () {
