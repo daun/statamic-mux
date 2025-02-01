@@ -5,8 +5,9 @@ namespace Daun\StatamicMux\Data;
 use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use Illuminate\Contracts\Support\Arrayable;
 use Statamic\Support\Traits\FluentlyGetsAndSets;
+use Stringable;
 
-class MuxPlaybackId implements Arrayable
+class MuxPlaybackId implements Arrayable, Stringable
 {
     use FluentlyGetsAndSets;
 
@@ -55,5 +56,10 @@ class MuxPlaybackId implements Arrayable
             'id' => $this->id,
             'policy' => $this->policy,
         ];
+    }
+
+    public function __toString(): string
+    {
+        return $this->id;
     }
 }

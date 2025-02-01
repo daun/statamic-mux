@@ -20,11 +20,11 @@
                 </span>
             </div>
             <div v-if="allowReuploads" class="flex items-center mt-3">
-                <label for="upload-missing-asset" class="flex items-center cursor-pointer">
+                <label for="upload-missing-asset" class="help-block grow flex items-center cursor-pointer font-normal">
                     <span class="basis-6 flex items-center">
-                        <input type="checkbox" name="reupload" id="upload-missing-asset" v-model="value.reupload">
+                        <input type="checkbox" name="reupload" id="upload-missing-asset" class="mr-2" v-model="value.reupload">
                     </span>
-                    <span class="ml-2">{{ __('statamic-mux::messages.mirror_fieldtype.upload_on_save') }}</span>
+                    <span>{{ __('statamic-mux::messages.mirror_fieldtype.upload_on_save') }}</span>
                 </label>
             </div>
         </div>
@@ -50,9 +50,9 @@
                 </table>
             </div>
             <div v-if="allowReuploads" class="flex items-center mt-3">
-                <label for="reupload-existing-asset" class="help-block flex items-center cursor-pointer font-normal">
+                <label for="reupload-existing-asset" class="help-block grow flex items-center cursor-pointer font-normal">
                     <span class="basis-6 flex items-center">
-                        <input type="checkbox" name="reupload" id="reupload-existing-asset" v-model="value.reupload">
+                        <input type="checkbox" name="reupload" id="reupload-existing-asset" class="mr-2" v-model="value.reupload">
                     </span>
                     <span>{{ __('statamic-mux::messages.mirror_fieldtype.reupload_on_save') }}</span>
                 </label>

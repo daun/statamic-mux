@@ -2,7 +2,6 @@
 
 namespace Tests\Concerns;
 
-use Daun\StatamicMux\Fieldtypes\MuxMirrorFieldtype;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
@@ -64,7 +63,7 @@ trait DealsWithAssets
             return $this->assetContainers[$name] ?? $this->getAssetContainer();
         }
 
-        return  $this->assetContainers['assets'] ?? null;
+        return $this->assetContainers['assets'] ?? null;
     }
 
     protected function createAssetContainer(string $name = 'assets'): AssetContainer

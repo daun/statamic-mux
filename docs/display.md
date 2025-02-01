@@ -16,6 +16,7 @@ and `loop` or events like `playing` will continue to work as expected.
 ```diff
 - <video src="/assets/video.mp4" autoplay>
 + <mux-video playback-id="DS00Spx1CV902M" autoplay></mux-video>
++ <script async src="https://unpkg.com/@mux/mux-video@0"></script>
 ```
 
 ### `mux-player`
@@ -27,6 +28,7 @@ playback.
 ```diff
 - <video src="/assets/video.mp4">
 + <mux-player playback-id="DS00Spx1CV902M"></mux-player>
++ <script async src="https://unpkg.com/@mux/mux-player@3"></script>
 ```
 
 ## Antlers Tags
@@ -35,7 +37,7 @@ You can use the provided Antlers tags to render the video components and placeho
 Learn more about the [available Antlers tags](/tags).
 
 ```antlers
-{{ mux:player src="assets::video.mp4" }}
+{{ mux:player src="assets::video.mp4" script="true" }}
 ```
 
 ::: code-group
@@ -46,7 +48,14 @@ Learn more about the [available Antlers tags](/tags).
   width="1920"
   height="1080"
 ></mux-player>
+<script async src="https://unpkg.com/@mux/mux-player@3"></script>
 ```
+
+:::
+
+## Headless Frontends
+
+For headless setups, the addon exposes custom [GraphQL Types](/graphql) you can query.
 
 ## Secure Playback
 
