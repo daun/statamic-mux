@@ -6,8 +6,6 @@ use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\GraphQL\MuxMirrorType;
 use Daun\StatamicMux\GraphQL\MuxPlaybackIdType;
 use Daun\StatamicMux\Jobs\CreateMuxAssetJob;
-use Daun\StatamicMux\Mux\MuxService;
-use Daun\StatamicMux\Support\Queue;
 use Statamic\Assets\Asset;
 use Statamic\Facades\GraphQL;
 use Statamic\Fields\Fieldtype;
@@ -72,14 +70,7 @@ class MuxMirrorFieldtype extends Fieldtype
 
         // (Re)upload asset if checkbox was checked by editor
         if ($reupload && $asset && $asset->isVideo()) {
-            if (Queue::connection() === 'sync') {
-                // We need to merge the current data with the created mux id
-                // to avoid overwriting the current data with an empty array
-                $muxId = app(MuxService::class)->createMuxAsset($asset, true);
-                $data = array_merge($data, array_filter(['id' => $muxId]));
-            } else {
-                CreateMuxAssetJob::dispatch($asset, true);
-            }
+            CreateMuxAssetJob::dispatchAfterResponse($asset, true);
         }
 
         return $data;
