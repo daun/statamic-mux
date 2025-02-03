@@ -1,7 +1,7 @@
 <template>
     <div>
         <div v-if="!isAsset || !isVideo" class="help-block mb-0 flex items-center">
-            <svg-icon name="hidden" class="h-4 mr-2" />
+            <svg-icon name="light/hidden" class="h-4 w-4 mr-2" />
             <span>
                 {{ __('statamic-mux::messages.mirror_fieldtype.not_mirrored') }}:
                 <template v-if="!isVideo">
@@ -14,7 +14,7 @@
         </div>
         <div v-else-if="!hasData">
             <div class="help-block mb-0 flex items-center">
-                <svg-icon name="close" class="h-4 mr-2" />
+                <svg-icon name="light/hyperlink-broken" class="h-4 w-4 mr-2" />
                 <span>
                     {{ __('statamic-mux::messages.mirror_fieldtype.not_uploaded') }}
                 </span>
@@ -30,7 +30,7 @@
         </div>
         <div v-else>
             <div class="help-block mb-0 flex items-center">
-                <svg-icon name="synchronize" class="h-4 mr-2" />
+                <svg-icon name="light/hyperlink" class="h-4 w-4 mr-2" />
                 <span :title="this.value.id">
                     {{ __('statamic-mux::messages.mirror_fieldtype.uploaded') }}
                 </span>
