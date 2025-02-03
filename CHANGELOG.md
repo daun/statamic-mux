@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.4] - 2025-02-03
+
+- Autocreate playback id on GraphQL requests
+
 ## [1.2.3] - 2025-01-30
 
 - Fix reupload when using sync queue
@@ -52,6 +56,7 @@
 
 - Beta release
 
+[1.2.4]: https://github.com/daun/statamic-mux/releases/tag/1.2.4
 [1.2.3]: https://github.com/daun/statamic-mux/releases/tag/1.2.3
 [1.2.2]: https://github.com/daun/statamic-mux/releases/tag/1.2.2
 [1.2.1]: https://github.com/daun/statamic-mux/releases/tag/1.2.1
