@@ -101,6 +101,13 @@ class MuxAsset implements Augmentable
         return $playbackId;
     }
 
+    public function setId(?string $id): self
+    {
+        $this->set('id', $id);
+
+        return $this;
+    }
+
     public function newAugmentedInstance(): AugmentedMuxAsset
     {
         return new AugmentedMuxAsset($this);

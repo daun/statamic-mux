@@ -56,7 +56,7 @@ class MuxService
 
         if ($asset) {
             if ($muxId = $this->app->make(CreateMuxAsset::class)->handle($asset, $force)) {
-                MuxAsset::fromAsset($asset)->set('id', $muxId)->save();
+                MuxAsset::fromAsset($asset)->clear()->setId($muxId)->save();
             }
         }
 
