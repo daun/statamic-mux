@@ -123,6 +123,7 @@ class MuxMirrorType extends \Rebing\GraphQL\Support\Type
             ],
         ];
     }
+
     protected function withPlaybackId(MuxAsset $asset, array $args, Closure $callback): mixed
     {
         if ($playbackId = Mux::getPlaybackId($asset->asset, $this->getPolicy($args))) {
