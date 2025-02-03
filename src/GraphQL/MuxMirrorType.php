@@ -2,6 +2,7 @@
 
 namespace Daun\StatamicMux\GraphQL;
 
+use Closure;
 use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Facades\Mux;
 use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
@@ -68,7 +69,7 @@ class MuxMirrorType extends \Rebing\GraphQL\Support\Type
                     ...$this->paramArgs('playback url'),
                 ],
                 'resolve' => function (MuxAsset $item, array $args) {
-                    return Mux::getPlaybackUrl($item->playbackId($this->getPolicy($args)), params: $args['params'] ?? []);
+                    return $this->withPlaybackId($item, $args, fn ($playbackId) => Mux::getPlaybackUrl($playbackId, params: $args['params'] ?? []));
                 },
             ],
             'playback_token' => [
@@ -79,7 +80,7 @@ class MuxMirrorType extends \Rebing\GraphQL\Support\Type
                     ...$this->paramArgs('signed playback url'),
                 ],
                 'resolve' => function (MuxAsset $item, array $args) {
-                    return Mux::getPlaybackToken($item->playbackId($this->getPolicy($args)), params: $args['params'] ?? []);
+                    return $this->withPlaybackId($item, $args, fn ($playbackId) => Mux::getPlaybackToken($playbackId, params: $args['params'] ?? []));
                 },
             ],
             'thumbnail' => [
@@ -90,7 +91,7 @@ class MuxMirrorType extends \Rebing\GraphQL\Support\Type
                     ...$this->paramArgs('thumbnail url'),
                 ],
                 'resolve' => function (MuxAsset $item, array $args) {
-                    return Mux::getThumbnailUrl($item->playbackId($this->getPolicy($args)), params: $args['params'] ?? []);
+                    return $this->withPlaybackId($item, $args, fn ($playbackId) => Mux::getThumbnailUrl($playbackId, params: $args['params'] ?? []));
                 },
             ],
             'gif' => [
@@ -101,7 +102,7 @@ class MuxMirrorType extends \Rebing\GraphQL\Support\Type
                     ...$this->paramArgs('gif url'),
                 ],
                 'resolve' => function (MuxAsset $item, array $args) {
-                    return Mux::getGifUrl($item->playbackId($this->getPolicy($args)), params: $args['params'] ?? []);
+                    return $this->withPlaybackId($item, $args, fn ($playbackId) => Mux::getGifUrl($playbackId, params: $args['params'] ?? []));
                 },
             ],
             'placeholder' => [
@@ -112,7 +113,7 @@ class MuxMirrorType extends \Rebing\GraphQL\Support\Type
                     ...$this->paramArgs('placeholder url'),
                 ],
                 'resolve' => function (MuxAsset $item, array $args) {
-                    return Mux::getPlaceholderDataUri($item->playbackId($this->getPolicy($args)), params: $args['params'] ?? []);
+                    return $this->withPlaybackId($item, $args, fn ($playbackId) => Mux::getPlaceholderDataUri($playbackId, params: $args['params'] ?? []));
                 },
             ],
             'playback_modifiers' => [
@@ -122,10 +123,19 @@ class MuxMirrorType extends \Rebing\GraphQL\Support\Type
             ],
         ];
     }
+    protected function withPlaybackId(MuxAsset $asset, array $args, Closure $callback): mixed
+    {
+        if ($playbackId = Mux::getPlaybackId($asset->asset, $this->getPolicy($args))) {
+            return $callback($playbackId);
+        } else {
+            return null;
+        }
+    }
 
     protected function getPolicy(array $args): ?MuxPlaybackPolicy
     {
         Validator::make($args, ['policy' => ['string', 'nullable', 'in:public,signed']])->validate();
+
         return MuxPlaybackPolicy::make($args['policy'] ?? null);
     }
 }
