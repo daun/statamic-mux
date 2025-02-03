@@ -42,7 +42,7 @@
                             <th>{{ label || key }}</th>
                             <td>
                                 <div class="flex align-center">
-                                    <svg-icon v-if="icon" :name="'light/' + icon" class="h-4 w-4 mr-2 " />
+                                    <svg-icon v-if="icon" :name="'light/' + icon" class="h-4 w-4 mr-2 shrink-0" />
                                     <span>{{ value }}</span>
                                 </div>
                             </td>
