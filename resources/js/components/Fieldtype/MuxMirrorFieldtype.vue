@@ -12,7 +12,7 @@
                 </template>
             </span>
         </div>
-        <div v-else-if="!hasData">
+        <div v-else-if="!isUploaded">
             <div class="help-block mb-0 flex items-center">
                 <svg-icon name="light/hyperlink-broken" class="h-4 w-4 mr-2" />
                 <span>
@@ -35,15 +35,16 @@
                     {{ __('statamic-mux::messages.mirror_fieldtype.uploaded') }}
                 </span>
             </div>
-            <div v-if="showDetails" class="mux-table-wrapper mt-3">
+            <div v-if="details.length" class="mux-table-wrapper mt-3">
                 <table class="mux-table">
                     <tbody>
-                        <tr v-for="row in rows" :key="row.key">
-                            <th>
-                                {{ row.label || row.key }}
-                            </th>
+                        <tr v-for="{ key, label, value, icon } in details" :key="key">
+                            <th>{{ label || key }}</th>
                             <td>
-                                {{ row.value }}
+                                <div class="flex align-center">
+                                    <svg-icon v-if="icon" :name="'light/' + icon" class="h-4 w-4 mr-2 " />
+                                    <span>{{ value }}</span>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
@@ -64,16 +65,6 @@
 <script>
 export default {
     mixins: [Fieldtype],
-    data() {
-        return {
-            details: false,
-            labels: {
-              'id': 'Mux ID',
-              'playback_id': 'Playback ID',
-              'playback_policy': 'Playback Policy',
-            }
-        };
-    },
     computed: {
         allowReuploads() {
             return this.config?.allow_reupload;
@@ -87,21 +78,33 @@ export default {
         isVideo() {
             return this.meta?.is_video || false;
         },
-        hasData() {
-            return this.rows.length;
+        isUploaded() {
+            return this.value.id;
         },
-        hasMuxData() {
-            return arr_get(this.field, 'config.has_mux_data', false);
-        },
-        rows() {
-            const rows = ['id', 'playback_id', 'playback_policy']
-            return Object.entries(this.value || {})
-                .filter(([key]) => rows.includes(key))
-                .sort(([a], [b]) => rows.indexOf(a) - rows.indexOf(b))
-                .map(([key, value]) => {
-                    const label = this.labels[key] || key;
-                    return { key, value, label };
-                });
+        details() {
+            if (! this.isUploaded || ! this.showDetails) return [];
+
+            const muxId = this.value.id;
+            const playbackIds = Object.entries(this.value.playback_ids || {})
+                .sort(([a], [b]) => a.localeCompare(b));
+            const playbackId = this.value.playback_id;
+            const playbackPolicy = this.value.playback_policy;
+            if (! playbackIds.length && playbackId && playbackPolicy) {
+                playbackIds.push([playbackPolicy, playbackId]);
+            }
+
+            const rows = [];
+
+            rows.push({ key: 'id', label: 'Mux ID', value: muxId });
+
+            for (const [policy, id] of playbackIds) {
+                const icon = playbackIds.length > 1
+                    ? (policy === 'signed' ? 'lock' : 'eye')
+                    : null;
+                rows.push({ key: id, label: 'Playback ID', value: id, icon });
+            }
+
+            return rows.filter(({ value }) => value);
         }
     }
 };
