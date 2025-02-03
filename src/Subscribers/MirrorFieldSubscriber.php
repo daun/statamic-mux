@@ -6,7 +6,6 @@ use Daun\StatamicMux\Concerns\UsesAddonQueue;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Support\MirrorField;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Events\Dispatcher;
 use Statamic\Events\AssetDeleted;
 use Statamic\Events\AssetReuploaded;
 use Statamic\Events\AssetSaved;
@@ -20,10 +19,9 @@ class MirrorFieldSubscriber implements ShouldQueue
         protected MuxService $service
     ) {}
 
-    public function subscribe(Dispatcher $events): array
+    public function subscribe(): array
     {
         return [
-            // AssetSaved::class => 'createMuxAsset',
             AssetUploaded::class => 'createMuxAsset',
             AssetReuploaded::class => 'createMuxAsset',
             AssetDeleted::class => 'deleteMuxAsset',
