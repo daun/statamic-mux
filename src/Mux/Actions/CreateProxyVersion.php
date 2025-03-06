@@ -4,9 +4,9 @@ namespace Daun\StatamicMux\Mux\Actions;
 
 use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use Daun\StatamicMux\Mux\MuxApi;
-use Daun\StatamicMux\Mux\MuxService;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Log;
+use MuxPhp\ApiException;
 use MuxPhp\Models\Asset as MuxApiAssetModel;
 use Statamic\Support\Traits\Hookable;
 
@@ -17,7 +17,6 @@ class CreateProxyVersion
     public function __construct(
         protected Application $app,
         protected MuxApi $api,
-        protected MuxService $service,
     ) {}
 
     /**
@@ -41,7 +40,16 @@ class CreateProxyVersion
      */
     public function ready(string $muxId): bool
     {
-        return $this->service->muxAssetExists($muxId) && $this->service->isMuxAssetReady($muxId);
+        try {
+            $status = $this->api->assets()->getAsset($muxId)->getData()?->getStatus();
+            return $status === MuxApiAssetModel::STATUS_READY;
+        } catch (ApiException $e) {
+            if ($e->getCode() === 404) {
+                return false;
+            } else {
+                throw $e;
+            }
+        }
     }
 
     /**

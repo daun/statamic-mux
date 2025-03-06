@@ -2,11 +2,14 @@
 
 namespace Daun\StatamicMux\Mux\Actions;
 
-use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Log;
+use MuxPhp\ApiException;
+use MuxPhp\Models\Asset as MuxApiAssetModel;
+use MuxPhp\Models\AssetStaticRenditions;
+use Statamic\Assets\Asset;
 use Statamic\Support\Traits\Hookable;
 
 class DownloadProxyVersion
@@ -22,10 +25,13 @@ class DownloadProxyVersion
     /**
      * Download a low-fi proxy video of an existing Mux asset.
      */
-    public function handle(string $muxId, string $path): bool
+    public function handle(string $muxId, Asset $asset): bool
     {
         try {
-            $renditionUrl = $this->getSmallestRendition($muxId);
+            if ($renditionUrl = $this->getSmallestRendition($muxId)) {
+                ray('$renditionUrl', $renditionUrl);
+                // $asset->disk()->filesystem(), $asset->path()
+            }
         } catch (\Throwable $th) {
             Log::error($th->getMessage());
 
@@ -36,13 +42,35 @@ class DownloadProxyVersion
     }
 
     /**
-     * Whether the proxy can already be downloaded.
+     * Whether the proxy is ready for downloading.
      */
     public function ready(string $muxId): bool
     {
-        return $this->service->muxAssetExists($muxId)
-            && $this->service->isMuxAssetReady($muxId)
-            && $this->;
+        try {
+            $data = $this->api->assets()->getAsset($muxId)->getData();
+            $assetStatus = $data?->getStatus();
+            $renditionStatus = $data?->getStaticRenditions()?->getStatus();
+
+            return $assetStatus === MuxApiAssetModel::STATUS_READY
+                && $renditionStatus === AssetStaticRenditions::STATUS_READY;
+        } catch (ApiException $e) {
+            if ($e->getCode() === 404) {
+                return false;
+            } else {
+                throw $e;
+            }
+        }
+    }
+
+    /**
+     * Check if a Mux asset has static renditions.
+     */
+    protected function hasStaticRenditionsReady(string $muxId): bool
+    {
+        $data = $this->api->assets()->getAsset($muxId)->getData();
+        $status = $data?->getStaticRenditions()?->getStatus();
+
+        return $status === AssetStaticRenditions::STATUS_READY;
     }
 
     /**
@@ -50,19 +78,11 @@ class DownloadProxyVersion
      */
     protected function getSmallestRendition(string $muxId): ?string
     {
-        $data = $this->api->assets()->getAsset($muxId)?->getData();
-        $playbackId = $data?->getPlaybackIds()[0]?->getId();
-        $status
-        $
+        $data = $this->api->assets()->getAsset($muxId)->getData();
+        $renditions = $data?->getStaticRenditions();
 
-        ray(json_decode($data->jsonSerialize()));
-    }
+        ray(json_decode($renditions->jsonSerialize()));
 
-    /**
-     * Get additional data to pass through to Mux.
-     */
-    protected function getAssetPassthroughData(string $muxId): string
-    {
-        return "statamic::proxy::{$muxId}";
+        return null;
     }
 }

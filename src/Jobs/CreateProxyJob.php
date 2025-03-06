@@ -3,7 +3,6 @@
 namespace Daun\StatamicMux\Jobs;
 
 use DateTime;
-use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Mux\Actions\CreateProxyVersion;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Support\Queue;
@@ -18,6 +17,8 @@ class CreateProxyJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public $backoff = [1, 3, 5, 10, 20, 30, 60, 120, 300, 600, 1200, 1800, 3600, 10800];
+
     public function __construct(
         protected Asset $asset
     ) {
@@ -27,7 +28,7 @@ class CreateProxyJob implements ShouldQueue
 
     public function retryUntil(): DateTime
     {
-        return now()->addMinutes(15);
+        return now()->addDay();
     }
 
     public function handle(MuxService $service, CreateProxyVersion $action): void
@@ -41,11 +42,11 @@ class CreateProxyJob implements ShouldQueue
 
         // Asset not ready? Release back for later processing
         if (! $action->ready($muxId)) {
-            return $this->release(5);
+            return $this->release(3);
         }
 
         if ($proxyId = $action->handle($muxId)) {
-            MuxAsset::fromAsset($this->asset)->set('proxy', $proxyId)->save();
+            DownloadProxyJob::dispatch($this->asset, $proxyId);
         }
     }
 }

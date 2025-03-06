@@ -120,10 +120,11 @@ class MuxService
     /**
      * Check if an asset with given id is ready on Mux.
      */
-    public function isMuxAssetReady(string $muxId): bool
+    public function muxAssetIsReady(string $muxId): bool
     {
         try {
             $status = $this->api->assets()->getAsset($muxId)->getData()?->getStatus();
+
             return $status === MuxApiAssetModel::STATUS_READY;
         } catch (ApiException $e) {
             return false;
