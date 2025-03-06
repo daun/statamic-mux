@@ -5,6 +5,7 @@ namespace Daun\StatamicMux\Subscribers;
 use Daun\StatamicMux\Concerns\UsesAddonQueue;
 use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Events\AssetUploadedToMux;
+use Daun\StatamicMux\Jobs\CreateProxyJob;
 use Daun\StatamicMux\Mux\Actions\CreateProxyVersion;
 use Daun\StatamicMux\Mux\MuxService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -35,6 +36,7 @@ class ProxyVersionSubscriber implements ShouldQueue
      */
     public function createProxy(AssetUploadedToMux $event): void
     {
+        CreateProxyJob::dispatchAfterResponse($event->asset);
         if ($proxyId = $this->app->make(CreateProxyVersion::class)->handle($event->muxId)) {
             MuxAsset::fromAsset($event->asset)->set('proxy', $proxyId)->save();
         }

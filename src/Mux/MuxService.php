@@ -14,6 +14,7 @@ use Daun\StatamicMux\Support\URL;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Arr;
 use MuxPhp\ApiException;
+use MuxPhp\Models\Asset as MuxApiAssetModel;
 use Statamic\Assets\Asset;
 use Statamic\Facades\Asset as Assets;
 use Statamic\Support\Traits\Hookable;
@@ -113,6 +114,19 @@ class MuxService
             } else {
                 throw $e;
             }
+        }
+    }
+
+    /**
+     * Check if an asset with given id is ready on Mux.
+     */
+    public function isMuxAssetReady(string $muxId): bool
+    {
+        try {
+            $status = $this->api->assets()->getAsset($muxId)->getData()?->getStatus();
+            return $status === MuxApiAssetModel::STATUS_READY;
+        } catch (ApiException $e) {
+            return false;
         }
     }
 

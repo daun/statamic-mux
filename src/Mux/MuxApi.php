@@ -11,6 +11,7 @@ use MuxPhp\Api\LiveStreamsApi;
 use MuxPhp\Api\PlaybackIDApi;
 use MuxPhp\Api\URLSigningKeysApi;
 use MuxPhp\Configuration;
+use MuxPhp\Models\Asset;
 use MuxPhp\Models\CreateAssetRequest;
 use MuxPhp\Models\CreatePlaybackIDRequest;
 use MuxPhp\Models\CreateUploadRequest;
@@ -106,6 +107,24 @@ class MuxApi
     public function input(array $input): InputSettings
     {
         return new InputSettings($input);
+    }
+
+    public function isAssetReady(string $assetId): ?bool
+    {
+        if ($status = $this->getAssetStatus($assetId)) {
+            return $status === Asset::STATUS_READY;
+        } else {
+            return null;
+        }
+    }
+
+    public function getAssetStatus(string $assetId): ?string
+    {
+        try {
+            return $this->assets()->getAsset($assetId)->getData()?->getStatus();
+        } catch (\Throwable $th) {
+            return null;
+        }
     }
 
     public function createAssetRequest(array $options = []): CreateAssetRequest
