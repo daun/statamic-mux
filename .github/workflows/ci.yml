@@ -57,6 +57,14 @@ jobs:
           max_attempts: 3
           command: composer require "laravel/framework:11.*" "orchestra/testbench:^9.0" "pestphp/pest:^3.0" "pestphp/pest-plugin-laravel:^3.0" "spatie/pest-plugin-snapshots:^2.1" --no-update --no-interaction
 
+      - name: Select Laravel 12
+        uses: nick-invision/retry@v3
+        if: ${{ matrix.laravel == '12' }}
+        with:
+          timeout_minutes: 3
+          max_attempts: 3
+          command: composer require "laravel/framework:12.*" "orchestra/testbench:^10.0" "pestphp/pest:^3.0" "pestphp/pest-plugin-laravel:^3.0" "spatie/pest-plugin-snapshots:^2.1" --no-update --no-interaction
+
       - name: Install PHP Dependencies
         uses: nick-invision/retry@v3
         with:
