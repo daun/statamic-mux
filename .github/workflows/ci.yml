@@ -58,3 +58,10 @@ jobs:
 
       - name: Execute tests
         run: composer run test:ci
+
+      - name: Check code coverage
+        uses: codecov/codecov-action@v4
+        if: ${{ matrix.php == '8.3' && matrix.laravel == '12.*' }}
+        with:
+          file: ./coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
