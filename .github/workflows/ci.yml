@@ -12,8 +12,9 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        php: [8.2, 8.3]
+        php: [8.2, 8.3, 8.4]
         laravel: [9.*, 10.*, 11.*, 12.*]
+        statamic: [4.*, 5.*]
         include:
           - laravel: 9.*
             testbench: 7.*
@@ -31,8 +32,11 @@ jobs:
             testbench: 10.*
             pest: 3.*
             snapshots: 2.*
+        exclude:
+          - laravel: 9.*
+            statamic: 5.*
 
-    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }}
+    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }} / Statamic ${{ matrix.statamic }}
 
     steps:
       - name: Checkout code
@@ -50,7 +54,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" "pestphp/pest:${{ matrix.pest }}" "pestphp/pest-plugin-laravel:${{ matrix.pest }}" "spatie/pest-plugin-snapshots:${{ matrix.snapshots }}" --no-interaction --no-update
+          composer require "statamic/cms:${{ matrix.statamic }}" "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" "pestphp/pest:${{ matrix.pest }}" "pestphp/pest-plugin-laravel:${{ matrix.pest }}" "spatie/pest-plugin-snapshots:${{ matrix.snapshots }}" --no-interaction --no-update
           composer update --prefer-dist --no-interaction --no-progress
 
       - name: Check code style
