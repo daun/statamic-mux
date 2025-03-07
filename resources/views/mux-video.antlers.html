@@ -15,9 +15,9 @@
   {{ if background }}
     autoplay loop muted
   {{ else }}
-    {{ autoplay | attribute:autoplay }}
-    {{ loop | attribute:loop }}
-    {{ muted | attribute:muted }}
+    {{ if autoplay }} autoplay {{ /if }}
+    {{ if loop }} loop {{ /if }}
+    {{ if muted }} muted {{ /if }}
   {{ /if }}
   {{ foreach:attributes as="attr|value" }}
     {{ if attr }} {{ attr }}="{{ value }}" {{ /if }}
