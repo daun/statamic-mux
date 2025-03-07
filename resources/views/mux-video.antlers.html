@@ -12,15 +12,8 @@
   width="{{ width }}"
   height="{{ height }}"
   playsinline
-  {{ if background }}
-    autoplay loop muted
-  {{ else }}
-    {{ autoplay | attribute:autoplay }}
-    {{ loop | attribute:loop }}
-    {{ muted | attribute:muted }}
-  {{ /if }}
   {{ foreach:attributes as="attr|value" }}
-    {{ attr }}="{{ value }}"
+    {{ if attr }} {{ attr }}="{{ value }}" {{ /if }}
   {{ /foreach:attributes }}
 ></mux-video>
 

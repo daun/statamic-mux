@@ -13,11 +13,8 @@
   preload="metadata"
   width="{{ width }}"
   height="{{ height }}"
-  {{ autoplay | attribute:autoplay }}
-  {{ loop | attribute:loop }}
-  {{ muted | attribute:muted }}
   {{ foreach:attributes as="attr|value" }}
-    {{ attr }}="{{ value }}"
+    {{ if attr }} {{ attr }}="{{ value }}" {{ /if }}
   {{ /foreach:attributes }}
 ></mux-player>
 

@@ -4,17 +4,17 @@ namespace Daun\StatamicMux\Tags;
 
 use Daun\StatamicMux\Tags\Concerns\GetsAssetFromContext;
 use Daun\StatamicMux\Tags\Concerns\ReadsMuxData;
-use Illuminate\Support\Collection;
+use Daun\StatamicMux\Tags\Concerns\RendersMuxPlayer;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Statamic\Tags\Concerns\RendersAttributes;
 use Statamic\Tags\Tags;
 
 class MuxTags extends Tags
 {
     use GetsAssetFromContext;
     use ReadsMuxData;
-    use RendersAttributes;
+    use RendersMuxPlayer;
 
     protected static $handle = 'mux';
 
@@ -135,26 +135,26 @@ class MuxTags extends Tags
 
         $data = $this->generate($asset);
 
-        $params = collect([
-            'autoplay' => $this->params->bool('autoplay', false),
-            'loop' => $this->params->bool('loop', false),
-            'muted' => $this->params->bool('muted', false),
-            'background' => $this->params->bool('background', false),
-            'script' => $this->params->bool('script', false),
-        ]);
+        $params = collect(['script' => $this->params->bool('script', false)]);
 
-        $attributes = collect($this->params->all())
+        $playbackAttributes = collect($this->getDefaultPlaybackModifiers())
+            ->merge($this->params->all())
+            ->when($this->params->bool('background'), function ($attr) {
+                $attr->merge(['autoplay' => true, 'loop' => true, 'muted' => true]);
+            })
+            ->filter(fn ($_, $key) => $this->isPlaybackAttribute($key));
+
+        $htmlAttributes = collect($this->params->all())
             ->except($this->assetParams)
-            ->except($params->keys());
-
-        $playbackAttributes = collect($data['playback_modifiers'])
-            ->except($attributes->keys());
+            ->except($params->keys())
+            ->except($playbackAttributes->keys());
 
         $viewdata = $this->context
-            ->merge($this->generate($asset))
+            ->merge($data)
             ->merge($params)
-            ->merge(['attributes' => $this->toHtmlAttributes($attributes)])
-            ->merge(['playback_attributes' => $this->toHtmlAttributes($playbackAttributes)]);
+            ->merge(['attributes' => $this->toHtmlAttributes($htmlAttributes)])
+            ->merge(['playback_attributes' => $this->toHtmlAttributes($playbackAttributes)])
+            ->merge(['playback_query' => Arr::query($playbackAttributes->all())]);
 
         return view("statamic-mux::{$view}", $viewdata)->render();
     }
@@ -196,7 +196,7 @@ class MuxTags extends Tags
      */
     public function thumbnail(): ?string
     {
-        return $this->getThumbnailUrl(params: $this->getNonAssetParams());
+        return $this->getThumbnailUrl(params: $this->params->except($this->assetParams)->all());
     }
 
     /**
@@ -206,7 +206,7 @@ class MuxTags extends Tags
      */
     public function gif(): ?string
     {
-        return $this->getGifUrl(params: $this->getNonAssetParams());
+        return $this->getGifUrl(params: $this->params->except($this->assetParams)->all());
     }
 
     /**
@@ -216,14 +216,16 @@ class MuxTags extends Tags
      */
     public function placeholder(): ?string
     {
-        return $this->getPlaceholderDataUri(params: $this->getNonAssetParams());
+        return $this->getPlaceholderDataUri(params: $this->params->except($this->assetParams)->all());
     }
 
     /**
      * Turn query_params into html-attributes (snake to kebab case)
      */
-    protected function toHtmlAttributes(mixed $params): Collection
+    protected function toHtmlAttributes(mixed $params): array
     {
-        return collect($params)->keyBy(fn ($_, $key) => Str::replace('_', '-', $key));
+        return collect($params)
+            ->keyBy(fn ($_, $key) => Str::replace('_', '-', $key))
+            ->all();
     }
 }
