@@ -195,7 +195,7 @@ class MuxTags extends Tags
      */
     public function thumbnail(): ?string
     {
-        return $this->getThumbnailUrl(params: $this->getNonAssetParams());
+        return $this->getThumbnailUrl(params: $this->params->except($this->assetParams)->all());
     }
 
     /**
@@ -205,7 +205,7 @@ class MuxTags extends Tags
      */
     public function gif(): ?string
     {
-        return $this->getGifUrl(params: $this->getNonAssetParams());
+        return $this->getGifUrl(params: $this->params->except($this->assetParams)->all());
     }
 
     /**
@@ -215,7 +215,7 @@ class MuxTags extends Tags
      */
     public function placeholder(): ?string
     {
-        return $this->getPlaceholderDataUri(params: $this->getNonAssetParams());
+        return $this->getPlaceholderDataUri(params: $this->params->except($this->assetParams)->all());
     }
 
     /**
