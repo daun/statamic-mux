@@ -58,6 +58,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          composer config --global github-protocols https
           composer require "statamic/cms:${{ matrix.statamic }}" "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" "pestphp/pest:${{ matrix.pest }}" "pestphp/pest-plugin-laravel:${{ matrix.pest }}" "spatie/pest-plugin-snapshots:${{ matrix.snapshots }}" --no-interaction --no-update
           composer update --prefer-dist --no-interaction --no-progress
 
