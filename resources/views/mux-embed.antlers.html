@@ -1,0 +1,23 @@
+{{ url = 'https://player.mux.com/' + playback_id }}
+
+{{ modifiers = arr(
+  "autoplay" => background || autoplay,
+  "loop" => background || loop,
+  "muted" => background || muted,
+)}}
+
+{{ params = playback_attributes | merge(modifiers) | merge(attributes) }}
+
+{{ if params | length > 0 }}
+  {{ query = params | to_qs }}
+  {{ url = url + '?' + query }}
+{{ /if }}
+
+<iframe
+  src="{{ url }}"
+  width="{{ width }}"
+  height="{{ height }}"
+  {{ foreach:attributes as="attr|value" }}
+    {{ attr }}="{{ value }}"
+  {{ /foreach:attributes }}
+></iframe>

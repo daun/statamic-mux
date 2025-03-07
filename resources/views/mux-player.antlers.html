@@ -2,6 +2,8 @@
   playback-id="{{ playback_id }}"
   {{ if is_signed }}
     playback-token="{{ playback_token }}"
+    thumbnail-token="{{ thumbnail_token }}"
+    storyboard-token="{{ storyboard_token }}"
   {{ else }}
     {{ foreach:playback_attributes as="attr|value" }}
       {{ attr }}="{{ value }}"

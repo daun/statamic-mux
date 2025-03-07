@@ -1,6 +1,6 @@
 <mux-video
   {{ if is_signed }}
-    playback-id="{{ playback_id_signed }}"
+    playback-id="{{ playback_id }}?token={{ playback_token }}"
   {{ else }}
     playback-id="{{ playback_id }}"
     {{ foreach:playback_attributes as="attr|value" }}

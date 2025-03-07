@@ -56,16 +56,6 @@ trait ReadsMuxData
     }
 
     /**
-     * Get the playback token of a signed video
-     */
-    protected function getPlaybackToken($asset = null, ?array $params = []): ?string
-    {
-        return ($playbackId = $this->getPlaybackId($asset))
-            ? Mux::getPlaybackToken($playbackId, params: $params)
-            : null;
-    }
-
-    /**
      * Get the thumbnail url of a video
      */
     protected function getThumbnailUrl($asset = null, ?array $params = []): ?string
@@ -92,6 +82,36 @@ trait ReadsMuxData
     {
         return ($playbackId = $this->getPlaybackId($asset))
             ? Mux::getPlaceholderDataUri($playbackId, params: $params)
+            : null;
+    }
+
+    /**
+     * Get the playback token of a signed video
+     */
+    protected function getPlaybackToken($asset = null, ?array $params = []): ?string
+    {
+        return ($playbackId = $this->getPlaybackId($asset))
+            ? Mux::getPlaybackToken($playbackId, params: $params)
+            : null;
+    }
+
+    /**
+     * Get the thumbnail token of a signed video
+     */
+    protected function getThumbnailToken($asset = null, ?array $params = []): ?string
+    {
+        return ($playbackId = $this->getPlaybackId($asset))
+            ? Mux::getThumbnailToken($playbackId, params: $params)
+            : null;
+    }
+
+    /**
+     * Get the storyboard token of a signed video
+     */
+    protected function getStoryboardToken($asset = null, ?array $params = []): ?string
+    {
+        return ($playbackId = $this->getPlaybackId($asset))
+            ? Mux::getStoryboardToken($playbackId, params: $params)
             : null;
     }
 

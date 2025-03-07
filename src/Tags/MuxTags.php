@@ -23,11 +23,13 @@ class MuxTags extends Tags
      *
      * Where `field` is the variable containing the video asset
      */
-    public function __call($method, $args)
+    public function wildcard($field)
     {
-        $tag = explode(':', $this->tag, 2)[1];
+        if (! $this->context->has($field)) {
+            throw new \Exception("Variable [{$field}] does not exist in context.");
+        }
 
-        $item = $this->context->value($tag);
+        $item = $this->context->value($field);
 
         if ($this->isPair) {
             return $this->generate($item);
@@ -71,12 +73,13 @@ class MuxTags extends Tags
                 'playback_id' => $playbackId?->id(),
                 'playback_policy' => $playbackId?->policy(),
                 'playback_modifiers' => ($playbackModifiers = $this->getDefaultPlaybackModifiers()),
-                'playback_token' => ($playbackToken = $this->getPlaybackToken($asset, $playbackModifiers)),
-                'playback_id_signed' => $playbackToken ? "{$playbackId->id()}?token={$playbackToken}" : $playbackId?->id(),
                 'playback_url' => $this->getPlaybackUrl($asset),
                 'thumbnail' => $this->getThumbnailUrl($asset),
-                'placeholder' => $this->getPlaceholderDataUri($asset),
                 'gif' => $this->getGifUrl($asset),
+                'placeholder' => $this->getPlaceholderDataUri($asset),
+                'playback_token' => $this->getPlaybackToken($asset, $playbackModifiers),
+                'thumbnail_token' => $this->getThumbnailToken($asset),
+                'storyboard_token' => $this->getStoryboardToken($asset),
                 'is_public' => $playbackId?->isPublic(),
                 'is_signed' => $playbackId?->isSigned(),
             ];
@@ -107,6 +110,16 @@ class MuxTags extends Tags
     public function player(): ?string
     {
         return $this->component('mux-player');
+    }
+
+    /**
+     * Tag {{ mux:embed }}
+     *
+     * Return a rendered <iframe> html embed.
+     */
+    public function embed(): ?string
+    {
+        return $this->component('mux-embed');
     }
 
     /**
