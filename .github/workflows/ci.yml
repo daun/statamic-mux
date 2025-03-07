@@ -52,13 +52,14 @@ jobs:
           php-version: ${{ matrix.php }}
           tools: composer:v2
           coverage: xdebug
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup problem matchers
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Install dependencies
         run: |
-          composer config --global github-protocols https
           composer require "statamic/cms:${{ matrix.statamic }}" "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" "pestphp/pest:${{ matrix.pest }}" "pestphp/pest-plugin-laravel:${{ matrix.pest }}" "spatie/pest-plugin-snapshots:${{ matrix.snapshots }}" --no-interaction --no-update
           composer update --prefer-dist --no-interaction --no-progress
 
