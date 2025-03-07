@@ -110,6 +110,16 @@ class MuxTags extends Tags
     }
 
     /**
+     * Tag {{ mux:embed }}
+     *
+     * Return a rendered <iframe> html embed.
+     */
+    public function embed(): ?string
+    {
+        return $this->component('mux-embed');
+    }
+
+    /**
      * Render a custom-element view.
      */
     protected function component(string $view): ?string
