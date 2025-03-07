@@ -12,13 +12,6 @@
   width="{{ width }}"
   height="{{ height }}"
   playsinline
-  {{ if background }}
-    autoplay loop muted
-  {{ else }}
-    {{ if autoplay }} autoplay {{ /if }}
-    {{ if loop }} loop {{ /if }}
-    {{ if muted }} muted {{ /if }}
-  {{ /if }}
   {{ foreach:attributes as="attr|value" }}
     {{ if attr }} {{ attr }}="{{ value }}" {{ /if }}
   {{ /foreach:attributes }}

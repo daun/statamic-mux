@@ -13,9 +13,6 @@
   preload="metadata"
   width="{{ width }}"
   height="{{ height }}"
-  {{ if autoplay }} autoplay {{ /if }}
-  {{ if loop }} loop {{ /if }}
-  {{ if muted }} muted {{ /if }}
   {{ foreach:attributes as="attr|value" }}
     {{ if attr }} {{ attr }}="{{ value }}" {{ /if }}
   {{ /foreach:attributes }}

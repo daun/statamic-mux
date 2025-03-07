@@ -1,16 +1,7 @@
 {{ url = 'https://player.mux.com/' + playback_id }}
 
-{{ modifiers = arr(
-  "autoplay" => background || autoplay || null,
-  "loop" => background || loop || null,
-  "muted" => background || muted || null,
-) }}
-
-{{ params = arr() | merge('playback_attributes') | merge('modifiers') | merge('attributes') }}
-
-{{ qs = params | to_qs }}
-{{ if qs }}
-  {{ url = url + '?' + qs }}
+{{ if playback_query }}
+  {{ url = url + '?' + playback_query }}
 {{ /if }}
 
 <iframe
