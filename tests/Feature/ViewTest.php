@@ -13,7 +13,7 @@ beforeEach(function () {
 });
 
 test('throws when missing variable in wildcard tag', function () {
-    expect(fn() => $this->antlers('{{ mux:something }}'))->toThrow('Variable [something] does not exist in context.');
+    expect(fn () => $this->antlers('{{ mux:something }}'))->toThrow('Variable [something] does not exist in context.');
 });
 
 test('renders video component', function () {
@@ -21,7 +21,7 @@ test('renders video component', function () {
         ->assertSeeInOrder([
             '<mux-video',
             'playback-id="456"',
-            '></mux-video>'
+            '></mux-video>',
         ], false);
 });
 
@@ -33,13 +33,12 @@ test('embeds video scripts', function () {
         ->assertSee('<script async src="https://unpkg.com/@mux/mux-video@0"></script>', false);
 });
 
-
 test('renders player component', function () {
     $this->antlers('{{ mux:player src="test_container_assets::test.mp4" }}')
         ->assertSeeInOrder([
             '<mux-player',
             'playback-id="456"',
-            '></mux-player>'
+            '></mux-player>',
         ], false);
 });
 
@@ -56,6 +55,6 @@ test('renders iframe embed', function () {
         ->assertSeeInOrder([
             '<iframe',
             'src="https://player.mux.com/456"',
-            '></iframe>'
+            '></iframe>',
         ], false);
 });

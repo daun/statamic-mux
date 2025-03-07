@@ -4,7 +4,6 @@ namespace Daun\StatamicMux\Tags;
 
 use Daun\StatamicMux\Tags\Concerns\GetsAssetFromContext;
 use Daun\StatamicMux\Tags\Concerns\ReadsMuxData;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Statamic\Tags\Concerns\RendersAttributes;
