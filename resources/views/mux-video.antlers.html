@@ -20,7 +20,7 @@
     {{ muted | attribute:muted }}
   {{ /if }}
   {{ foreach:attributes as="attr|value" }}
-    {{ attr }}="{{ value }}"
+    {{ if attr }} {{ attr }}="{{ value }}" {{ /if }}
   {{ /foreach:attributes }}
 ></mux-video>
 

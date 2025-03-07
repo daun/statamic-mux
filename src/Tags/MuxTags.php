@@ -222,8 +222,10 @@ class MuxTags extends Tags
     /**
      * Turn query_params into html-attributes (snake to kebab case)
      */
-    protected function toHtmlAttributes(mixed $params): Collection
+    protected function toHtmlAttributes(mixed $params): array
     {
-        return collect($params)->keyBy(fn ($_, $key) => Str::replace('_', '-', $key));
+        return collect($params)
+            ->keyBy(fn ($_, $key) => Str::replace('_', '-', $key))
+            ->all();
     }
 }

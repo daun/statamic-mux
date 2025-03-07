@@ -17,7 +17,7 @@
   {{ loop | attribute:loop }}
   {{ muted | attribute:muted }}
   {{ foreach:attributes as="attr|value" }}
-    {{ attr }}="{{ value }}"
+    {{ if attr }} {{ attr }}="{{ value }}" {{ /if }}
   {{ /foreach:attributes }}
 ></mux-player>
 
