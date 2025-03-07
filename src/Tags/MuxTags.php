@@ -23,11 +23,13 @@ class MuxTags extends Tags
      *
      * Where `field` is the variable containing the video asset
      */
-    public function __call($method, $args)
+    public function wildcard($field)
     {
-        $tag = explode(':', $this->tag, 2)[1];
+        if (! $this->context->has($field)) {
+            throw new \Exception("Variable [{$field}] does not exist in context.");
+        }
 
-        $item = $this->context->value($tag);
+        $item = $this->context->value($field);
 
         if ($this->isPair) {
             return $this->generate($item);
