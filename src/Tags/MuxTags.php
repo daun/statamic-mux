@@ -139,8 +139,8 @@ class MuxTags extends Tags
 
         $playbackAttributes = collect($this->getDefaultPlaybackModifiers())
             ->merge($this->params->all())
-            ->when($this->params->bool('background'), function ($attributes) {
-                $attributes->merge(['autoplay' => true, 'loop' => true, 'muted' => true]);
+            ->when($this->params->bool('background'), function ($attr) {
+                $attr->merge(['autoplay' => true, 'loop' => true, 'muted' => true]);
             })
             ->filter(fn ($_, $key) => $this->isPlaybackAttribute($key));
 

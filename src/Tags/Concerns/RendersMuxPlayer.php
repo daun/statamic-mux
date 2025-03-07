@@ -67,7 +67,7 @@ trait RendersMuxPlayer
 
     protected function isPlaybackAttribute(string $param): bool
     {
-        return isset($this->playbackAttributes[$param])
-            || isset($this->playbackAttributes[Str::snake($param)]);
+        return in_array($param, $this->playbackAttributes)
+            || in_array(Str::snake($param), $this->playbackAttributes);
     }
 }

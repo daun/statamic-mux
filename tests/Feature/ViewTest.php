@@ -90,3 +90,21 @@ test('renders iframe embed', function () {
             '></iframe>',
         ], false);
 });
+
+test('applies params to embed component', function () {
+    $this->antlers('{{ mux:embed src="test_container_assets::test.mp4" }}')
+        ->assertDontSee('autoplay');
+
+    $this->antlers('{{ mux:embed src="test_container_assets::test.mp4" autoplay="true" loop="true" }}')
+        ->assertSeeInOrder([
+            '<iframe',
+            'src="https://player.mux.com/456?autoplay=1&loop=1"',
+        ], false)
+        ->assertDontSee('muted');
+
+    $this->antlers('{{ mux:embed src="test_container_assets::test.mp4" disable-tracking="true" }}')
+        ->assertSeeInOrder([
+            '<iframe',
+            'src="https://player.mux.com/456?disable-tracking=1"',
+        ], false);
+});
