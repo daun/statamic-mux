@@ -25,6 +25,19 @@ test('renders video component', function () {
         ], false);
 });
 
+test('applies params to video component', function () {
+    $this->antlers('{{ mux:video src="test_container_assets::test.mp4" }}')
+        ->assertDontSee('autoplay');
+
+    $this->antlers('{{ mux:video src="test_container_assets::test.mp4" autoplay="true" loop="true" }}')
+        ->assertSeeInOrder([
+            '<mux-video',
+            'autoplay',
+            'loop',
+        ], false)
+        ->assertDontSee('muted');
+});
+
 test('embeds video scripts', function () {
     $this->antlers('{{ mux:video src="test_container_assets::test.mp4" }}')
         ->assertDontSee('<script async src="https://unpkg.com/@mux/mux-video@0"></script>', false);
@@ -39,6 +52,25 @@ test('renders player component', function () {
             '<mux-player',
             'playback-id="456"',
             '></mux-player>',
+        ], false);
+});
+
+test('applies params to player component', function () {
+    $this->antlers('{{ mux:player src="test_container_assets::test.mp4" }}')
+        ->assertDontSee('autoplay');
+
+    $this->antlers('{{ mux:player src="test_container_assets::test.mp4" autoplay="true" loop="true" }}')
+        ->assertSeeInOrder([
+            '<mux-player',
+            'autoplay',
+            'loop',
+        ], false)
+        ->assertDontSee('muted');
+
+    $this->antlers('{{ mux:player src="test_container_assets::test.mp4" accent-color="#f00" }}')
+        ->assertSeeInOrder([
+            '<mux-player',
+            'accent-color="#f00"',
         ], false);
 });
 
