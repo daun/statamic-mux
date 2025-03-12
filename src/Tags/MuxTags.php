@@ -147,8 +147,7 @@ class MuxTags extends Tags
             ->except($this->assetParams)
             ->except($playbackModifiers->keys())
             ->except(['script', 'public', 'signed', 'background'])
-            ->when($this->params->bool('background'), fn ($attr) =>
-                $attr->merge(['autoplay' => true, 'loop' => true, 'muted' => true])
+            ->when($this->params->bool('background'), fn ($attr) => $attr->merge(['autoplay' => true, 'loop' => true, 'muted' => true])
             );
 
         $viewdata = $this->context
