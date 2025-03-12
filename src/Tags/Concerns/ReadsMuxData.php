@@ -116,6 +116,16 @@ trait ReadsMuxData
     }
 
     /**
+     * Get the playback modifiers
+     */
+    protected function getPlaybackModifiers(): array
+    {
+        return collect($this->getDefaultPlaybackModifiers())
+            ->merge($this->params->filter(fn ($_, $key) => $this->isPlaybackModifier($key)))
+            ->all();
+    }
+
+    /**
      * Get the default playback modifiers
      */
     protected function getDefaultPlaybackModifiers(): array

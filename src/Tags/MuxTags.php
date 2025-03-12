@@ -67,22 +67,30 @@ class MuxTags extends Tags
         try {
             $muxId = $this->getMuxId($asset);
             $playbackId = $this->getPlaybackId($asset);
+            if (! $playbackId) {
+                return [];
+            }
 
             $data = [
                 'mux_id' => $muxId,
                 'playback_id' => $playbackId?->id(),
                 'playback_policy' => $playbackId?->policy(),
-                'playback_modifiers' => ($playbackModifiers = $this->getDefaultPlaybackModifiers()),
+                'playback_modifiers' => ($playbackModifiers = $this->getPlaybackModifiers()),
                 'playback_url' => $this->getPlaybackUrl($asset),
                 'thumbnail' => $this->getThumbnailUrl($asset),
                 'gif' => $this->getGifUrl($asset),
                 'placeholder' => $this->getPlaceholderDataUri($asset),
-                'playback_token' => $this->getPlaybackToken($asset, $playbackModifiers),
-                'thumbnail_token' => $this->getThumbnailToken($asset),
-                'storyboard_token' => $this->getStoryboardToken($asset),
                 'is_public' => $playbackId?->isPublic(),
                 'is_signed' => $playbackId?->isSigned(),
             ];
+
+            if ($playbackId?->isSigned()) {
+                $data = $data + [
+                    'playback_token' => $this->getPlaybackToken($asset, $playbackModifiers),
+                    'thumbnail_token' => $this->getThumbnailToken($asset),
+                    'storyboard_token' => $this->getStoryboardToken($asset),
+                ];
+            }
 
             return array_merge($asset->toAugmentedArray(), $data);
         } catch (\Throwable $th) {
@@ -127,27 +135,22 @@ class MuxTags extends Tags
      */
     protected function component(string $view): ?string
     {
-        $asset = $this->getAssetFromContext();
-        $playbackId = $this->getPlaybackId($asset)?->id();
-        if (! $playbackId) {
+        $data = $this->generate();
+        if (empty($data)) {
             return null;
         }
 
-        $data = $this->generate($asset);
-
         $params = collect(['script' => $this->params->bool('script', false)]);
 
-        $playbackAttributes = collect($this->getDefaultPlaybackModifiers())
-            ->merge($this->params->all())
-            ->when($this->params->bool('background'), function ($attr) {
-                $attr->merge(['autoplay' => true, 'loop' => true, 'muted' => true]);
-            })
-            ->filter(fn ($_, $key) => $this->isPlaybackAttribute($key));
+        $playbackAttributes = collect($this->getPlaybackModifiers());
 
         $htmlAttributes = collect($this->params->all())
             ->except($this->assetParams)
             ->except($params->keys())
-            ->except($playbackAttributes->keys());
+            ->except(['script', 'public', 'signed', 'background'])
+            ->when($this->params->bool('background'), fn ($attr) =>
+                $attr->merge(['autoplay' => true, 'loop' => true, 'muted' => true])
+            );
 
         $viewdata = $this->context
             ->merge($data)
@@ -226,6 +229,7 @@ class MuxTags extends Tags
     {
         return collect($params)
             ->keyBy(fn ($_, $key) => Str::replace('_', '-', $key))
+            ->filter(fn ($_, $key) => $key)
             ->all();
     }
 }

@@ -6,7 +6,16 @@ use Illuminate\Support\Str;
 
 trait RendersMuxPlayer
 {
-    protected $playbackAttributes = [
+    protected $playbackModifiers = [
+        'redundant_streams',
+        'roku_trick_play',
+        'default_subtitles_lang',
+        'max_resolution',
+        'min_resolution',
+        'rendition_order',
+    ];
+
+    protected $playerAttributes = [
         'autoplay',
         'crossorigin',
         'loop',
@@ -65,9 +74,15 @@ trait RendersMuxPlayer
         'proudly-display-mux-badge',
     ];
 
-    protected function isPlaybackAttribute(string $param): bool
+    protected function isPlaybackModifier(string $param): bool
     {
-        return in_array($param, $this->playbackAttributes)
-            || in_array(Str::snake($param), $this->playbackAttributes);
+        return in_array($param, $this->playbackModifiers)
+            || in_array(Str::snake($param), $this->playbackModifiers);
+    }
+
+    protected function isPlayerAttribute(string $param): bool
+    {
+        return in_array($param, $this->playerAttributes)
+            || in_array(Str::snake($param), $this->playerAttributes);
     }
 }

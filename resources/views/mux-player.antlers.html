@@ -5,17 +5,17 @@
     thumbnail-token="{{ thumbnail_token }}"
     storyboard-token="{{ storyboard_token }}"
   {{ else }}
-    {{ foreach:playback_attributes as="attr|value" }}
+    {{ foreach array="playback_attributes" as="attr|value" }}
       {{ attr }}="{{ value }}"
-    {{ /foreach:playback_attributes }}
+    {{ /foreach }}
   {{ /if }}
   poster="{{ thumbnail }}"
   preload="metadata"
   width="{{ width }}"
   height="{{ height }}"
-  {{ foreach:attributes as="attr|value" }}
-    {{ if attr }} {{ attr }}="{{ value }}" {{ /if }}
-  {{ /foreach:attributes }}
+  {{ foreach array="attributes" as="attr|value" }}
+    {{ attr }}="{{ value }}"
+  {{ /foreach }}
 ></mux-player>
 
 {{ if script }}
