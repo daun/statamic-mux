@@ -1,0 +1,14 @@
+{{ url = 'https://player.mux.com/' + playback_id }}
+
+{{ if player_query }}
+  {{ url = url + '?' + player_query }}
+{{ /if }}
+
+<iframe
+  src="{{ url }}"
+  width="{{ width }}"
+  height="{{ height }}"
+  {{ foreach:attributes as="attr|value" }}
+    {{ if attr }} {{ attr }}="{{ value }}" {{ /if }}
+  {{ /foreach:attributes }}
+></iframe>

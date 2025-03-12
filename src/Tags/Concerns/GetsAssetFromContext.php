@@ -2,7 +2,6 @@
 
 namespace Daun\StatamicMux\Tags\Concerns;
 
-use Illuminate\Support\Arr;
 use Statamic\Assets\Asset;
 use Statamic\Facades\Asset as Assets;
 use Statamic\Fields\Value;
@@ -10,11 +9,6 @@ use Statamic\Fields\Value;
 trait GetsAssetFromContext
 {
     protected $assetParams = ['src', 'path', 'url', 'asset'];
-
-    protected function getNonAssetParams(): array
-    {
-        return Arr::except($this->params->all(), $this->assetParams);
-    }
 
     /**
      * Get the asset model from a path or id in the context.

@@ -1,27 +1,20 @@
 <mux-video
   {{ if is_signed }}
-    playback-id="{{ playback_id_signed }}"
+    playback-id="{{ playback_id }}?token={{ playback_token }}"
   {{ else }}
     playback-id="{{ playback_id }}"
-    {{ foreach:playback_attributes as="attr|value" }}
+    {{ foreach array="playback_modifiers" as="attr|value" }}
       {{ attr }}="{{ value }}"
-    {{ /foreach:playback_attributes }}
+    {{ /foreach }}
   {{ /if }}
-  poster="{{ poster }}"
+  poster="{{ thumbnail }}"
   preload="metadata"
   width="{{ width }}"
   height="{{ height }}"
   playsinline
-  {{ if background }}
-    autoplay loop muted
-  {{ else }}
-    {{ autoplay | attribute:autoplay }}
-    {{ loop | attribute:loop }}
-    {{ muted | attribute:muted }}
-  {{ /if }}
-  {{ foreach:attributes as="attr|value" }}
+  {{ foreach array="attributes" as="attr|value" }}
     {{ attr }}="{{ value }}"
-  {{ /foreach:attributes }}
+  {{ /foreach }}
 ></mux-video>
 
 {{ if script }}

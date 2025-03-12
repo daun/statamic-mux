@@ -179,15 +179,6 @@ class MuxService
         return $this->signUrl($this->urls->playback($playbackId->id()), $playbackId, MuxAudience::Video, $params);
     }
 
-    public function getPlaybackToken(MuxPlaybackId $playbackId, array $params = []): ?string
-    {
-        $params = $params + $this->getDefaultPlaybackModifiers();
-
-        return $playbackId->isSigned()
-            ? $this->urls->token($playbackId->id(), MuxAudience::Video, $params)
-            : null;
-    }
-
     public function getThumbnailUrl(MuxPlaybackId $playbackId, array $params = []): ?string
     {
         $format = $params['format'] ?? 'jpg';
@@ -215,6 +206,30 @@ class MuxService
         } else {
             return $fallback;
         }
+    }
+
+    protected function getToken(MuxPlaybackId $playbackId, MuxAudience $audience, array $params = []): ?string
+    {
+        $params = $params + $this->getDefaultPlaybackModifiers();
+
+        return $playbackId->isSigned()
+            ? $this->urls->token($playbackId->id(), $audience, $params)
+            : null;
+    }
+
+    public function getPlaybackToken(MuxPlaybackId $playbackId, array $params = []): ?string
+    {
+        return $this->getToken($playbackId, MuxAudience::Video, $params);
+    }
+
+    public function getThumbnailToken(MuxPlaybackId $playbackId, array $params = []): ?string
+    {
+        return $this->getToken($playbackId, MuxAudience::Thumbnail, $params);
+    }
+
+    public function getStoryboardToken(MuxPlaybackId $playbackId, array $params = []): ?string
+    {
+        return $this->getToken($playbackId, MuxAudience::Storyboard, $params);
     }
 
     protected function signUrl(string $url, MuxPlaybackId $playbackId, MuxAudience $audience, array $params = [], ?int $expiration = null): ?string
