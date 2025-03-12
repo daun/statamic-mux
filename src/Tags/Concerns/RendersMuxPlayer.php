@@ -7,12 +7,12 @@ use Illuminate\Support\Str;
 trait RendersMuxPlayer
 {
     protected $playbackModifiers = [
-        'redundant_streams',
-        'roku_trick_play',
-        'default_subtitles_lang',
         'max_resolution',
         'min_resolution',
         'rendition_order',
+        'redundant_streams',
+        'default_subtitles_lang',
+        'roku_trick_play',
     ];
 
     protected $playerAttributes = [
@@ -31,9 +31,9 @@ trait RendersMuxPlayer
         'disable-cookies',
         'playback-id',
         'prefer-playback',
-        'max-resolution',
-        'min-resolution',
-        'rendition-order',
+        // 'max-resolution',
+        // 'min-resolution',
+        // 'rendition-order',
         'program-start-time',
         'program-end-time',
         'asset-start-time',
@@ -41,7 +41,6 @@ trait RendersMuxPlayer
         'metadata-video-id',
         'metadata-video-title',
         'metadata-viewer-user-id',
-        'metadata-*',
         'beacon-collection-domain',
         'custom-domain',
         'stream-type',
@@ -55,10 +54,6 @@ trait RendersMuxPlayer
         'accent-color',
         'forward-seek-offset',
         'backward-seek-offset',
-        'playback-token',
-        'thumbnail-token',
-        'storyboard-token',
-        'drm-token',
         'storyboard-src',
         'thumbnail-time',
         'audio',
@@ -71,7 +66,6 @@ trait RendersMuxPlayer
         'cast-receiver',
         'no-tooltips',
         'player-init-time',
-        'proudly-display-mux-badge',
     ];
 
     protected function isPlaybackModifier(string $param): bool

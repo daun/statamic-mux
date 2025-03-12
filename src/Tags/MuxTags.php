@@ -140,13 +140,12 @@ class MuxTags extends Tags
             return null;
         }
 
-        $params = collect(['script' => $this->params->bool('script', false)]);
-
-        $playbackAttributes = collect($this->getPlaybackModifiers());
+        $playbackModifiers = collect($this->getPlaybackModifiers());
+        $playerAttributes = collect($this->getPlayerAttributes());
 
         $htmlAttributes = collect($this->params->all())
             ->except($this->assetParams)
-            ->except($params->keys())
+            ->except($playbackModifiers->keys())
             ->except(['script', 'public', 'signed', 'background'])
             ->when($this->params->bool('background'), fn ($attr) =>
                 $attr->merge(['autoplay' => true, 'loop' => true, 'muted' => true])
@@ -154,10 +153,10 @@ class MuxTags extends Tags
 
         $viewdata = $this->context
             ->merge($data)
-            ->merge($params)
+            ->merge(['script' => $this->params->bool('script', false)])
             ->merge(['attributes' => $this->toHtmlAttributes($htmlAttributes)])
-            ->merge(['playback_attributes' => $this->toHtmlAttributes($playbackAttributes)])
-            ->merge(['playback_query' => Arr::query($playbackAttributes->all())]);
+            ->merge(['playback_modifiers' => $this->toHtmlAttributes($playbackModifiers)])
+            ->merge(['player_query' => Arr::query($playbackModifiers->merge($playerAttributes)->all())]);
 
         return view("statamic-mux::{$view}", $viewdata)->render();
     }

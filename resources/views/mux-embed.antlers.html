@@ -1,7 +1,7 @@
 {{ url = 'https://player.mux.com/' + playback_id }}
 
-{{ if playback_query }}
-  {{ url = url + '?' + playback_query }}
+{{ if player_query }}
+  {{ url = url + '?' + player_query }}
 {{ /if }}
 
 <iframe

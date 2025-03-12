@@ -116,6 +116,16 @@ trait ReadsMuxData
     }
 
     /**
+     * Get the player attributes
+     */
+    protected function getPlayerAttributes(): array
+    {
+        return $this->params
+            ->filter(fn ($_, $key) => $this->isPlayerAttribute($key))
+            ->all();
+    }
+
+    /**
      * Get the playback modifiers
      */
     protected function getPlaybackModifiers(): array

@@ -5,7 +5,7 @@
     thumbnail-token="{{ thumbnail_token }}"
     storyboard-token="{{ storyboard_token }}"
   {{ else }}
-    {{ foreach array="playback_attributes" as="attr|value" }}
+    {{ foreach array="playback_modifiers" as="attr|value" }}
       {{ attr }}="{{ value }}"
     {{ /foreach }}
   {{ /if }}

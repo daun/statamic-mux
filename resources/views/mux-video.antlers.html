@@ -3,7 +3,7 @@
     playback-id="{{ playback_id }}?token={{ playback_token }}"
   {{ else }}
     playback-id="{{ playback_id }}"
-    {{ foreach array="playback_attributes" as="attr|value" }}
+    {{ foreach array="playback_modifiers" as="attr|value" }}
       {{ attr }}="{{ value }}"
     {{ /foreach }}
   {{ /if }}
