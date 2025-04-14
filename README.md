@@ -1,7 +1,7 @@
 # Statamic Mux
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/daun/statamic-mux.svg)](https://packagist.org/packages/daun/statamic-mux)
-[![Test Status](https://img.shields.io/github/actions/workflow/status/daun/statamic-mux/ci.yml?label=tests)](https://github.com/daun/statamic-mux/actions/workflows/ci.yml)
+<!-- [![Latest Version on Packagist](https://img.shields.io/packagist/v/daun/statamic-mux.svg)](https://packagist.org/packages/daun/statamic-mux) -->
+<!-- [![Test Status](https://img.shields.io/github/actions/workflow/status/daun/statamic-mux/ci.yml?label=tests)](https://github.com/daun/statamic-mux/actions/workflows/ci.yml) -->
 <!-- [![Code Coverage](https://img.shields.io/codecov/c/github/daun/statamic-mux)](https://app.codecov.io/gh/daun/statamic-mux) -->
 <!-- [![License](https://img.shields.io/github/license/daun/statamic-mux.svg)](https://github.com/daun/statamic-mux/blob/master/LICENSE) -->
 

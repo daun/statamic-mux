@@ -2,21 +2,20 @@
   playback-id="{{ playback_id }}"
   {{ if is_signed }}
     playback-token="{{ playback_token }}"
+    thumbnail-token="{{ thumbnail_token }}"
+    storyboard-token="{{ storyboard_token }}"
   {{ else }}
-    {{ foreach:playback_attributes as="attr|value" }}
+    {{ foreach array="playback_modifiers" as="attr|value" }}
       {{ attr }}="{{ value }}"
-    {{ /foreach:playback_attributes }}
+    {{ /foreach }}
   {{ /if }}
-  poster="{{ poster }}"
+  poster="{{ thumbnail }}"
   preload="metadata"
   width="{{ width }}"
   height="{{ height }}"
-  {{ autoplay | attribute:autoplay }}
-  {{ loop | attribute:loop }}
-  {{ muted | attribute:muted }}
-  {{ foreach:attributes as="attr|value" }}
+  {{ foreach array="attributes" as="attr|value" }}
     {{ attr }}="{{ value }}"
-  {{ /foreach:attributes }}
+  {{ /foreach }}
 ></mux-player>
 
 {{ if script }}

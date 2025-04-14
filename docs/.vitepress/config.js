@@ -43,6 +43,7 @@ export default defineConfig({
               { text: 'mux', link: '/tags/mux' },
               { text: 'mux:video', link: '/tags/mux-video' },
               { text: 'mux:player', link: '/tags/mux-player' },
+              { text: 'mux:embed', link: '/tags/mux-embed' },
               { text: 'mux:thumbnail', link: '/tags/mux-thumbnail' },
               { text: 'mux:placeholder', link: '/tags/mux-placeholder' },
               { text: 'mux:gif', link: '/tags/mux-gif' },

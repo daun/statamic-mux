@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.4.0] - 2025-03-12
+
+- Add `mux:embed` tag to render player in iframe
+- Use correct poster images in player views
+- Use all available tokens for secure playback
+- Improve test coverage
+- Update Mux SDK to v4
+
+## [1.3.0] - 2025-03-06
+
+- Add support for Laravel 12
+
 ## [1.2.5] - 2025-02-03
 
 - Improve display of available data in fieldtype
@@ -60,6 +72,8 @@
 
 - Beta release
 
+[1.4.0]: https://github.com/daun/statamic-mux/releases/tag/1.4.0
+[1.3.0]: https://github.com/daun/statamic-mux/releases/tag/1.3.0
 [1.2.5]: https://github.com/daun/statamic-mux/releases/tag/1.2.5
 [1.2.4]: https://github.com/daun/statamic-mux/releases/tag/1.2.4
 [1.2.3]: https://github.com/daun/statamic-mux/releases/tag/1.2.3

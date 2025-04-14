@@ -89,10 +89,24 @@ abstract class TestCase extends OrchestraTestCase
 
     protected function registerStatamicAddon($app)
     {
+        $reflector = new \ReflectionClass(AddonServiceProvider::class);
+        $directory = dirname($reflector->getFileName());
+
+        $providerParts = explode('\\', AddonServiceProvider::class, -1);
+        $namespace = implode('\\', $providerParts);
+
+        $json = json_decode($app['files']->get($directory.'/../composer.json'), true);
+        $statamic = $json['extra']['statamic'] ?? [];
+        $autoload = $json['autoload']['psr-4'][$namespace.'\\'];
+
         $app->make(Manifest::class)->manifest = [
-            'daun/statamic-mux' => [
-                'id' => 'daun/statamic-mux',
-                'namespace' => 'Daun\\StatamicMux',
+            $json['name'] => [
+                'id' => $json['name'],
+                'slug' => $statamic['slug'] ?? null,
+                'version' => 'dev-main',
+                'namespace' => $namespace,
+                'autoload' => $autoload,
+                'provider' => AddonServiceProvider::class,
             ],
         ];
     }
