@@ -71,11 +71,13 @@ CreateMuxAssetJob::dispatch($asset)->onQueue('mux');
 
 ## Key Technical Constraints
 
+- Mux API operations can be slow and should be processed asynchronously
 ## Development Tools
 
 ### Testing
 
 - PHPUnit/Pest for PHP testing
+- Feature tests with Statamic TestCase extensions
 
 ### Development Workflow
 

@@ -12,7 +12,7 @@ Some features are currently not covered by tests.
 
 ### Architecture Overhaul
 
-The architecture of the addon needs some restructuring to improve maintainability and allow for future enhancements.
+The architecture of the addon is being restructured to improve maintainability and allow for future enhancements.
 
 - Move more logic into dedicated action classes
 - Decouple services from the Mux API client
@@ -37,19 +37,22 @@ It should be possible to get the lowest resolution video from the playback manif
 - Prefer trait-based composition over inheritance
 - Action classes for discrete operations
 - Event-driven communication between components
+- Clear separation between UI, service, and API layers
 
 ### Naming Conventions
 
 - `Asset` for a file managed locally by Statamic
 - `MuxAsset` for a file uploaded to and streamed by Mux
-- `MuxPlaybackId` for a unique playback id allowing streaming from frontend components
+- `MuxPlaybackId` for a unique playback ID allowing streaming from frontend components
 - `Mux` prefix for all Mux-specific classes
+- Distinction between "mirror" (copying asset to Mux) and "proxy" (replacing original with optimized version)
 
 ### Testing Approach
 
 - Feature tests for integration points
 - Unit tests for isolated functionality
 - Mock Mux API responses in tests
+- Test end-to-end flows for critical paths
 
 ## Key Learnings & Insights
 
@@ -59,17 +62,27 @@ The system benefits from Laravel's event system for loosely coupled communicatio
 
 ### API Error Handling
 
-Mux API errors must be carefully handled with appropriate retries and user feedback.
+Mux API errors must be carefully handled with appropriate retries and user feedback. The current implementation includes:
+
+- Job retries with exponential backoff
+- Detailed error logging
+- Graceful failure modes
 
 ### Performance Considerations
 
 - Avoid synchronous API calls in web requests
 - Cache playback URLs when possible
+- Use queue system effectively for background processing
+- Consider storage implications of large video files
 
 ## Immediate Next Steps
 
 1. Complete low-res placeholder download implementation
+   - Finalize CreateProxyVersion action
+   - Complete DownloadProxyJob implementation
+   - Add ProxyVersionSubscriber for webhook events
 2. Implement GraphQL types for headless implementations
+3. Expand test coverage for critical paths
 
 ## Current Questions & Considerations
 

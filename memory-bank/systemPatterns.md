@@ -95,7 +95,8 @@ sequenceDiagram
 
 All Mux operations happen asynchronously to prevent blocking user interactions:
 
-- Upload operations use Laravel's dispatchAfterResponse()
+- Upload operations use Laravel's queue system
+- Error handling with exponential backoff retries
 - Webhook handlers update asset status when processing completes
 
 ### Playback Security

@@ -9,12 +9,15 @@
 - ✅ Asset mirroring architecture
 - ✅ Playback ID management
 - ✅ Queue-based job processing
-- ✅ Basic event system
+- ✅ Event system with subscribers
+- ✅ Secure URL signing with JWT tokens
 
 ### Asset Management
 
 - ✅ Mirror field implementation
 - ✅ Control panel status display
+- ✅ Asset lifecycle events
+- ✅ CLI commands for asset operations
 
 ### Frontend Rendering
 
@@ -26,6 +29,8 @@
 ### Security
 
 - ✅ Signed URL implementation
+- ✅ Playback policies (public/signed)
+- ✅ Time-based token expiration
 
 ### Developer Experience
 
@@ -39,6 +44,11 @@
 
 - 🔄 Creation of low-res placeholder version of the original video file
 - 🔄 Download job implementation
+### Test Coverage Extensions
+
+- 🔄 Expanding test coverage for critical components
+- 🔄 Adding tests for frontend tag rendering
+- 🔄 MuxApi client testing
 
 ## Planned Features
 
@@ -55,14 +65,14 @@
 ### Initial Release (v1.0)
 
 - Mirror field implementation
-- Support multiple playback ids
+- Support for multiple playback ids
 - Basic frontend tags
 
 ### Current Version
 
 - Improved frontend tags with multiple embedding options
-- Improved playback token usage
-- Fixed little sync/upload gotchas
+- Secure playback options
+- Fixed synchronization issues in upload process
 
 ### Next Major Release
 

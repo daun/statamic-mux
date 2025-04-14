@@ -9,6 +9,7 @@ The Statamic Mux addon is a purpose-built integration between the Statamic CMS a
 - Provide a seamless mirroring mechanism for video assets between Statamic and Mux
 - Enable optimized video delivery through Mux infrastructure and take load off the web server
 - Simplify video embedding and rendering through Antlers frontend tags
+- Support secure video playback through signed URLs
 
 ## Key Features
 
