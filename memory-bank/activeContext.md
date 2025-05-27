@@ -81,8 +81,7 @@ Mux API errors must be carefully handled with appropriate retries and user feedb
    - Finalize CreateProxyVersion action
    - Complete DownloadProxyJob implementation
    - Add ProxyVersionSubscriber for webhook events
-2. Implement GraphQL types for headless implementations
-3. Expand test coverage for critical paths
+2. Expand test coverage for critical paths
 
 ## Current Questions & Considerations
 
