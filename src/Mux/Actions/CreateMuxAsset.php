@@ -115,6 +115,7 @@ class CreateMuxAsset
     {
         $metadata = [
             'title' => $asset->title(),
+            'creator_id' => 'statamic-mux',
             'external_id' => $asset->id(),
         ];
 
