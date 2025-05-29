@@ -2,10 +2,10 @@
 
 namespace Daun\StatamicMux\Mux\Actions;
 
-use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Events\AssetUploadedToMux;
 use Daun\StatamicMux\Events\AssetUploadingToMux;
 use Daun\StatamicMux\Mux\MuxApi;
+use Daun\StatamicMux\Mux\MuxService;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Log;
 use Statamic\Assets\Asset;
@@ -17,6 +17,7 @@ class CreateMuxAsset
 
     public function __construct(
         protected Application $app,
+        protected MuxService $service,
         protected MuxApi $api,
     ) {}
 
@@ -29,8 +30,7 @@ class CreateMuxAsset
             return null;
         }
 
-        $existingMuxAsset = MuxAsset::fromAsset($asset);
-        if (! $force && $existingMuxAsset->existsOnMux()) {
+        if (! $force && $this->service->hasExistingMuxAsset($asset)) {
             return null;
         }
 
@@ -98,12 +98,11 @@ class CreateMuxAsset
      */
     protected function getAssetData(Asset $asset): array
     {
-        $metadata = $this->getAssetMetadata($asset);
-        $data = $this->runHooksWith('asset-data', ['asset' => $asset, 'data' => []])->data;
+        $data = ['meta' => $this->getAssetMeta($asset)];
+        $result = $this->runHooks('asset-data', ['asset' => $asset, 'data' => $data]);
 
         return [
-            'meta' => $metadata,
-            ...$data,
+            ...$result['data'] ?? [],
             'passthrough' => $this->getAssetIdentifier($asset),
         ];
     }
@@ -111,15 +110,17 @@ class CreateMuxAsset
     /**
      * Get metadata to send to Mux during asset creation.
      */
-    protected function getAssetMetadata(Asset $asset): array
+    protected function getAssetMeta(Asset $asset): array
     {
-        $metadata = [
+        $meta = [
             'title' => $asset->title(),
             'creator_id' => 'statamic-mux',
             'external_id' => $asset->id(),
         ];
 
-        return $this->runHooksWith('asset-metadata', ['asset' => $asset, 'metadata' => $metadata])->metadata ?? [];
+        $result = $this->runHooks('asset-meta', ['asset' => $asset, 'meta' => $meta]);
+
+        return $result['meta'] ?? [];
     }
 
     /**

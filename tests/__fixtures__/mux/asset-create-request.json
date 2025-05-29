@@ -1,0 +1,12 @@
+{
+  "input": {
+    "url": "https:\/\/example.com\/video.mp4"
+  },
+  "playback_policy": [
+    "public"
+  ],
+  "passthrough": "example-passthrough",
+  "normalize_audio": false,
+  "test": false,
+  "video_quality": "plus"
+}
