@@ -11,6 +11,7 @@ use Statamic\Events\AssetDeleted;
 use Statamic\Events\AssetReuploaded;
 use Statamic\Events\AssetSaved;
 use Statamic\Events\AssetUploaded;
+use Statamic\Facades\CP\Toast;
 
 class MirrorFieldSubscriber implements ShouldQueue
 {
@@ -40,7 +41,13 @@ class MirrorFieldSubscriber implements ShouldQueue
         }
 
         $force = $event instanceof AssetReuploaded;
-        $this->service->createMuxAsset($event->asset, $force);
+
+        try {
+            $this->service->createMuxAsset($event->asset, $force);
+            Toast::info(__('statamic-mux::messages.toast.uploaded'));
+        } catch (\Throwable $th) {
+            Toast::error(__('statamic-mux::messages.toast.upload_failed', ['error' => $th->getMessage()]));
+        }
     }
 
     /**
@@ -52,6 +59,11 @@ class MirrorFieldSubscriber implements ShouldQueue
             return;
         }
 
-        $this->service->deleteMuxAsset($event->asset);
+        try {
+            $this->service->deleteMuxAsset($event->asset);
+            Toast::info(__('statamic-mux::messages.toast.deleted'));
+        } catch (\Throwable $th) {
+            Toast::error(__('statamic-mux::messages.toast.delete_failed', ['error' => $th->getMessage()]));
+        }
     }
 }
