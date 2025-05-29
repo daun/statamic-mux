@@ -36,6 +36,7 @@ it('ignores non-video asset', function () {
     $result = $this->createMuxAsset->handle($this->jpg);
 
     expect($result)->toBeNull();
+    $this->guzzler->assertHistoryCount(0);
     Event::assertNotDispatched(AssetUploadingToMux::class);
     Event::assertNotDispatched(AssetUploadedToMux::class);
 });
@@ -51,6 +52,7 @@ it('ignores existing mux asset', function () {
     $result = $this->createMuxAsset->handle($this->mp4);
 
     expect($result)->toBeNull();
+    $this->guzzler->assertHistoryCount(0);
     Event::assertNotDispatched(AssetUploadingToMux::class);
     Event::assertNotDispatched(AssetUploadedToMux::class);
 });
@@ -64,6 +66,7 @@ it('handles cancelled uploading event', function () {
     $result = $this->createMuxAsset->handle($this->mp4);
 
     expect($result)->toBeNull();
+    $this->guzzler->assertHistoryCount(0);
     Event::assertNotDispatched(AssetUploadedToMux::class);
 });
 
@@ -73,6 +76,7 @@ it('ingests assets from public containers', function () {
     $this->service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
 
     $this->guzzler->expects($this->once())
+        ->ray()
         ->post('https://api.mux.com/video/v1/assets')
         ->withJson([
             'input' => [
@@ -85,6 +89,11 @@ it('ingests assets from public containers', function () {
             'normalize_audio' => false,
             'test' => false,
             'video_quality' => 'plus',
+            'meta' => [
+                'title' => 'test.mp4',
+                'creator_id' => 'statamic-mux',
+                'external_id' => 'test_container_assets::test.mp4',
+            ],
         ])
         ->willRespondJson([
             'data' => [
@@ -103,7 +112,7 @@ it('ingests assets from public containers', function () {
     $result = $this->createMuxAsset->handle($this->mp4);
 
     expect($result)->toBe('JaUWdXuXM93J9Q2yvSqQnqz6s5MBuXGv');
-
+    $this->guzzler->assertHistoryCount(1);
     Event::assertDispatched(AssetUploadedToMux::class);
 });
 
@@ -127,6 +136,11 @@ it('uploads assets from private containers', function () {
                 'normalize_audio' => false,
                 'test' => false,
                 'video_quality' => 'plus',
+                'meta' => [
+                    'title' => 'private.mp4',
+                    'creator_id' => 'statamic-mux',
+                    'external_id' => 'test_container_private::private.mp4',
+                ],
             ],
             'test' => false,
         ])
@@ -164,6 +178,7 @@ it('uploads assets from private containers', function () {
     $result = $this->createMuxAsset->handle($privateMp4);
 
     expect($result)->toBe('123456789');
+    $this->guzzler->assertHistoryCount(3);
     Event::assertDispatched(AssetUploadedToMux::class);
 });
 
@@ -187,6 +202,11 @@ it('uploads assets from local environment', function () {
                 'normalize_audio' => false,
                 'test' => false,
                 'video_quality' => 'plus',
+                'meta' => [
+                    'title' => 'test.mp4',
+                    'creator_id' => 'statamic-mux',
+                    'external_id' => 'test_container_assets::test.mp4',
+                ],
             ],
             'test' => false,
         ])
@@ -231,12 +251,12 @@ it('allows modifying asset data via hook', function () {
     $this->service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
 
     CreateMuxAsset::hook('asset-data', function ($payload, $next) {
-        expect($payload['data'])->toBeArray();
-        expect($payload['asset'])->toBeInstanceOf(Asset::class);
+        expect($payload->data)->toBeArray();
+        expect($payload->asset)->toBeInstanceOf(Asset::class);
 
-        $payload['data']['video_quality'] = 'very_bad';
-        $payload['data']['test'] = true;
-        $payload['data']['passthrough'] = 'cannot::be::overridden::by::hook';
+        $payload->data['video_quality'] = 'very_bad';
+        $payload->data['test'] = true;
+        $payload->data['passthrough'] = 'cannot::be::overridden::by::hook';
 
         return $next($payload);
     });
@@ -254,6 +274,65 @@ it('allows modifying asset data via hook', function () {
             'normalize_audio' => false,
             'test' => true,
             'video_quality' => 'very_bad',
+            'meta' => [
+                'title' => 'test.mp4',
+                'creator_id' => 'statamic-mux',
+                'external_id' => 'test_container_assets::test.mp4',
+            ],
+        ])
+        ->willRespondJson([
+            'data' => [
+                'status' => 'preparing',
+                'playback_ids' => [
+                    [
+                        'policy' => 'public',
+                        'id' => 'uNbxnGLKJ00yfbijDO8COxTOyVKT01xpxW',
+                    ],
+                ],
+                'id' => 'JaUWdXuXM93J9Q2yvSqQnqz6s5MBuXGv',
+                'created_at' => '1607452572',
+            ],
+        ]);
+
+    $result = $this->createMuxAsset->handle($this->mp4);
+
+    expect($result)->toBe('JaUWdXuXM93J9Q2yvSqQnqz6s5MBuXGv');
+});
+
+it('allows modifying asset metadata via hook', function () {
+    $this->service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
+
+    CreateMuxAsset::hook('asset-meta', function ($payload, $next) {
+        expect($payload->meta)->toBeArray();
+        expect($payload->asset)->toBeInstanceOf(Asset::class);
+
+        $payload->meta = [
+            'title' => 'Lorem ipsum',
+            'creator_id' => '123',
+            'external_id' => '456',
+        ];
+
+        return $next($payload);
+    });
+
+    $this->guzzler->expects($this->once())
+        ->post('https://api.mux.com/video/v1/assets')
+        ->withJson([
+            'input' => [
+                'url' => 'http://localhost/assets/assets/test.mp4',
+            ],
+            'playback_policy' => [
+                'public',
+            ],
+            'passthrough' => 'statamic::test_container_assets::test.mp4',
+            'normalize_audio' => false,
+            'test' => false,
+            'video_quality' => 'plus',
+            'meta' => [
+                'title' => 'Lorem ipsum',
+                'creator_id' => '123',
+                'external_id' => '456',
+            ],
         ])
         ->willRespondJson([
             'data' => [

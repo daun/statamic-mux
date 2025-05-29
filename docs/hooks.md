@@ -28,10 +28,27 @@ Transform the data sent to Mux when uploading a video. Change any of the availab
 Most useful to dynamically set video quality or playback policy based on the properties of an asset itself.
 
 ```php
+// Set the video quality based on the asset's height
 CreateMuxAsset::hook('asset-data', function ($payload, $next) {
-    if ($payload['asset']->height() >= 1080) {
-        $payload['data']['video_quality'] = 'plus';
+    if ($payload->asset->height() >= 1080) {
+        $payload->data['video_quality'] = 'plus';
     }
+    return $next($payload);
+});
+```
+
+## Asset Metadata
+
+Define custom metadata for videos uploaded to Mux. Currently supports title, creator id and external id
+properties. Learn more about [adding metadata to Mux assets](https://www.mux.com/docs/guides/add-metadata-to-your-videos).
+
+```php
+// Pull metadata from custom blueprint fields on the asset
+CreateMuxAsset::hook('asset-meta', function ($payload, $next) {
+    $payload->meta = [
+        'title' => $payload->asset->get('caption'),
+        'external_id' => md5($payload->asset->url()),
+    ];
     return $next($payload);
 });
 ```
