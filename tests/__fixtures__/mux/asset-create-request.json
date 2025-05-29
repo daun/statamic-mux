@@ -1,0 +1,11 @@
+{
+  "inputs": [
+    {
+      "url": "https://muxed.s3.amazonaws.com/leds.mp4"
+    }
+  ],
+  "playback_policies": [
+    "public"
+  ],
+  "video_quality": "basic"
+}
