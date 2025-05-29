@@ -1,6 +1,6 @@
 # Hooks
 
-Hooks provide a way of intercepting and modifying data at various points in the package's workflow.
+Hooks allow intercepting and modifying data at various points in the package's workflow.
 
 ## Example
 
@@ -23,7 +23,9 @@ class AppServiceProvider extends ServiceProvider
 }
 ```
 
-## Asset Data
+## Available Hooks
+
+### Asset Data
 
 Transform the data sent to Mux when uploading a video. Change any of the available
 [input parameters of the Mux assets endpoint](https://www.mux.com/docs/api-reference/video/assets/create-asset).
@@ -39,7 +41,7 @@ Mux::hook('asset-data', function ($payload, $next) {
 });
 ```
 
-## Asset Metadata
+### Asset Metadata
 
 Define custom metadata for videos uploaded to Mux. Currently supports title, creator id and external id
 properties. Learn more about [adding metadata to Mux assets](https://www.mux.com/docs/guides/add-metadata-to-your-videos).
