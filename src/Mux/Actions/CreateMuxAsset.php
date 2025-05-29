@@ -6,7 +6,6 @@ use Daun\StatamicMux\Events\AssetUploadedToMux;
 use Daun\StatamicMux\Events\AssetUploadingToMux;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Log;
 use Statamic\Assets\Asset;
 use Statamic\Support\Traits\Hookable;
@@ -16,7 +15,6 @@ class CreateMuxAsset
     use Hookable;
 
     public function __construct(
-        protected Application $app,
         protected MuxService $service,
         protected MuxApi $api,
     ) {}
@@ -39,7 +37,7 @@ class CreateMuxAsset
         }
 
         try {
-            if ($this->app->isLocal() || $asset->container()->private()) {
+            if (app()->isLocal() || $asset->container()->private()) {
                 $muxId = $this->uploadAssetToMux($asset);
             } else {
                 $muxId = $this->ingestAssetToMux($asset);

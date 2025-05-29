@@ -17,7 +17,7 @@ beforeEach(function () {
     $this->app->bind(MuxApi::class, fn () => $this->api);
     $this->service = Mockery::spy($this->app->makeWith(MuxService::class))->makePartial();
 
-    $this->createMuxAsset = Mockery::spy(new CreateMuxAsset($this->app, $this->service, $this->api))
+    $this->createMuxAsset = Mockery::spy(new CreateMuxAsset($this->service, $this->api))
         ->makePartial()
         ->shouldAllowMockingProtectedMethods();
 

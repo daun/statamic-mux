@@ -6,7 +6,6 @@ use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Log;
 use MuxPhp\Models\PlaybackID;
 use Statamic\Assets\Asset;
@@ -17,7 +16,6 @@ class RequestPlaybackId
     use Hookable;
 
     public function __construct(
-        protected Application $app,
         protected MuxApi $api,
         protected MuxService $service,
     ) {}
