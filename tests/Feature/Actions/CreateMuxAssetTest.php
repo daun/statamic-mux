@@ -15,9 +15,9 @@ beforeEach(function () {
     $this->app->bind(MuxClient::class, fn () => $this->guzzler->getClient());
     $this->api = $this->app->make(MuxApi::class);
     $this->app->bind(MuxApi::class, fn () => $this->api);
-    $this->service = Mockery::spy($this->app->makeWith(MuxService::class))->makePartial();
+    $this->service = Mockery::spy($this->app->make(MuxService::class))->makePartial();
 
-    $this->createMuxAsset = Mockery::spy(new CreateMuxAsset($this->service, $this->api))
+    $this->createMuxAsset = Mockery::spy($this->app->makeWith(CreateMuxAsset::class, ['service' => $this->service]))
         ->makePartial()
         ->shouldAllowMockingProtectedMethods();
 
