@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use BlastCloud\Guzzler\UsesGuzzler;
 use Daun\StatamicMux\ServiceProvider as AddonServiceProvider;
 use Illuminate\Foundation\Testing\Concerns\InteractsWithViews;
 use Orchestra\Testbench\TestCase as OrchestraTestCase;
@@ -23,6 +24,7 @@ abstract class TestCase extends OrchestraTestCase
     use InteractsWithViews;
     use PreventSavingStacheItemsToDisk;
     use ResolvesStatamicConfig;
+    use UsesGuzzler;
 
     protected function setUp(): void
     {

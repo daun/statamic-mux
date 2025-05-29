@@ -32,6 +32,7 @@
         "statamic/cms": "^4.0 || ^5.0"
     },
     "require-dev": {
+        "blastcloud/guzzler": "^2.2",
         "larastan/larastan": "^2.9 || ^3.0",
         "laravel/facade-documenter": "dev-main",
         "laravel/pint": "^1.14",
