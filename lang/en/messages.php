@@ -12,4 +12,11 @@ return [
         'reupload_on_save' => 'Reupload to Mux on save',
     ],
 
+    'toast' => [
+        'uploaded' => 'Video uploaded to Mux',
+        'upload_failed' => 'Video could not be upload to Mux: :error',
+        'deleted' => 'Video deleted from Mux',
+        'delete_failed' => 'Video could not be deleted from Mux: :error',
+    ],
+
 ];
