@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use BlastCloud\Guzzler\Expectation;
 use BlastCloud\Guzzler\UsesGuzzler;
 use Daun\StatamicMux\ServiceProvider as AddonServiceProvider;
 use Illuminate\Foundation\Testing\Concerns\InteractsWithViews;
@@ -31,6 +32,15 @@ abstract class TestCase extends OrchestraTestCase
         parent::setUp();
 
         $this->setUpAssetTest();
+
+        // Create Guzzler helper: $this->guzzer->get()->debug();
+        Expectation::macro('ray', function (Expectation $e) {
+            return $e->withCallback(function (array $history) {
+                ray($history['request']->getBody()->getContents())->label('Body');
+                ray($history['request'])->label('Request');
+                return true;
+            });
+        });
     }
 
     protected function tearDown(): void

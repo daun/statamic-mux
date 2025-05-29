@@ -64,8 +64,8 @@ test('returns a configured DeliveryUsageApi instance', function () {
 });
 
 test('sends API request to create asset', function () {
-    $requestBody = file_get_contents(fixtures_path('mux/asset-create-request.json'));
-    $responseBody = file_get_contents(fixtures_path('mux/asset-create-response.json'));
+    $requestBody = json_fixture('mux/asset-create-request.json');
+    $responseBody = json_fixture('mux/asset-create-response.json');
 
     $assetRequest = $this->api->createAssetRequest([
         'input' => $this->api->input(['url' => 'https://example.com/video.mp4']),
@@ -73,12 +73,9 @@ test('sends API request to create asset', function () {
     ]);
 
     $this->guzzler->expects($this->once())
+        ->ray()
         ->post('https://api.mux.com/video/v1/assets')
-        ->withJson(json_decode($requestBody, true))
-        // ->withCallback(function (array $history) use ($requestBody) {
-        //     ray($history['request']->getBody()->getContents());
-        //     return true;
-        // })
+        ->withJson($requestBody)
         ->willRespond(Http::response($responseBody, 200));
 
     $muxAsset = $this->api->assets()->createAsset($assetRequest)->getData();
