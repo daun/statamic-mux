@@ -27,6 +27,7 @@ trait DealsWithAssets
         $this->artisan(GlideClear::class);
 
         $this->createAssetContainer();
+        $this->createAssetContainer('private', ['url' => null]);
     }
 
     protected function tearDownAssetTest(): void
@@ -66,12 +67,13 @@ trait DealsWithAssets
         return $this->assetContainers['assets'] ?? null;
     }
 
-    protected function createAssetContainer(string $name = 'assets'): AssetContainer
+    protected function createAssetContainer(string $name = 'assets', array $config = []): AssetContainer
     {
         config(["filesystems.disks.assets_{$name}" => [
             'driver' => 'local',
             'root' => $this->getTempDirectory("assets_{$name}"),
             'url' => "/assets/{$name}",
+            ...$config,
         ]]);
 
         $this->assetContainers[$name] = (new AssetContainer)

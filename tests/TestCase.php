@@ -2,8 +2,11 @@
 
 namespace Tests;
 
+use BlastCloud\Guzzler\Expectation;
+use BlastCloud\Guzzler\UsesGuzzler;
 use Daun\StatamicMux\ServiceProvider as AddonServiceProvider;
 use Illuminate\Foundation\Testing\Concerns\InteractsWithViews;
+use Illuminate\Support\Facades\Http;
 use Orchestra\Testbench\TestCase as OrchestraTestCase;
 use Statamic\Extend\Manifest;
 use Statamic\Providers\StatamicServiceProvider;
@@ -23,12 +26,28 @@ abstract class TestCase extends OrchestraTestCase
     use InteractsWithViews;
     use PreventSavingStacheItemsToDisk;
     use ResolvesStatamicConfig;
+    use UsesGuzzler;
 
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->setUpAssetTest();
+
+        // Guzzler helper: $this->guzzer->get()->ray() for debugging request and response body
+        Expectation::macro('ray', function (Expectation $e) {
+            return $e->withCallback(function (array $history) {
+                ray($history['request']->getRequestTarget())->label('url');
+                ray($history['request']->getBody()->getContents())->label('request');
+                ray($history['response']->getBody()->getContents())->label('response');
+                return true;
+            });
+        });
+
+        // Guzzler helper: $this->guzzer->willRespondJson() for auto-creating json responses
+        Expectation::macro('willRespondJson', function (Expectation $e, $response, $times = 1) {
+            return $e->will(Http::response($response), $times);
+        });
     }
 
     protected function tearDown(): void
