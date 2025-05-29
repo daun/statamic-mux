@@ -288,6 +288,9 @@ it('defines default asset metadata', function () {
                 'public',
             ],
             'passthrough' => 'statamic::test_container_assets::test.mp4',
+            'normalize_audio' => false,
+            'test' => false,
+            'video_quality' => 'plus',
             'meta' => [
                 'title' => 'test.mp4',
                 'creator_id' => 'statamic-mux',
@@ -316,13 +319,13 @@ it('defines default asset metadata', function () {
 it('allows modifying asset metadata via hook', function () {
     $this->service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
 
-    CreateMuxAsset::hook('asset-metadata', function ($payload, $next) {
-        expect($payload['metadata'])->toBeArray();
+    CreateMuxAsset::hook('asset-meta', function ($payload, $next) {
+        expect($payload['meta'])->toBeArray();
         expect($payload['asset'])->toBeInstanceOf(Asset::class);
 
-        $payload['metadata']['title'] = 'Lorem ipsum';
-        $payload['metadata']['creator_id'] = '123';
-        $payload['metadata']['external_id'] = '456';
+        $payload['meta']['title'] = 'Lorem ipsum';
+        $payload['meta']['creator_id'] = '123';
+        $payload['meta']['external_id'] = '456';
 
         return $next($payload);
     });
@@ -338,8 +341,8 @@ it('allows modifying asset metadata via hook', function () {
             ],
             'passthrough' => 'statamic::test_container_assets::test.mp4',
             'normalize_audio' => false,
-            'test' => true,
-            'video_quality' => 'very_bad',
+            'test' => false,
+            'video_quality' => 'plus',
             'meta' => [
                 'title' => 'Lorem ipsum',
                 'creator_id' => '123',
