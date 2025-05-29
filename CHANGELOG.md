@@ -4,6 +4,7 @@
 
 - Add support for video metadata
 - Make upload request data hookable
+- Display toast notifications on upload
 - Improve test coverage
 - Update Mux SDK to v5
 
