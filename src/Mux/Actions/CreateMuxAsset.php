@@ -98,10 +98,10 @@ class CreateMuxAsset
      */
     protected function getAssetData(Asset $asset): array
     {
-        $data = $this->runHooksWith('asset-data', ['asset' => $asset, 'data' => []])->data;
+        $result = $this->runHooks('asset-data', ['asset' => $asset, 'data' => []]);
 
         return [
-            ...$data,
+            ...$result['data'] ?? [],
             'passthrough' => $this->getAssetIdentifier($asset),
         ];
     }

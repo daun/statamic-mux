@@ -8,6 +8,7 @@ use Daun\StatamicMux\Mux\MuxClient;
 use Daun\StatamicMux\Mux\MuxService;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
+use Statamic\Contracts\Assets\Asset;
 use Statamic\Facades\Stache;
 
 beforeEach(function () {
@@ -230,11 +231,12 @@ it('allows modifying asset data via hook', function () {
     $this->service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
 
     CreateMuxAsset::hook('asset-data', function ($payload, $next) {
-        $data = $payload->data;
-        $data['video_quality'] = 'very_bad';
-        $data['test'] = true;
-        $data['passthrough'] = 'cannot::be::overridden::by::hook';
-        $payload->data = $data;
+        expect($payload['data'])->toBeArray();
+        expect($payload['asset'])->toBeInstanceOf(Asset::class);
+
+        $payload['data']['video_quality'] = 'very_bad';
+        $payload['data']['test'] = true;
+        $payload['data']['passthrough'] = 'cannot::be::overridden::by::hook';
 
         return $next($payload);
     });
