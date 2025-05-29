@@ -43,6 +43,7 @@ class ServiceProvider extends AddonServiceProvider
 
     public function register()
     {
+        $this->registerHooks();
         $this->registerMuxApi();
         $this->registerMuxService();
         $this->registerUrlService();
@@ -54,6 +55,11 @@ class ServiceProvider extends AddonServiceProvider
         $this->bootPermissions();
         $this->autoPublishConfig();
         $this->publishViews();
+    }
+
+    protected function registerHooks()
+    {
+        $this->app->instance('mux.hooks', collect());
     }
 
     protected function registerMuxApi()

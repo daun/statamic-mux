@@ -2,6 +2,7 @@
 
 namespace Daun\StatamicMux\Mux;
 
+use Daun\StatamicMux\Concerns\ProcessesHooks;
 use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Data\MuxPlaybackId;
 use Daun\StatamicMux\Mux\Actions\CreateMuxAsset;
@@ -16,11 +17,10 @@ use Illuminate\Support\Arr;
 use MuxPhp\ApiException;
 use Statamic\Assets\Asset;
 use Statamic\Facades\Asset as Assets;
-use Statamic\Support\Traits\Hookable;
 
 class MuxService
 {
-    use Hookable;
+    use ProcessesHooks;
 
     public function __construct(
         protected Application $app,

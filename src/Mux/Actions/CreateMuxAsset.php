@@ -2,17 +2,17 @@
 
 namespace Daun\StatamicMux\Mux\Actions;
 
+use Daun\StatamicMux\Concerns\ProcessesHooks;
 use Daun\StatamicMux\Events\AssetUploadedToMux;
 use Daun\StatamicMux\Events\AssetUploadingToMux;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
 use Illuminate\Support\Facades\Log;
 use Statamic\Assets\Asset;
-use Statamic\Support\Traits\Hookable;
 
 class CreateMuxAsset
 {
-    use Hookable;
+    use ProcessesHooks;
 
     public function __construct(
         protected MuxService $service,
@@ -97,7 +97,7 @@ class CreateMuxAsset
     protected function getAssetData(Asset $asset): array
     {
         $data = ['meta' => $this->getAssetMeta($asset)];
-        $result = $this->runHooks('asset-data', (object) ['asset' => $asset, 'data' => $data]);
+        $result = $this->hooks('asset-data', (object) ['asset' => $asset, 'data' => $data]);
 
         return [
             ...$result->data ?? [],
@@ -116,7 +116,7 @@ class CreateMuxAsset
             'external_id' => $asset->id(),
         ];
 
-        $result = $this->runHooks('asset-meta', (object) ['asset' => $asset, 'meta' => $meta]);
+        $result = $this->hooks('asset-meta', (object) ['asset' => $asset, 'meta' => $meta]);
 
         return $result->meta ?? [];
     }

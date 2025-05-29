@@ -9,12 +9,9 @@ use Daun\StatamicMux\Mux\MuxService;
 use Illuminate\Support\Facades\Log;
 use MuxPhp\Models\PlaybackID;
 use Statamic\Assets\Asset;
-use Statamic\Support\Traits\Hookable;
 
 class RequestPlaybackId
 {
-    use Hookable;
-
     public function __construct(
         protected MuxApi $api,
         protected MuxService $service,

@@ -7,11 +7,13 @@ Hooks provide a way of intercepting and modifying data at various points in the 
 The best place to register hooks is in your service provider's `boot` method.
 
 ```php
+use Daun\StatamicMux\Facades\Mux;
+
 class AppServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        ActionName::hook('hook-name', function ($payload, $next) {
+        Mux::hook('hook-name', function ($payload, $next) {
             // Manipulate the payload here
             [...]
             // Make sure to call $next() to continue the process
@@ -29,7 +31,7 @@ Most useful to dynamically set video quality or playback policy based on the pro
 
 ```php
 // Set the video quality based on the asset's height
-CreateMuxAsset::hook('asset-data', function ($payload, $next) {
+Mux::hook('asset-data', function ($payload, $next) {
     if ($payload->asset->height() >= 1080) {
         $payload->data['video_quality'] = 'plus';
     }
@@ -44,7 +46,7 @@ properties. Learn more about [adding metadata to Mux assets](https://www.mux.com
 
 ```php
 // Pull metadata from custom blueprint fields on the asset
-CreateMuxAsset::hook('asset-meta', function ($payload, $next) {
+Mux::hook('asset-meta', function ($payload, $next) {
     $payload->meta = [
         'title' => $payload->asset->get('caption'),
         'external_id' => md5($payload->asset->url()),

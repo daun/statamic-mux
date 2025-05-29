@@ -2,6 +2,7 @@
 
 use Daun\StatamicMux\Events\AssetUploadedToMux;
 use Daun\StatamicMux\Events\AssetUploadingToMux;
+use Daun\StatamicMux\Facades\Mux;
 use Daun\StatamicMux\Mux\Actions\CreateMuxAsset;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxClient;
@@ -250,7 +251,7 @@ it('uploads assets from local environment', function () {
 it('allows modifying asset data via hook', function () {
     $this->service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
 
-    CreateMuxAsset::hook('asset-data', function ($payload, $next) {
+    Mux::hook('asset-data', function ($payload, $next) {
         expect($payload->data)->toBeArray();
         expect($payload->asset)->toBeInstanceOf(Asset::class);
 
@@ -302,7 +303,7 @@ it('allows modifying asset data via hook', function () {
 it('allows modifying asset metadata via hook', function () {
     $this->service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
 
-    CreateMuxAsset::hook('asset-meta', function ($payload, $next) {
+    Mux::hook('asset-meta', function ($payload, $next) {
         expect($payload->meta)->toBeArray();
         expect($payload->asset)->toBeInstanceOf(Asset::class);
 
