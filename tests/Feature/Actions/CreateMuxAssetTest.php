@@ -225,3 +225,49 @@ it('uploads assets from local environment', function () {
     expect($result)->toBe('123456789');
     Event::assertDispatched(AssetUploadedToMux::class);
 });
+
+it('allows modifying asset data via hook', function () {
+    $this->service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
+
+    CreateMuxAsset::hook('asset-data', function ($payload, $next) {
+        $data = $payload->data;
+        $data['video_quality'] = 'very_bad';
+        $data['test'] = true;
+        $data['passthrough'] = 'cannot::be::overridden::by::hook';
+        $payload->data = $data;
+
+        return $next($payload);
+    });
+
+    $this->guzzler->expects($this->once())
+        ->post('https://api.mux.com/video/v1/assets')
+        ->withJson([
+            'input' => [
+                'url' => 'http://localhost/assets/assets/test.mp4',
+            ],
+            'playback_policy' => [
+                'public',
+            ],
+            'passthrough' => 'statamic::test_container_assets::test.mp4',
+            'normalize_audio' => false,
+            'test' => true,
+            'video_quality' => 'very_bad',
+        ])
+        ->willRespondJson([
+            'data' => [
+                'status' => 'preparing',
+                'playback_ids' => [
+                    [
+                        'policy' => 'public',
+                        'id' => 'uNbxnGLKJ00yfbijDO8COxTOyVKT01xpxW',
+                    ],
+                ],
+                'id' => 'JaUWdXuXM93J9Q2yvSqQnqz6s5MBuXGv',
+                'created_at' => '1607452572',
+            ],
+        ]);
+
+    $result = $this->createMuxAsset->handle($this->mp4);
+
+    expect($result)->toBe('JaUWdXuXM93J9Q2yvSqQnqz6s5MBuXGv');
+});
