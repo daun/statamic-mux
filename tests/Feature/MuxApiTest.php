@@ -68,7 +68,6 @@ test('sends API request to create asset', function () {
     ]);
 
     $this->guzzler->expects($this->once())
-        ->ray()
         ->post('https://api.mux.com/video/v1/assets')
         ->withJson([
             'input' => [
