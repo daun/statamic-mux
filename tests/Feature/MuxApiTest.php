@@ -1,7 +1,9 @@
 <?php
 
 use Daun\StatamicMux\Mux\MuxApi;
+use Daun\StatamicMux\Mux\MuxClient;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Http;
 use MuxPhp\Api\AssetsApi;
 use MuxPhp\Api\DeliveryUsageApi;
 use MuxPhp\Api\DirectUploadsApi;
@@ -57,4 +59,25 @@ test('returns a configured PlaybackIDApi instance', function () {
 test('returns a configured DeliveryUsageApi instance', function () {
     expect($this->api->deliveryUsage())->toBeInstanceOf(DeliveryUsageApi::class);
     expect($this->api->deliveryUsage()->getConfig())->toBe($this->api->config());
+});
+
+test('sends API request to create asset', function () {
+    $requestBody = file_get_contents(fixtures_path('mux/asset-create-request.json'));
+    $responseBody = file_get_contents(fixtures_path('mux/asset-create-response.json'));
+
+    $this->app->bind(MuxClient::class, fn() => $this->guzzler->getClient());
+
+    $this->guzzler->expects($this->once())
+        ->post('https://api.mux.com/video/v1/assets')
+        ->withBody($requestBody)
+        ->willRespond(Http::response($responseBody, 200));
+
+    $assetRequest = $this->api->createAssetRequest([
+        'input' => $this->api->input(['url' => 'https://example.com/video.mp4']),
+        'passthrough' => '1234',
+    ]);
+
+    $muxAsset = $this->api->assets()->createAsset($assetRequest)->getData();
+
+    expect($muxAsset->getId())->toBe('SqQnqz6s5MBuXGvJaUWdXuXM93J9Q2yv');
 });
