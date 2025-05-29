@@ -98,12 +98,27 @@ class CreateMuxAsset
      */
     protected function getAssetData(Asset $asset): array
     {
+        $metadata = $this->getAssetMetadata($asset);
         $data = $this->runHooksWith('asset-data', ['asset' => $asset, 'data' => []])->data;
 
         return [
+            'meta' => $metadata,
             ...$data,
             'passthrough' => $this->getAssetIdentifier($asset)
         ];
+    }
+
+    /**
+     * Get metadata to send to Mux during asset creation.
+     */
+    protected function getAssetMetadata(Asset $asset): array
+    {
+        $metadata = [
+            'title' => $asset->title(),
+            'external_id' => $asset->id(),
+        ];
+
+        return $this->runHooksWith('asset-metadata', ['asset' => $asset, 'metadata' => $metadata])->metadata ?? [];
     }
 
     /**
