@@ -1,5 +1,6 @@
 <?php
 
+use BlastCloud\Guzzler\Expectation;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxClient;
 use GuzzleHttp\Client;
@@ -12,6 +13,7 @@ use MuxPhp\Api\PlaybackIDApi;
 use MuxPhp\Api\URLSigningKeysApi;
 
 beforeEach(function () {
+    $this->app->bind(MuxClient::class, fn() => $this->guzzler->getClient());
     $this->api = $this->app->make(MuxApi::class);
 });
 
@@ -65,17 +67,19 @@ test('sends API request to create asset', function () {
     $requestBody = file_get_contents(fixtures_path('mux/asset-create-request.json'));
     $responseBody = file_get_contents(fixtures_path('mux/asset-create-response.json'));
 
-    $this->app->bind(MuxClient::class, fn() => $this->guzzler->getClient());
+    $assetRequest = $this->api->createAssetRequest([
+        'input' => $this->api->input(['url' => 'https://example.com/video.mp4']),
+        'passthrough' => 'example-passthrough',
+    ]);
 
     $this->guzzler->expects($this->once())
         ->post('https://api.mux.com/video/v1/assets')
-        ->withBody($requestBody)
+        ->withJson(json_decode($requestBody, true))
+        // ->withCallback(function (array $history) use ($requestBody) {
+        //     ray($history['request']->getBody()->getContents());
+        //     return true;
+        // })
         ->willRespond(Http::response($responseBody, 200));
-
-    $assetRequest = $this->api->createAssetRequest([
-        'input' => $this->api->input(['url' => 'https://example.com/video.mp4']),
-        'passthrough' => '1234',
-    ]);
 
     $muxAsset = $this->api->assets()->createAsset($assetRequest)->getData();
 
