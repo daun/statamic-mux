@@ -102,7 +102,7 @@ class CreateMuxAsset
 
         return [
             ...$data,
-            'passthrough' => $this->getAssetIdentifier($asset)
+            'passthrough' => $this->getAssetIdentifier($asset),
         ];
     }
 
