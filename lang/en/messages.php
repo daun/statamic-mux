@@ -13,10 +13,9 @@ return [
     ],
 
     'toast' => [
-        'uploaded' => 'Video uploaded to Mux',
-        'upload_failed' => 'Video could not be uploaded to Mux: :error',
-        'deleted' => 'Video deleted from Mux',
-        'delete_failed' => 'Video could not be deleted from Mux: :error',
+        'uploading' => ':file uploading to Mux',
+        'uploaded' => ':file uploaded to Mux',
+        'upload_failed' => ':file could not be uploaded to Mux: :error',
     ],
 
 ];

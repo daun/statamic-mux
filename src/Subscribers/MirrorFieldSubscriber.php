@@ -44,7 +44,7 @@ class MirrorFieldSubscriber implements ShouldQueue
 
         try {
             $this->service->createMuxAsset($event->asset, $force);
-            Toast::info(__('statamic-mux::messages.toast.uploaded'));
+            Toast::info(__('statamic-mux::messages.toast.uploaded', ['file' => $event->asset->basename()]));
         } catch (\Throwable $th) {
             Toast::error(__('statamic-mux::messages.toast.upload_failed', ['error' => $th->getMessage()]));
         }
@@ -59,11 +59,6 @@ class MirrorFieldSubscriber implements ShouldQueue
             return;
         }
 
-        try {
-            $this->service->deleteMuxAsset($event->asset);
-            Toast::info(__('statamic-mux::messages.toast.deleted'));
-        } catch (\Throwable $th) {
-            Toast::error(__('statamic-mux::messages.toast.delete_failed', ['error' => $th->getMessage()]));
-        }
+        $this->service->deleteMuxAsset($event->asset);
     }
 }
