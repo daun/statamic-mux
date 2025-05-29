@@ -1,10 +1,8 @@
 <?php
 
-use BlastCloud\Guzzler\Expectation;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxClient;
 use GuzzleHttp\Client;
-use Illuminate\Support\Facades\Http;
 use MuxPhp\Api\AssetsApi;
 use MuxPhp\Api\DeliveryUsageApi;
 use MuxPhp\Api\DirectUploadsApi;
@@ -13,7 +11,7 @@ use MuxPhp\Api\PlaybackIDApi;
 use MuxPhp\Api\URLSigningKeysApi;
 
 beforeEach(function () {
-    $this->app->bind(MuxClient::class, fn() => $this->guzzler->getClient());
+    $this->app->bind(MuxClient::class, fn () => $this->guzzler->getClient());
     $this->api = $this->app->make(MuxApi::class);
 });
 
@@ -73,29 +71,29 @@ test('sends API request to create asset', function () {
         ->ray()
         ->post('https://api.mux.com/video/v1/assets')
         ->withJson([
-            "input" => [
-                "url" => "https://example.com/video.mp4"
+            'input' => [
+                'url' => 'https://example.com/video.mp4',
             ],
-            "playback_policy" => [
-                "public"
+            'playback_policy' => [
+                'public',
             ],
-            "passthrough" => "example-passthrough",
-            "normalize_audio" => false,
-            "test" => false,
-            "video_quality" => "plus"
+            'passthrough' => 'example-passthrough',
+            'normalize_audio' => false,
+            'test' => false,
+            'video_quality' => 'plus',
         ])
         ->willRespondJson([
-            "data" => [
-                "status" => "preparing",
-                "playback_ids" => [
+            'data' => [
+                'status' => 'preparing',
+                'playback_ids' => [
                     [
-                        "policy" => "public",
-                        "id" => "uNbxnGLKJ00yfbijDO8COxTOyVKT01xpxW"
-                    ]
+                        'policy' => 'public',
+                        'id' => 'uNbxnGLKJ00yfbijDO8COxTOyVKT01xpxW',
+                    ],
                 ],
-                "id" => "SqQnqz6s5MBuXGvJaUWdXuXM93J9Q2yv",
-                "created_at" => "1607452572"
-            ]
+                'id' => 'SqQnqz6s5MBuXGvJaUWdXuXM93J9Q2yv',
+                'created_at' => '1607452572',
+            ],
         ]);
 
     $muxAsset = $this->api->assets()->createAsset($assetRequest)->getData();
