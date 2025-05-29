@@ -49,3 +49,15 @@ one of the available [Artisan Commands](/commands), e.g.:
 # Upload existing videos to Mux
 php please mux:upload
 ```
+
+## Video Metadata
+
+Mux videos support a set of [metadata fields](https://www.mux.com/docs/guides/add-metadata-to-your-videos)
+that are set when uploading video files. The addon will pull these from the asset blueprint if
+possible. You can [customize metadata using a hook](/hooks#asset-metadata).
+
+| Meta | Value | Example |
+|------|------ | --------|
+| `title` | Value of asset's `title` field<br> (or filename if empty) | `Good Times` or `video.mp4` |
+| `creator_id` | Addon name | `statamic-mux` |
+| `external_id` | Asset id | `assets::video.mp4` |

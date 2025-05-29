@@ -3,6 +3,7 @@
 namespace Daun\StatamicMux;
 
 use Daun\StatamicMux\Mux\MuxApi;
+use Daun\StatamicMux\Mux\MuxClient;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Mux\MuxUrls;
 use Daun\StatamicMux\Placeholders\PlaceholderService;
@@ -42,6 +43,7 @@ class ServiceProvider extends AddonServiceProvider
 
     public function register()
     {
+        $this->registerHooks();
         $this->registerMuxApi();
         $this->registerMuxService();
         $this->registerUrlService();
@@ -55,11 +57,20 @@ class ServiceProvider extends AddonServiceProvider
         $this->publishViews();
     }
 
+    protected function registerHooks()
+    {
+        $this->app->instance('mux.hooks', collect());
+    }
+
     protected function registerMuxApi()
     {
+        $this->app->bind(MuxClient::class, function (Application $app) {
+            return new Client;
+        });
+
         $this->app->bind(MuxApi::class, function (Application $app) {
             return new MuxApi(
-                new Client,
+                $app['mux.client'],
                 $app['config']->get('mux.credentials.token_id'),
                 $app['config']->get('mux.credentials.token_secret'),
                 $app['config']->get('app.debug', false),
@@ -68,6 +79,8 @@ class ServiceProvider extends AddonServiceProvider
                 $app['config']->get('mux.video_quality', null),
             );
         });
+
+        $this->app->alias(MuxClient::class, 'mux.client');
         $this->app->alias(MuxApi::class, 'mux.api');
     }
 

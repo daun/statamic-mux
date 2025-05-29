@@ -46,6 +46,11 @@ function fixtures_path(...$paths): string
     return join_paths(__DIR__, '__fixtures__', ...$paths);
 }
 
+function json_fixture($path): array
+{
+    return json_decode(file_get_contents(fixtures_path($path)), true);
+}
+
 function snapshots_path(...$paths): string
 {
     return join_paths(__DIR__, '__snapshots__', ...$paths);

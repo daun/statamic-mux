@@ -6,17 +6,12 @@ use Daun\StatamicMux\Events\AssetDeletedFromMux;
 use Daun\StatamicMux\Events\AssetDeletingFromMux;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Log;
 use Statamic\Assets\Asset;
-use Statamic\Support\Traits\Hookable;
 
 class DeleteMuxAsset
 {
-    use Hookable;
-
     public function __construct(
-        protected Application $app,
         protected MuxApi $api,
         protected MuxService $service,
     ) {}

@@ -27,11 +27,12 @@
         "firebase/php-jwt": "^6.10",
         "guzzlehttp/guzzle": "^7.8",
         "laravel/framework": "^9.21 || ^10.0 || ^11.0 || ^12.0",
-        "muxinc/mux-php": "^4.0",
+        "muxinc/mux-php": "^5.0",
         "srwiez/thumbhash": "^1.2",
         "statamic/cms": "^4.0 || ^5.0"
     },
     "require-dev": {
+        "blastcloud/guzzler": "^2.2",
         "larastan/larastan": "^2.9 || ^3.0",
         "laravel/facade-documenter": "dev-main",
         "laravel/pint": "^1.14",
@@ -39,7 +40,8 @@
         "orchestra/testbench": "^9.5 || ^10.0",
         "pestphp/pest": "^3.3",
         "pestphp/pest-plugin-laravel": "^3.0",
-        "spatie/pest-plugin-snapshots": "^2.1"
+        "spatie/pest-plugin-snapshots": "^2.1",
+        "spatie/ray": "^1.42"
     },
     "repositories": {
         "facade-documenter": {

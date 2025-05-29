@@ -12,4 +12,10 @@ return [
         'reupload_on_save' => 'Reupload to Mux on save',
     ],
 
+    'toast' => [
+        'uploading' => ':file uploading to Mux',
+        'uploaded' => ':file uploaded to Mux',
+        'upload_failed' => ':file could not be uploaded to Mux: :error',
+    ],
+
 ];

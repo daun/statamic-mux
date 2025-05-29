@@ -2,21 +2,20 @@
 
 namespace Daun\StatamicMux\Mux\Actions;
 
-use Daun\StatamicMux\Data\MuxAsset;
+use Daun\StatamicMux\Concerns\GeneratesAssetData;
 use Daun\StatamicMux\Events\AssetUploadedToMux;
 use Daun\StatamicMux\Events\AssetUploadingToMux;
 use Daun\StatamicMux\Mux\MuxApi;
-use Illuminate\Foundation\Application;
+use Daun\StatamicMux\Mux\MuxService;
 use Illuminate\Support\Facades\Log;
 use Statamic\Assets\Asset;
-use Statamic\Support\Traits\Hookable;
 
 class CreateMuxAsset
 {
-    use Hookable;
+    use GeneratesAssetData;
 
     public function __construct(
-        protected Application $app,
+        protected MuxService $service,
         protected MuxApi $api,
     ) {}
 
@@ -29,8 +28,7 @@ class CreateMuxAsset
             return null;
         }
 
-        $existingMuxAsset = MuxAsset::fromAsset($asset);
-        if (! $force && $existingMuxAsset->existsOnMux()) {
+        if (! $force && $this->service->hasExistingMuxAsset($asset)) {
             return null;
         }
 
@@ -39,7 +37,7 @@ class CreateMuxAsset
         }
 
         try {
-            if ($this->app->isLocal() || $asset->container()->private()) {
+            if (app()->isLocal() || $asset->container()->private()) {
                 $muxId = $this->uploadAssetToMux($asset);
             } else {
                 $muxId = $this->ingestAssetToMux($asset);
@@ -62,9 +60,7 @@ class CreateMuxAsset
      */
     protected function uploadAssetToMux(Asset $asset): ?string
     {
-        $request = $this->api->createUploadRequest([
-            'passthrough' => $this->getAssetPassthroughData($asset),
-        ]);
+        $request = $this->api->createUploadRequest($this->getAssetData($asset));
         $muxUpload = $this->api->directUploads()->createDirectUpload($request)->getData();
         $uploadId = $muxUpload->getId();
 
@@ -85,28 +81,12 @@ class CreateMuxAsset
     protected function ingestAssetToMux(Asset $asset): ?string
     {
         $request = $this->api->createAssetRequest([
+            ...$this->getAssetData($asset),
             'input' => $this->api->input(['url' => $asset->absoluteUrl()]),
-            'passthrough' => $this->getAssetPassthroughData($asset),
         ]);
         $muxAssetResponse = $this->api->assets()->createAsset($request)->getData();
         $muxId = $muxAssetResponse?->getId();
 
         return $muxId;
-    }
-
-    /**
-     * Get additional data to pass through to Mux.
-     */
-    protected function getAssetPassthroughData(Asset $asset): string
-    {
-        return $this->getAssetIdentifier($asset);
-    }
-
-    /**
-     * Get unique asset identifier.
-     */
-    protected function getAssetIdentifier(Asset $asset): string
-    {
-        return "statamic::{$asset->id()}";
     }
 }
