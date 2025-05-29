@@ -4,17 +4,17 @@ namespace Daun\StatamicMux\Tags;
 
 use Daun\StatamicMux\Tags\Concerns\GetsAssetFromContext;
 use Daun\StatamicMux\Tags\Concerns\ReadsMuxData;
-use Illuminate\Support\Collection;
+use Daun\StatamicMux\Tags\Concerns\RendersMuxPlayer;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Statamic\Tags\Concerns\RendersAttributes;
 use Statamic\Tags\Tags;
 
 class MuxTags extends Tags
 {
     use GetsAssetFromContext;
     use ReadsMuxData;
-    use RendersAttributes;
+    use RendersMuxPlayer;
 
     protected static $handle = 'mux';
 
@@ -23,11 +23,13 @@ class MuxTags extends Tags
      *
      * Where `field` is the variable containing the video asset
      */
-    public function __call($method, $args)
+    public function wildcard($field)
     {
-        $tag = explode(':', $this->tag, 2)[1];
+        if (! $this->context->has($field)) {
+            throw new \Exception("Variable [{$field}] does not exist in context.");
+        }
 
-        $item = $this->context->value($tag);
+        $item = $this->context->value($field);
 
         if ($this->isPair) {
             return $this->generate($item);
@@ -65,21 +67,30 @@ class MuxTags extends Tags
         try {
             $muxId = $this->getMuxId($asset);
             $playbackId = $this->getPlaybackId($asset);
+            if (! $playbackId) {
+                return [];
+            }
 
             $data = [
                 'mux_id' => $muxId,
                 'playback_id' => $playbackId?->id(),
                 'playback_policy' => $playbackId?->policy(),
-                'playback_modifiers' => ($playbackModifiers = $this->getDefaultPlaybackModifiers()),
-                'playback_token' => ($playbackToken = $this->getPlaybackToken($asset, $playbackModifiers)),
-                'playback_id_signed' => $playbackToken ? "{$playbackId->id()}?token={$playbackToken}" : $playbackId?->id(),
+                'playback_modifiers' => ($playbackModifiers = $this->getPlaybackModifiers()),
                 'playback_url' => $this->getPlaybackUrl($asset),
                 'thumbnail' => $this->getThumbnailUrl($asset),
-                'placeholder' => $this->getPlaceholderDataUri($asset),
                 'gif' => $this->getGifUrl($asset),
+                'placeholder' => $this->getPlaceholderDataUri($asset),
                 'is_public' => $playbackId?->isPublic(),
                 'is_signed' => $playbackId?->isSigned(),
             ];
+
+            if ($playbackId?->isSigned()) {
+                $data = $data + [
+                    'playback_token' => $this->getPlaybackToken($asset, $playbackModifiers),
+                    'thumbnail_token' => $this->getThumbnailToken($asset),
+                    'storyboard_token' => $this->getStoryboardToken($asset),
+                ];
+            }
 
             return array_merge($asset->toAugmentedArray(), $data);
         } catch (\Throwable $th) {
@@ -110,38 +121,41 @@ class MuxTags extends Tags
     }
 
     /**
+     * Tag {{ mux:embed }}
+     *
+     * Return a rendered <iframe> html embed.
+     */
+    public function embed(): ?string
+    {
+        return $this->component('mux-embed');
+    }
+
+    /**
      * Render a custom-element view.
      */
     protected function component(string $view): ?string
     {
-        $asset = $this->getAssetFromContext();
-        $playbackId = $this->getPlaybackId($asset)?->id();
-        if (! $playbackId) {
+        $data = $this->generate();
+        if (empty($data)) {
             return null;
         }
 
-        $data = $this->generate($asset);
+        $playbackModifiers = collect($this->getPlaybackModifiers());
+        $playerAttributes = collect($this->getPlayerAttributes());
 
-        $params = collect([
-            'autoplay' => $this->params->bool('autoplay', false),
-            'loop' => $this->params->bool('loop', false),
-            'muted' => $this->params->bool('muted', false),
-            'background' => $this->params->bool('background', false),
-            'script' => $this->params->bool('script', false),
-        ]);
-
-        $attributes = collect($this->params->all())
+        $htmlAttributes = collect($this->params->all())
             ->except($this->assetParams)
-            ->except($params->keys());
-
-        $playbackAttributes = collect($data['playback_modifiers'])
-            ->except($attributes->keys());
+            ->except($playbackModifiers->keys())
+            ->except(['script', 'public', 'signed', 'background'])
+            ->when($this->params->bool('background'), fn ($attr) => $attr->merge(['autoplay' => true, 'loop' => true, 'muted' => true])
+            );
 
         $viewdata = $this->context
-            ->merge($this->generate($asset))
-            ->merge($params)
-            ->merge(['attributes' => $this->toHtmlAttributes($attributes)])
-            ->merge(['playback_attributes' => $this->toHtmlAttributes($playbackAttributes)]);
+            ->merge($data)
+            ->merge(['script' => $this->params->bool('script', false)])
+            ->merge(['attributes' => $this->toHtmlAttributes($htmlAttributes)])
+            ->merge(['playback_modifiers' => $this->toHtmlAttributes($playbackModifiers)])
+            ->merge(['player_query' => Arr::query($playbackModifiers->merge($playerAttributes)->all())]);
 
         return view("statamic-mux::{$view}", $viewdata)->render();
     }
@@ -183,7 +197,7 @@ class MuxTags extends Tags
      */
     public function thumbnail(): ?string
     {
-        return $this->getThumbnailUrl(params: $this->getNonAssetParams());
+        return $this->getThumbnailUrl(params: $this->params->except($this->assetParams)->all());
     }
 
     /**
@@ -193,7 +207,7 @@ class MuxTags extends Tags
      */
     public function gif(): ?string
     {
-        return $this->getGifUrl(params: $this->getNonAssetParams());
+        return $this->getGifUrl(params: $this->params->except($this->assetParams)->all());
     }
 
     /**
@@ -203,14 +217,17 @@ class MuxTags extends Tags
      */
     public function placeholder(): ?string
     {
-        return $this->getPlaceholderDataUri(params: $this->getNonAssetParams());
+        return $this->getPlaceholderDataUri(params: $this->params->except($this->assetParams)->all());
     }
 
     /**
      * Turn query_params into html-attributes (snake to kebab case)
      */
-    protected function toHtmlAttributes(mixed $params): Collection
+    protected function toHtmlAttributes(mixed $params): array
     {
-        return collect($params)->keyBy(fn ($_, $key) => Str::replace('_', '-', $key));
+        return collect($params)
+            ->keyBy(fn ($_, $key) => Str::replace('_', '-', $key))
+            ->filter(fn ($_, $key) => $key)
+            ->all();
     }
 }

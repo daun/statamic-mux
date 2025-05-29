@@ -17,7 +17,7 @@ trait InteractsWithAntlersViews
         $tempDirectory = sys_get_temp_dir();
 
         if (! in_array($tempDirectory, ViewFacade::getFinder()->getPaths())) {
-            ViewFacade::addLocation(sys_get_temp_dir());
+            ViewFacade::addLocation($tempDirectory);
         }
 
         $tempFileInfo = pathinfo(tempnam($tempDirectory, 'laravel-antlers'));
