@@ -62,9 +62,7 @@ class CreateMuxAsset
      */
     protected function uploadAssetToMux(Asset $asset): ?string
     {
-        $request = $this->api->createUploadRequest([
-            'passthrough' => $this->getAssetPassthroughData($asset),
-        ]);
+        $request = $this->api->createUploadRequest($this->getAssetData($asset));
         $muxUpload = $this->api->directUploads()->createDirectUpload($request)->getData();
         $uploadId = $muxUpload->getId();
 
@@ -85,8 +83,8 @@ class CreateMuxAsset
     protected function ingestAssetToMux(Asset $asset): ?string
     {
         $request = $this->api->createAssetRequest([
+            ...$this->getAssetData($asset),
             'input' => $this->api->input(['url' => $asset->absoluteUrl()]),
-            'passthrough' => $this->getAssetPassthroughData($asset),
         ]);
         $muxAssetResponse = $this->api->assets()->createAsset($request)->getData();
         $muxId = $muxAssetResponse?->getId();
@@ -95,11 +93,17 @@ class CreateMuxAsset
     }
 
     /**
-     * Get additional data to pass through to Mux.
+     * Get complete data to send to Mux for asset creation.
+     * The passthrough data is used to identify addon assets later, so it should not be overridden.
      */
-    protected function getAssetPassthroughData(Asset $asset): string
+    protected function getAssetData(Asset $asset): array
     {
-        return $this->getAssetIdentifier($asset);
+        $data = $this->runHooksWith('asset-data', ['asset' => $asset, 'data' => []])->data;
+
+        return [
+            ...$data,
+            'passthrough' => $this->getAssetIdentifier($asset)
+        ];
     }
 
     /**
