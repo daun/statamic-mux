@@ -27,6 +27,7 @@ trait DealsWithAssets
         $this->artisan(GlideClear::class);
 
         $this->createAssetContainer();
+        $this->createAssetContainer('private', ['url' => null]);
     }
 
     protected function tearDownAssetTest(): void

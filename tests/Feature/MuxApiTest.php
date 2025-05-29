@@ -64,9 +64,6 @@ test('returns a configured DeliveryUsageApi instance', function () {
 });
 
 test('sends API request to create asset', function () {
-    $requestBody = json_fixture('mux/asset-create-request.json');
-    $responseBody = json_fixture('mux/asset-create-response.json');
-
     $assetRequest = $this->api->createAssetRequest([
         'input' => $this->api->input(['url' => 'https://example.com/video.mp4']),
         'passthrough' => 'example-passthrough',
@@ -75,10 +72,35 @@ test('sends API request to create asset', function () {
     $this->guzzler->expects($this->once())
         ->ray()
         ->post('https://api.mux.com/video/v1/assets')
-        ->withJson($requestBody)
-        ->willRespond(Http::response($responseBody, 200));
+        ->withJson([
+            "input" => [
+                "url" => "https://example.com/video.mp4"
+            ],
+            "playback_policy" => [
+                "public"
+            ],
+            "passthrough" => "example-passthrough",
+            "normalize_audio" => false,
+            "test" => false,
+            "video_quality" => "plus"
+        ])
+        ->willRespondJson([
+            "data" => [
+                "status" => "preparing",
+                "playback_ids" => [
+                    [
+                        "policy" => "public",
+                        "id" => "uNbxnGLKJ00yfbijDO8COxTOyVKT01xpxW"
+                    ]
+                ],
+                "id" => "SqQnqz6s5MBuXGvJaUWdXuXM93J9Q2yv",
+                "created_at" => "1607452572"
+            ]
+        ]);
 
     $muxAsset = $this->api->assets()->createAsset($assetRequest)->getData();
+
+    $this->guzzler->assertHistoryCount(1);
 
     expect($muxAsset->getId())->toBe('SqQnqz6s5MBuXGvJaUWdXuXM93J9Q2yv');
 });
