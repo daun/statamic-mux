@@ -99,10 +99,10 @@ class CreateMuxAsset
     protected function getAssetData(Asset $asset): array
     {
         $data = ['meta' => $this->getAssetMeta($asset)];
-        $result = $this->runHooks('asset-data', ['asset' => $asset, 'data' => $data]);
+        $result = $this->runHooks('asset-data', (object) ['asset' => $asset, 'data' => $data]);
 
         return [
-            ...$result['data'] ?? [],
+            ...$result->data ?? [],
             'passthrough' => $this->getAssetIdentifier($asset),
         ];
     }
@@ -118,9 +118,9 @@ class CreateMuxAsset
             'external_id' => $asset->id(),
         ];
 
-        $result = $this->runHooks('asset-meta', ['asset' => $asset, 'meta' => $meta]);
+        $result = $this->runHooks('asset-meta', (object) ['asset' => $asset, 'meta' => $meta]);
 
-        return $result['meta'] ?? [];
+        return $result->meta ?? [];
     }
 
     /**
