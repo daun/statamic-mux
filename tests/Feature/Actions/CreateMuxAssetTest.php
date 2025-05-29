@@ -114,7 +114,6 @@ it('uploads assets from private containers', function () {
     $this->service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
 
     $this->guzzler->expects($this->once())
-        ->ray()
         ->post('https://api.mux.com/video/v1/uploads')
         ->withJson([
             'timeout' => 3600,
@@ -146,14 +145,12 @@ it('uploads assets from private containers', function () {
         ]);
 
     $this->guzzler->expects($this->once())
-        ->ray()
         ->put('https://storage.googleapis.com/video-storage-us-east1-uploads/zd01Pe2bNpYhxbrw')
         ->withHeaders(['Content-Type' => 'application/octet-stream'])
         ->withBody($privateMp4->contents())
         ->willRespond(Http::response('', 200));
 
     $this->guzzler->expects($this->once())
-        ->ray()
         ->get('https://api.mux.com/video/v1/uploads/zd01Pe2bNpYhxbrwYABgFE01twZdtv4M00kts2i02GhbGjc')
         ->willRespondJson([
             'data' => [
@@ -177,7 +174,6 @@ it('uploads assets from local environment', function () {
     $this->service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
 
     $this->guzzler->expects($this->once())
-        ->ray()
         ->post('https://api.mux.com/video/v1/uploads')
         ->withJson([
             'timeout' => 3600,
@@ -209,14 +205,12 @@ it('uploads assets from local environment', function () {
         ]);
 
     $this->guzzler->expects($this->once())
-        ->ray()
         ->put('https://storage.googleapis.com/video-storage-us-east1-uploads/zd01Pe2bNpYhxbrw')
         ->withHeaders(['Content-Type' => 'application/octet-stream'])
         ->withBody($this->mp4->contents())
         ->willRespond(Http::response('', 200));
 
     $this->guzzler->expects($this->once())
-        ->ray()
         ->get('https://api.mux.com/video/v1/uploads/zd01Pe2bNpYhxbrwYABgFE01twZdtv4M00kts2i02GhbGjc')
         ->willRespondJson([
             'data' => [
