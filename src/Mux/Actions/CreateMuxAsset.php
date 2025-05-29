@@ -2,10 +2,10 @@
 
 namespace Daun\StatamicMux\Mux\Actions;
 
-use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Events\AssetUploadedToMux;
 use Daun\StatamicMux\Events\AssetUploadingToMux;
 use Daun\StatamicMux\Mux\MuxApi;
+use Daun\StatamicMux\Mux\MuxService;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Log;
 use Statamic\Assets\Asset;
@@ -17,6 +17,7 @@ class CreateMuxAsset
 
     public function __construct(
         protected Application $app,
+        protected MuxService $service,
         protected MuxApi $api,
     ) {}
 
@@ -29,8 +30,7 @@ class CreateMuxAsset
             return null;
         }
 
-        $existingMuxAsset = MuxAsset::fromAsset($asset);
-        if (! $force && $existingMuxAsset->existsOnMux()) {
+        if (! $force && $this->service->hasExistingMuxAsset($asset)) {
             return null;
         }
 
