@@ -66,6 +66,7 @@ export default defineConfig({
           { text: 'Secure Playback', link: '/secure-playback' },
           { text: 'Configuration', link: '/configuration' },
           { text: 'Events', link: '/events' },
+          { text: 'Hooks', link: '/hooks' },
         ]
       }
     ],
