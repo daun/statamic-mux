@@ -3,7 +3,7 @@
 ## [1.5.0] - 2025-05-29
 
 - Add support for video metadata
-- Make upload data hookable
+- Make upload request data hookable
 - Improve test coverage
 - Update Mux SDK to v5
 
