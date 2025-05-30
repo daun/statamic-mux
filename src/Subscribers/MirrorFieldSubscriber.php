@@ -26,6 +26,7 @@ class MirrorFieldSubscriber implements ShouldQueue
             // AssetSaved::class => 'createMuxAsset',
             AssetUploaded::class => 'createMuxAsset',
             AssetReuploaded::class => 'createMuxAsset',
+            AssetSaved::class => 'updateMuxAsset',
             AssetDeleted::class => 'deleteMuxAsset',
         ];
     }
@@ -38,6 +39,16 @@ class MirrorFieldSubscriber implements ShouldQueue
         if (MirrorField::shouldMirror($event->asset)) {
             $force = $event instanceof AssetReuploaded;
             $this->service->createMuxAsset($event->asset, $force);
+        }
+    }
+
+    /**
+     * Update a mirrored asset on Mux.
+     */
+    public function updateMuxAsset(AssetSaved $event): void
+    {
+        if (MirrorField::shouldMirror($event->asset)) {
+            $this->service->updateMuxAsset($event->asset);
         }
     }
 
