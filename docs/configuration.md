@@ -53,6 +53,32 @@ return [
 ];
 ```
 
+## Mirror Field Settings
+
+Configure the behavior of assets mirrored to Mux through the [Mirror fieldtype](/upload). The `enabled` flag
+turns mirroring on or off globally. The `sync_meta` flag controls whether
+[Mux metadata](https://www.mux.com/docs/guides/add-metadata-to-your-videos) is updated
+whenever the asset is updated in Statamic. Turn it off to only set the metadata once on creation.
+
+```php
+return [
+    /*
+    |--------------------------------------------------------------------------
+    | Mirror Local Video Assets to Mux
+    |--------------------------------------------------------------------------
+    */
+
+    'mirror' => [
+
+        'enabled' => env('MUX_MIRROR_ENABLED', true), // [!code focus]
+
+        'sync_meta' => true, // [!code focus]
+
+    ],
+
+];
+```
+
 ## Test Mode
 
 Mux offers a test mode for evaluating their service without incurring charges for storage or streaming.
