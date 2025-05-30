@@ -166,6 +166,32 @@ return [
 ];
 ```
 
+## Storage Optimization
+
+Define how the addon handles original video files. In most cases, you'll want to
+stick with the default behavior and keep the original MP4 files around to ensure
+long-term independence from any one video provider.
+
+If you need to save storage space on the server and are fine with having the
+original files on Mux only, you can configure the addon to only store low-quality
+placeholders on disk. This will save a small placeholder video that can be
+previewed in the backend, but requires Mux to properly stream high-quality
+videos from your frontend.
+
+```php
+    /*
+    |--------------------------------------------------------------------------
+    | Optimize Storage
+    |--------------------------------------------------------------------------
+    */
+
+    'storage' => [
+
+        'store_placeholders' => true, // [!code focus]
+
+    ],
+```
+
 ## Queue Driver
 
 Define the queue driver to be used for uploads and other long-running requests to Mux.

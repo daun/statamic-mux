@@ -131,6 +131,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Optimize Storage
+    |--------------------------------------------------------------------------
+    |
+    | To preserve storage space, the addon can replace original video files with
+    | a smaller placeholder version after uploading to Mux. A short clip of the
+    | video will remain available in the control panel for previewing.
+    |
+    */
+
+    'storage' => [
+
+        'store_placeholders' => false,
+
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Queue Driver
     |--------------------------------------------------------------------------
     |
