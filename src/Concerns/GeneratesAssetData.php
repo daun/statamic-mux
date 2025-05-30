@@ -20,7 +20,7 @@ trait GeneratesAssetData
     }
 
     /**
-     * Get data to send when creating a new Mux asset.
+     * Get data to send when creating a new Mux asset or updating an existing one.
      * The passthrough data is used to identify addon assets later.
      */
     protected function getAssetData(Asset $asset): array
