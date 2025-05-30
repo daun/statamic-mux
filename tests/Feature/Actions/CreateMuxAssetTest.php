@@ -248,16 +248,16 @@ it('uploads assets from local environment', function () {
     Event::assertDispatched(AssetUploadedToMux::class);
 });
 
-it('allows modifying asset data via hook', function () {
+it('allows modifying asset settings via hook', function () {
     $this->service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
 
-    Mux::hook('asset-data', function ($payload, $next) {
-        expect($payload->data)->toBeArray();
+    Mux::hook('asset-settings', function ($payload, $next) {
+        expect($payload->settings)->toBeArray();
         expect($payload->asset)->toBeInstanceOf(Asset::class);
 
-        $payload->data['video_quality'] = 'very_bad';
-        $payload->data['test'] = true;
-        $payload->data['passthrough'] = 'cannot::be::overridden::by::hook';
+        $payload->settings['video_quality'] = 'very_bad';
+        $payload->settings['test'] = true;
+        $payload->settings['passthrough'] = 'cannot::be::overridden::by::hook';
 
         return $next($payload);
     });

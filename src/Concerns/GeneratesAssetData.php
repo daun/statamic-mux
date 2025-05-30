@@ -9,20 +9,30 @@ trait GeneratesAssetData
     use ProcessesHooks;
 
     /**
-     * Get complete data to send to Mux for asset creation.
-     * The passthrough data is used to identify addon assets later, so it should not be overridden.
+     * Get settings to apply when creating a new Mux asset.
+     * Video quality, playback policy, etc.
      */
-    protected function getAssetData(Asset $asset): array
+    protected function getAssetSettings(Asset $asset): array
     {
-        $defaults = ['passthrough' => $this->getAssetIdentifier($asset)];
-        $data = ['meta' => $this->getAssetMeta($asset)];
-        $result = $this->hooks('asset-data', (object) ['asset' => $asset, 'data' => $data]);
+        $result = $this->hooks('asset-settings', (object) ['asset' => $asset, 'settings' => []]);
 
-        return $defaults + $result->data ?? [];
+        return $result->settings ?? [];
     }
 
     /**
-     * Get metadata to send to Mux during asset creation.
+     * Get data to send when creating a new Mux asset.
+     * The passthrough data is used to identify addon assets later.
+     */
+    protected function getAssetData(Asset $asset): array
+    {
+        return [
+            'passthrough' => $this->getAssetIdentifier($asset),
+            'meta' => $this->getAssetMeta($asset),
+        ];
+    }
+
+    /**
+     * Get metadata to send to Mux during asset creation and updates.
      */
     protected function getAssetMeta(Asset $asset): array
     {

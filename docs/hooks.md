@@ -25,17 +25,17 @@ class AppServiceProvider extends ServiceProvider
 
 ## Available Hooks
 
-### Asset Data
+### Asset Settings
 
-Transform the data sent to Mux when uploading a video. Change any of the available
-[input parameters of the Mux assets endpoint](https://www.mux.com/docs/api-reference/video/assets/create-asset).
-Most useful to dynamically set video quality or playback policy based on the properties of an asset itself.
+Settings to apply when uploading a video to Mux, e.g. video quality or playback policy. Change any of the available
+[input parameters of the Mux assets endpoint](https://www.mux.com/docs/api-reference/video/assets/create-asset)
+based on the properties of the asset itself.
 
 ```php
 // Set the video quality based on the asset's height
-Mux::hook('asset-data', function ($payload, $next) {
+Mux::hook('asset-settings', function ($payload, $next) {
     if ($payload->asset->height() >= 1080) {
-        $payload->data['video_quality'] = 'plus';
+        $payload->settings['video_quality'] = 'plus';
     }
     return $next($payload);
 });
