@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.5.1] - 2025-05-30
+
+- Rename asset settings hook
+
 ## [1.5.0] - 2025-05-29
 
 - Add support for video metadata
@@ -80,6 +84,7 @@
 
 - Beta release
 
+[1.5.1]: https://github.com/daun/statamic-mux/releases/tag/1.5.1
 [1.5.0]: https://github.com/daun/statamic-mux/releases/tag/1.5.0
 [1.4.0]: https://github.com/daun/statamic-mux/releases/tag/1.4.0
 [1.3.0]: https://github.com/daun/statamic-mux/releases/tag/1.3.0

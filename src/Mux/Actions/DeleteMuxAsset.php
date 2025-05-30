@@ -26,22 +26,38 @@ class DeleteMuxAsset
         }
 
         if (is_string($asset)) {
-            $muxId = $asset;
+            // Special case: delete Mux asset by its ID
+            return $this->deleteOrphanedMuxAsset($asset);
+        } else {
+            // Delete Mux asset tied to local Statamic asset
+            return $this->deleteConnectedMuxAsset($asset);
+        }
+    }
 
-            try {
-                $muxAssetResponse = $this->api->assets()->getAsset($muxId)->getData();
-                if ($this->wasAssetCreatedByAddon($muxAssetResponse)) {
-                    $this->api->assets()->deleteAsset($muxId);
+    /**
+     * Delete a standalone Mux asset (without associated local Statamic asset) by its ID
+     */
+    protected function deleteOrphanedMuxAsset(string $muxId): bool
+    {
+        try {
+            $muxAssetResponse = $this->api->assets()->getAsset($muxId)->getData();
+            if ($this->wasAssetCreatedByAddon($muxAssetResponse)) {
+                $this->api->assets()->deleteAsset($muxId);
 
-                    return true;
-                }
-            } catch (\Throwable $th) {
-                Log::error($th->getMessage());
+                return true;
             }
-
-            return false;
+        } catch (\Throwable $th) {
+            Log::error($th->getMessage());
         }
 
+        return false;
+    }
+
+    /**
+     * Delete a remote Mux asset by its local Statamic asset.
+     */
+    protected function deleteConnectedMuxAsset(Asset $asset): bool
+    {
         if (! $asset->isVideo()) {
             return false;
         }

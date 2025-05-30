@@ -37,7 +37,7 @@ abstract class TestCase extends OrchestraTestCase
         // Guzzler helper: $this->guzzer->get()->ray() for debugging request and response body
         Expectation::macro('ray', function (Expectation $e) {
             return $e->withCallback(function (array $history) {
-                ray($history['request']->getRequestTarget())->label('url');
+                ray($history['request']->getRequestTarget())->label($history['request']->getMethod());
                 ray($history['request']->getBody()->getContents())->label('request');
                 ray($history['response']->getBody()->getContents())->label('response');
                 return true;

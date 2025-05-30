@@ -60,7 +60,8 @@ class CreateMuxAsset
      */
     protected function uploadAssetToMux(Asset $asset): ?string
     {
-        $request = $this->api->createUploadRequest($this->getAssetData($asset));
+        $data = $this->getAssetData($asset) + $this->getAssetSettings($asset);
+        $request = $this->api->createUploadRequest($data);
         $muxUpload = $this->api->directUploads()->createDirectUpload($request)->getData();
         $uploadId = $muxUpload->getId();
 
@@ -80,10 +81,9 @@ class CreateMuxAsset
      */
     protected function ingestAssetToMux(Asset $asset): ?string
     {
-        $request = $this->api->createAssetRequest([
-            ...$this->getAssetData($asset),
-            'input' => $this->api->input(['url' => $asset->absoluteUrl()]),
-        ]);
+        $input = $this->api->input(['url' => $asset->absoluteUrl()]);
+        $data = ['input' => $input] + $this->getAssetData($asset) + $this->getAssetSettings($asset);
+        $request = $this->api->createAssetRequest($data);
         $muxAssetResponse = $this->api->assets()->createAsset($request)->getData();
         $muxId = $muxAssetResponse?->getId();
 

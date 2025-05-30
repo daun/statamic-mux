@@ -7,7 +7,6 @@ The Statamic Mux addon follows a service-oriented architecture with clear separa
 ```mermaid
 graph TD
     UI[Control Panel UI] --> FT[Fieldtypes]
-    UI --> LI[Listings]
     FT --> SERVICE[MuxService]
     CLI[CLI Commands] --> SERVICE
     SERVICE --> API[MuxApi]
@@ -23,7 +22,6 @@ graph TD
 The `Mux` facade provides a clean interface to the complex service implementation:
 
 ```php
-// Usage example
 Mux::createMuxAsset($asset);
 ```
 
@@ -32,11 +30,7 @@ Mux::createMuxAsset($asset);
 Discrete operations are encapsulated in dedicated action classes:
 
 ```php
-// Example from actions/CreateMuxAsset.php
-public function handle(Asset $asset): bool
-{
-    // Implementation...
-}
+(new CreateMuxAsset)->handle($asset);
 ```
 
 ### Observer Pattern
@@ -44,11 +38,7 @@ public function handle(Asset $asset): bool
 The system uses Laravel's event system for loose coupling:
 
 ```php
-// Example from subscribers/MirrorFieldSubscriber.php
-public function subscribe($events)
-{
-    $events->listen(AssetSaved::class, [self::class, 'handleAssetSaved']);
-}
+AssetUploadingToMux::dispatch($asset);
 ```
 
 ## Asset Lifecycle
@@ -105,33 +95,4 @@ Multiple layers of security for video content:
 
 - Public playback IDs for open content
 - Signed playback IDs with JWT tokens for restricted content
-- Domain restrictions via playback policies
 - Signed URLs with expiration timestamps
-
-### Error Handling Strategy
-
-Robust error handling through multiple mechanisms:
-
-- Job retries with exponential backoff
-- Exception capturing and logging
-- Status tracking for user feedback
-- Webhook validation to prevent spoofing
-
-## Critical Implementation Paths
-
-### Asset Creation
-
-1. Asset created or updated in Statamic
-2. MirrorFieldSubscriber detects change
-3. CreateMuxAssetJob dispatched to queue
-4. MuxApi creates asset in Mux platform
-5. MuxAsset record created with initial status
-6. Webhook updates status when processing completes
-
-### Video Playback Rendering
-
-1. Template uses `{{ mux:video }}` Antlers tag
-2. MuxTags resolves asset from context
-3. ReadsMuxData trait retrieves playback details
-4. RendersMuxPlayer generates appropriate HTML
-5. Frontend receives optimized video embed code
