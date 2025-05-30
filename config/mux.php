@@ -62,6 +62,8 @@ return [
 
         'enabled' => env('MUX_MIRROR_ENABLED', true),
 
+        'sync_meta' => true,
+
     ],
 
     /*

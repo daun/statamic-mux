@@ -23,11 +23,10 @@ class MirrorFieldSubscriber implements ShouldQueue
     public function subscribe(Dispatcher $events): array
     {
         return [
-            // AssetSaved::class => 'createMuxAsset',
             AssetUploaded::class => 'createMuxAsset',
             AssetReuploaded::class => 'createMuxAsset',
-            AssetSaved::class => 'updateMuxAsset',
             AssetDeleted::class => 'deleteMuxAsset',
+            AssetSaved::class => 'updateMuxAsset',
         ];
     }
 
@@ -47,8 +46,10 @@ class MirrorFieldSubscriber implements ShouldQueue
      */
     public function updateMuxAsset(AssetSaved $event): void
     {
-        if (MirrorField::shouldMirror($event->asset)) {
-            $this->service->updateMuxAsset($event->asset);
+        if (MirrorField::shouldMirror($event->asset) && MirrorField::shouldUpdateMeta()) {
+            if ($this->service->getMuxId($event->asset)) {
+                $this->service->updateMuxAsset($event->asset);
+            }
         }
     }
 
