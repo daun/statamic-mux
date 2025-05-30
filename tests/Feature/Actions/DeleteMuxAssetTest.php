@@ -3,14 +3,11 @@
 use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Events\AssetDeletedFromMux;
 use Daun\StatamicMux\Events\AssetDeletingFromMux;
-use Daun\StatamicMux\Facades\Mux;
 use Daun\StatamicMux\Mux\Actions\DeleteMuxAsset;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxClient;
-use Daun\StatamicMux\Mux\MuxService;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
-use Statamic\Contracts\Assets\Asset;
 use Statamic\Facades\Stache;
 
 beforeEach(function () {
