@@ -9,7 +9,7 @@
 - **Statamic 4+**: CMS platform
 - **Mux PHP SDK**: Official API client for Mux services
 
-### Frontend Components
+### Control Panel Components
 
 - **Vue.js**: Used for Control Panel components
 - **Tailwind CSS**: Utility-first CSS framework
@@ -17,61 +17,26 @@
 ### Infrastructure Requirements
 
 - **Queue System**: Laravel queues for async processing
-- **Webhook Receiver**: For Mux event handling
+- **Webhook Receiver**: For long-running Mux processing
 
 ## Core Technical Patterns
 
 ### Dependency Management
 
-```php
-// composer.json
-"require": {
-    "php": "^8.1",
-    "statamic/cms": "^4.0",
-    "muxinc/mux-php": "^3.0"
-}
-```
+Dependencies are managed via Composer in `composer.json`.
 
-### Configuration Structure
+### Configuration
 
-The addon uses Laravel's configuration system with `config/mux.php` defining core settings:
-
-```php
-// Key configuration options
-[
-    'access_token_id' => env('MUX_TOKEN_ID'),
-    'access_token_secret' => env('MUX_TOKEN_SECRET'),
-    'webhook_secret' => env('MUX_WEBHOOK_SECRET'),
-    'signing_key' => env('MUX_SIGNING_KEY')
-]
-```
+The addon uses Laravel's configuration system with `config/mux.php` defining settings.
 
 ### API Integration
 
-The `MuxApi` class wraps the Mux PHP SDK to provide a consistent interface:
-
-```php
-// API client initialization
-$client = new \MuxPhp\Api\AssetsApi(
-    new \MuxPhp\Configuration([
-        'username' => config('mux.access_token_id'),
-        'password' => config('mux.access_token_secret')
-    ])
-);
-```
+The `MuxApi` class wraps the Mux PHP SDK to provide a consistent interface.
 
 ### Async Processing
 
-All Mux operations are performed asynchronously through Laravel's queue system:
+Some Mux operations are performed asynchronously through Laravel's queue and event systems.
 
-```php
-// Example job dispatch
-CreateMuxAssetJob::dispatch($asset)->onQueue('mux');
-```
-
-## Key Technical Constraints
-
-- Mux API operations can be slow and should be processed asynchronously
 ## Development Tools
 
 ### Testing
@@ -90,15 +55,13 @@ CreateMuxAssetJob::dispatch($asset)->onQueue('mux');
 
 Stores the relationship between Statamic assets and Mux resources:
 
+- Statamic Asset
 - Mux Asset ID
 - Playback IDs
-- Processing status
-- Metadata
 
 ### MuxPlaybackIds
 
 Represents playback policies and access controls:
 
+- Unique ID to pass into frontend components
 - Policy type (public, signed)
-- Token requirements
-- Domain restrictions

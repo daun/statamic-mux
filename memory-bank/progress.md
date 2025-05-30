@@ -38,17 +38,23 @@
 - ✅ Tag usage examples
 - ✅ Configuration guide
 
+### Test Coverage
+
+- ✅ Tests for MuxApi client
+- ✅ Tests for event dispatch
+- ✅ Tests for asset creation action
+- ✅ Tests for frontend tag rendering
+
 ## In-Progress Features
 
 ### Low-Res Placeholder Download
 
 - 🔄 Creation of low-res placeholder version of the original video file
 - 🔄 Download job implementation
+
 ### Test Coverage Extensions
 
-- 🔄 Expanding test coverage for critical components
-- 🔄 Adding tests for frontend tag rendering
-- 🔄 MuxApi client testing
+- 🔄 Expanding test coverage for critical actions
 
 ## Planned Features
 

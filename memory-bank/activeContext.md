@@ -85,6 +85,6 @@ Mux API errors must be carefully handled with appropriate retries and user feedb
 
 ## Current Questions & Considerations
 
-1. How to create a low-res version of the original video? 
+1. How to create a low-res version of the original video?
    - Use a short clip of the original video?
    - Use a low-res version of the original video?
