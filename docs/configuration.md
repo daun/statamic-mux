@@ -71,24 +71,6 @@ return [
 ];
 ```
 
-## Playback Policy
-
-Videos uploaded to Mux can restrict access by requiring signed playback urls.
-Learn more about [Setting Up Secure Playback](/secure-playback).
-
-```php
-return [
-    /*
-    |--------------------------------------------------------------------------
-    | Playback Policy
-    |--------------------------------------------------------------------------
-    */
-
-    'playback_policy' => env('MUX_PLAYBACK_POLICY', 'public'), // [!code focus]
-
-];
-```
-
 ## Video Quality
 
 Mux offers three quality levels. Learn more at
@@ -115,6 +97,24 @@ You can set this to `null` to use the default quality setting of your Mux accoun
 defined one in the [Default Video Quality Settings](https://dashboard.mux.com/organizations/59g3uj/settings/video-quality)
 of your Mux account dashboard.
 
+## Playback Policy
+
+Videos uploaded to Mux can restrict access by requiring signed playback urls.
+Learn more about [Setting Up Secure Playback](/secure-playback).
+
+```php
+return [
+    /*
+    |--------------------------------------------------------------------------
+    | Playback Policy
+    |--------------------------------------------------------------------------
+    */
+
+    'playback_policy' => env('MUX_PLAYBACK_POLICY', 'public'), // [!code focus]
+
+];
+```
+
 ## Playback Modifiers
 
 Change the default playback behavior of video streams received from Mux.
@@ -129,9 +129,12 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'playback_modifiers' => [ // [!code focus]
+    'playback_modifiers' => [
+
         'min_resolution' => '720p', // [!code focus]
+
         'max_resolution' => '1440p', // [!code focus]
+
     ],
 
 ];
