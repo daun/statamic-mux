@@ -62,6 +62,8 @@ return [
 
         'enabled' => env('MUX_MIRROR_ENABLED', true),
 
+        'sync_meta' => true,
+
     ],
 
     /*
@@ -75,19 +77,6 @@ return [
     */
 
     'test_mode' => env('MUX_TEST_MODE', false),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Playback Policy
-    |--------------------------------------------------------------------------
-    |
-    | The playback policy applied when creating new assets: 'public' or 'signed'
-    |
-    | Learn about policies at https://docs.mux.com/guides/secure-video-playback
-    |
-    */
-
-    'playback_policy' => env('MUX_PLAYBACK_POLICY', 'public'),
 
     /*
     |--------------------------------------------------------------------------
@@ -105,6 +94,19 @@ return [
     */
 
     'video_quality' => env('MUX_VIDEO_QUALITY', 'plus'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Playback Policy
+    |--------------------------------------------------------------------------
+    |
+    | The playback policy applied when creating new assets: 'public' or 'signed'
+    |
+    | Learn about policies at https://docs.mux.com/guides/secure-video-playback
+    |
+    */
+
+    'playback_policy' => env('MUX_PLAYBACK_POLICY', 'public'),
 
     /*
     |--------------------------------------------------------------------------

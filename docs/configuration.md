@@ -53,6 +53,32 @@ return [
 ];
 ```
 
+## Mirror Field Settings
+
+Configure the behavior of assets mirrored to Mux through the [Mirror fieldtype](/upload). The `enabled` flag
+turns mirroring on or off globally. The `sync_meta` flag controls whether
+[Mux metadata](https://www.mux.com/docs/guides/add-metadata-to-your-videos) is updated
+whenever the asset is updated in Statamic. Turn it off to only set the metadata once on creation.
+
+```php
+return [
+    /*
+    |--------------------------------------------------------------------------
+    | Mirror Local Video Assets to Mux
+    |--------------------------------------------------------------------------
+    */
+
+    'mirror' => [
+
+        'enabled' => env('MUX_MIRROR_ENABLED', true), // [!code focus]
+
+        'sync_meta' => true, // [!code focus]
+
+    ],
+
+];
+```
+
 ## Test Mode
 
 Mux offers a test mode for evaluating their service without incurring charges for storage or streaming.
@@ -68,24 +94,6 @@ return [
 
     'test_mode' => env('MUX_TEST_MODE', false), // [!code focus]
     
-];
-```
-
-## Playback Policy
-
-Videos uploaded to Mux can restrict access by requiring signed playback urls.
-Learn more about [Setting Up Secure Playback](/secure-playback).
-
-```php
-return [
-    /*
-    |--------------------------------------------------------------------------
-    | Playback Policy
-    |--------------------------------------------------------------------------
-    */
-
-    'playback_policy' => env('MUX_PLAYBACK_POLICY', 'public'), // [!code focus]
-
 ];
 ```
 
@@ -115,6 +123,24 @@ You can set this to `null` to use the default quality setting of your Mux accoun
 defined one in the [Default Video Quality Settings](https://dashboard.mux.com/organizations/59g3uj/settings/video-quality)
 of your Mux account dashboard.
 
+## Playback Policy
+
+Videos uploaded to Mux can restrict access by requiring signed playback urls.
+Learn more about [Setting Up Secure Playback](/secure-playback).
+
+```php
+return [
+    /*
+    |--------------------------------------------------------------------------
+    | Playback Policy
+    |--------------------------------------------------------------------------
+    */
+
+    'playback_policy' => env('MUX_PLAYBACK_POLICY', 'public'), // [!code focus]
+
+];
+```
+
 ## Playback Modifiers
 
 Change the default playback behavior of video streams received from Mux.
@@ -129,9 +155,12 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'playback_modifiers' => [ // [!code focus]
+    'playback_modifiers' => [
+
         'min_resolution' => '720p', // [!code focus]
+
         'max_resolution' => '1440p', // [!code focus]
+
     ],
 
 ];

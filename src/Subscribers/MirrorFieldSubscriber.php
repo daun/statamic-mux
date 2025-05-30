@@ -11,7 +11,6 @@ use Statamic\Events\AssetDeleted;
 use Statamic\Events\AssetReuploaded;
 use Statamic\Events\AssetSaved;
 use Statamic\Events\AssetUploaded;
-use Statamic\Facades\CP\Toast;
 
 class MirrorFieldSubscriber implements ShouldQueue
 {
@@ -24,10 +23,10 @@ class MirrorFieldSubscriber implements ShouldQueue
     public function subscribe(Dispatcher $events): array
     {
         return [
-            // AssetSaved::class => 'createMuxAsset',
             AssetUploaded::class => 'createMuxAsset',
             AssetReuploaded::class => 'createMuxAsset',
             AssetDeleted::class => 'deleteMuxAsset',
+            AssetSaved::class => 'updateMuxAsset',
         ];
     }
 
@@ -36,17 +35,21 @@ class MirrorFieldSubscriber implements ShouldQueue
      */
     public function createMuxAsset(AssetSaved|AssetUploaded|AssetReuploaded $event): void
     {
-        if (! MirrorField::shouldMirror($event->asset)) {
-            return;
-        }
-
-        $force = $event instanceof AssetReuploaded;
-
-        try {
+        if (MirrorField::shouldMirror($event->asset)) {
+            $force = $event instanceof AssetReuploaded;
             $this->service->createMuxAsset($event->asset, $force);
-            Toast::info(__('statamic-mux::messages.toast.uploaded', ['file' => $event->asset->basename()]));
-        } catch (\Throwable $th) {
-            Toast::error(__('statamic-mux::messages.toast.upload_failed', ['error' => $th->getMessage()]));
+        }
+    }
+
+    /**
+     * Update a mirrored asset on Mux.
+     */
+    public function updateMuxAsset(AssetSaved $event): void
+    {
+        if (MirrorField::shouldMirror($event->asset) && MirrorField::shouldUpdateMeta()) {
+            if ($this->service->getMuxId($event->asset)) {
+                $this->service->updateMuxAsset($event->asset);
+            }
         }
     }
 
@@ -55,10 +58,8 @@ class MirrorFieldSubscriber implements ShouldQueue
      */
     public function deleteMuxAsset(AssetDeleted $event): void
     {
-        if (! MirrorField::shouldMirror($event->asset)) {
-            return;
+        if (MirrorField::shouldMirror($event->asset)) {
+            $this->service->deleteMuxAsset($event->asset);
         }
-
-        $this->service->deleteMuxAsset($event->asset);
     }
 }

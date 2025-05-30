@@ -8,6 +8,7 @@ use Daun\StatamicMux\Data\MuxPlaybackId;
 use Daun\StatamicMux\Mux\Actions\CreateMuxAsset;
 use Daun\StatamicMux\Mux\Actions\DeleteMuxAsset;
 use Daun\StatamicMux\Mux\Actions\RequestPlaybackId;
+use Daun\StatamicMux\Mux\Actions\UpdateMuxAsset;
 use Daun\StatamicMux\Mux\Enums\MuxAudience;
 use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use Daun\StatamicMux\Placeholders\PlaceholderService;
@@ -61,6 +62,22 @@ class MuxService
         }
 
         return $muxId ?? null;
+    }
+
+    /**
+     * Update data of a video asset on Mux.
+     */
+    public function updateMuxAsset(Asset|string $asset): bool
+    {
+        if (is_string($asset)) {
+            $asset = Assets::find($asset);
+        }
+
+        if ($asset) {
+            return $this->app->make(UpdateMuxAsset::class)->handle($asset);
+        } else {
+            return false;
+        }
     }
 
     /**

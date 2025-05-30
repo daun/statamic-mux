@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.5.2] - 2025-05-30
+
+- Update Mux metadata when underlying Statamic asset is saved
+
 ## [1.5.1] - 2025-05-30
 
 - Rename asset settings hook
@@ -84,6 +88,7 @@
 
 - Beta release
 
+[1.5.2]: https://github.com/daun/statamic-mux/releases/tag/1.5.2
 [1.5.1]: https://github.com/daun/statamic-mux/releases/tag/1.5.1
 [1.5.0]: https://github.com/daun/statamic-mux/releases/tag/1.5.0
 [1.4.0]: https://github.com/daun/statamic-mux/releases/tag/1.4.0

@@ -38,6 +38,11 @@ class MirrorField
         return static::configured() && static::enabled() && static::enabledForAsset($asset);
     }
 
+    public static function shouldUpdateMeta(): bool
+    {
+        return (bool) config('mux.mirror.sync_meta', true);
+    }
+
     public static function existsInBlueprint(Asset|AssetContainer $asset): bool
     {
         return (bool) static::getFromBlueprint($asset);
