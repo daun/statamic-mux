@@ -56,12 +56,10 @@ class MuxService
         }
 
         if ($asset) {
-            if ($muxId = $this->app->make(CreateMuxAsset::class)->handle($asset, $force)) {
-                MuxAsset::fromAsset($asset)->clear()->setId($muxId)->save();
-            }
+            return $this->app->make(CreateMuxAsset::class)->handle($asset, $force);
         }
 
-        return $muxId ?? null;
+        return null;
     }
 
     /**
@@ -86,14 +84,7 @@ class MuxService
     public function deleteMuxAsset(Asset|string $asset): bool
     {
         if ($asset) {
-            $deleted = $this->app->make(DeleteMuxAsset::class)->handle($asset);
-            if ($deleted) {
-                if ($asset instanceof Asset) {
-                    MuxAsset::fromAsset($asset)->clear()->save();
-                }
-
-                return true;
-            }
+            return $this->app->make(DeleteMuxAsset::class)->handle($asset);
         }
 
         return false;
@@ -174,19 +165,7 @@ class MuxService
             return $playbackId;
         }
 
-        $result = $this->app->make(RequestPlaybackId::class)->handle($asset, $policy);
-        if ($result) {
-            [$id, $policy] = $result;
-            if ($id && $policy) {
-                $muxAsset = MuxAsset::fromAsset($asset);
-                $playbackId = $muxAsset->addPlaybackId($id, $policy);
-                $muxAsset->save();
-
-                return $playbackId;
-            }
-        }
-
-        return null;
+        return $this->app->make(RequestPlaybackId::class)->handle($asset, $policy);
     }
 
     public function getPlaybackUrl(MuxPlaybackId $playbackId, array $params = []): ?string

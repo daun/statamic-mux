@@ -2,6 +2,7 @@
 
 namespace Daun\StatamicMux\Mux\Actions;
 
+use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Events\AssetDeletedFromMux;
 use Daun\StatamicMux\Events\AssetDeletingFromMux;
 use Daun\StatamicMux\Mux\MuxApi;
@@ -25,13 +26,17 @@ class DeleteMuxAsset
             return false;
         }
 
+        // Special case: delete Mux asset by its ID
         if (is_string($asset)) {
-            // Special case: delete Mux asset by its ID
             return $this->deleteOrphanedMuxAsset($asset);
-        } else {
-            // Delete Mux asset tied to local Statamic asset
-            return $this->deleteConnectedMuxAsset($asset);
         }
+
+        // Delete Mux asset tied to local Statamic asset
+        if ($deleted = $this->deleteConnectedMuxAsset($asset)) {
+            MuxAsset::fromAsset($asset)->clear()->save();
+        }
+
+        return $deleted;
     }
 
     /**
