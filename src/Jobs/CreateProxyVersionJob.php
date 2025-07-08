@@ -37,12 +37,20 @@ class CreateProxyVersionJob implements ShouldQueue
 
         // Not ready? Release back for later processing
         if (! $action->isReady($this->asset)) {
-            $this->release(5);
+            $this->release($this->getBackoffDelay());
             return;
         }
 
         if ($proxyId = $action->handle($this->asset)) {
             // TODO: download proxy and replace asset file
         }
+    }
+
+    private function getBackoffDelay(): int
+    {
+        $backoffDelays = [1, 3, 5, 10, 20, 30, 60, 120, 300, 600, 1200, 1800, 3600, 10800];
+        $attempt = $this->attempts() - 1;
+
+        return $backoffDelays[$attempt] ?? end($backoffDelays);
     }
 }
