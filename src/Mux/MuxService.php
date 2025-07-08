@@ -125,6 +125,20 @@ class MuxService
     }
 
     /**
+     * Check if an asset with given id is ready on Mux.
+     */
+    public function muxAssetIsReady(string $muxId): bool
+    {
+        try {
+            $status = $this->api->assets()->getAsset($muxId)->getData()?->getStatus();
+
+            return $status === \MuxPhp\Models\Asset::STATUS_READY;
+        } catch (ApiException $e) {
+            return false;
+        }
+    }
+
+    /**
      * List existing Mux assets
      */
     public function listMuxAssets(int $limit = 100, int $page = 1)
