@@ -34,7 +34,7 @@ class ProxyVersionSubscriber implements ShouldQueue
      */
     public function createProxy(AssetUploadedToMux $event): void
     {
-
+        CreateProxyVersionJob::dispatch($event->asset);
     }
 
     protected function shouldHandle(): bool

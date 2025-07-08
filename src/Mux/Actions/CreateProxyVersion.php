@@ -22,11 +22,11 @@ class CreateProxyVersion
      */
     public function handle(Asset $asset, float $start = 0, float $length = 5): ?string
     {
-        if (! $asset->isVideo()) {
+        if (! $this->canHandle($asset)) {
             return null;
         }
 
-        if (! $this->service->hasExistingMuxAsset($asset)) {
+        if (! $this->isReady($asset)) {
             return null;
         }
 
@@ -39,6 +39,22 @@ class CreateProxyVersion
         }
 
         return null;
+    }
+
+    /**
+     * Whether a proxy can be created for this asset.
+     */
+    public function canHandle(Asset $asset): bool
+    {
+        return $asset->isVideo() && $this->service->hasExistingMuxAsset($asset);
+    }
+
+    /**
+     * Whether the proxy can already be created.
+     */
+    public function isReady(Asset $asset): bool
+    {
+        return ($muxId = $this->service->getMuxId($asset)) && $this->service->muxAssetIsReady($muxId);
     }
 
     /**

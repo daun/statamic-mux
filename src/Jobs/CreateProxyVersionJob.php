@@ -2,6 +2,7 @@
 
 namespace Daun\StatamicMux\Jobs;
 
+use DateTime;
 use Daun\StatamicMux\Mux\Actions\CreateProxyVersion;
 use Daun\StatamicMux\Support\Queue;
 use Illuminate\Bus\Queueable;
@@ -22,8 +23,26 @@ class CreateProxyVersionJob implements ShouldQueue
         $this->queue = Queue::queue();
     }
 
+    public function retryUntil(): DateTime
+    {
+        return now()->addDay();
+    }
+
     public function handle(CreateProxyVersion $action): void
     {
-        $action->handle($this->asset);
+        // No Mux ID? Nothing to do
+        if (! $action->canHandle($this->asset)) {
+            return;
+        }
+
+        // Not ready? Release back for later processing
+        if (! $action->isReady($this->asset)) {
+            $this->release(5);
+            return;
+        }
+
+        if ($proxyId = $action->handle($this->asset)) {
+            // TODO: download proxy and replace asset file
+        }
     }
 }
