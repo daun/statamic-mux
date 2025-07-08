@@ -134,7 +134,11 @@ class MuxService
 
             return $status === \MuxPhp\Models\Asset::STATUS_READY;
         } catch (ApiException $e) {
-            return false;
+            if ($e->getCode() === 404) {
+                return false;
+            } else {
+                throw $e;
+            }
         }
     }
 

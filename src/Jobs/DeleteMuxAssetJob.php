@@ -2,7 +2,7 @@
 
 namespace Daun\StatamicMux\Jobs;
 
-use Daun\StatamicMux\Mux\MuxService;
+use Daun\StatamicMux\Mux\Actions\DeleteMuxAsset;
 use Daun\StatamicMux\Support\Queue;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -22,8 +22,8 @@ class DeleteMuxAssetJob implements ShouldQueue
         $this->queue = Queue::queue();
     }
 
-    public function handle(MuxService $service): void
+    public function handle(DeleteMuxAsset $action): void
     {
-        $service->deleteMuxAsset($this->asset);
+        $action->handle($this->asset);
     }
 }
