@@ -46,7 +46,7 @@ class PruneCommand extends Command
             $this->newLine();
         }
 
-        $muxAssets = $service->listMuxAssets();
+        $muxAssets = $service->listMuxAssets(all: true);
         $actualMuxIds = $muxAssets->pluck('id');
 
         if ($actualMuxIds->isEmpty()) {

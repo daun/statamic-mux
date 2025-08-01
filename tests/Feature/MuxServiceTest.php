@@ -164,7 +164,7 @@ test('sends API request to list assets', function () {
     expect($muxAssets[1]->getId())->toBe('lJ4bGGsp7ZlPf02nMg015W02iHQLN9XnuuLRBsPS00xqd68');
 });
 
-test('paginates API request to list assets', function () {
+test('paginates API request to list all assets', function () {
     $this->guzzler->expects($this->once())
         ->ray()
         ->get('https://api.mux.com/video/v1/assets')
@@ -273,7 +273,7 @@ test('paginates API request to list assets', function () {
             'data' => []
         ]);
 
-    $muxAssets = $this->service->listMuxAssets(200);
+    $muxAssets = $this->service->listMuxAssets(all: true);
 
     $this->guzzler->assertHistoryCount(3);
 
