@@ -138,7 +138,21 @@ class MuxService
      */
     public function listMuxAssets(int $limit = 100, int $page = 1)
     {
-        return collect($this->api->assets()->listAssets($limit, $page)->getData());
+        // Below max page size, just pass on the request
+        if ($limit <= 100) {
+            return collect($this->api->assets()->listAssets($limit, $page)->getData());
+        }
+
+        // Above max page size, we need to paginate
+        $assets = collect();
+        $new = null;
+        do {
+            $new = $this->api->assets()->listAssets(100, $page)->getData();
+            $assets->push(...$new);
+            $page++;
+        } while ($new !== [] && $assets->count() < $limit);
+
+        return $assets->slice(0, $limit)->values();
     }
 
     public function getMuxId(Asset $asset): ?string
