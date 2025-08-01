@@ -87,21 +87,21 @@ test('sends API request to list assets', function () {
                             'max_height' => 800,
                             'max_frame_rate' => 24,
                             'id' => 'HK01Bq7FrEQmIu3QpRiZZ98HQOOZjm6BYyg17eEunlyo',
-                            'duration' => 734.166667
+                            'duration' => 734.166667,
                         ],
                         [
                             'type' => 'audio',
                             'max_channels' => 2,
                             'id' => 'nNKHJqw2G9cE019AoK16CJr3O27gGnbtW4w525hJWqWw',
-                            'duration' => 734.143991
-                        ]
+                            'duration' => 734.143991,
+                        ],
                     ],
                     'status' => 'ready',
                     'playback_ids' => [
                         [
                             'policy' => 'public',
-                            'id' => '85g23gYz7NmQu02YsY81ihuod6cZMxCp017ZrfglyLCKc'
-                        ]
+                            'id' => '85g23gYz7NmQu02YsY81ihuod6cZMxCp017ZrfglyLCKc',
+                        ],
                     ],
                     'max_stored_resolution' => 'HD',
                     'resolution_tier' => '1080p',
@@ -112,7 +112,7 @@ test('sends API request to list assets', function () {
                     'video_quality' => 'basic',
                     'duration' => 734.25,
                     'created_at' => '1609869152',
-                    'aspect_ratio' => '12:5'
+                    'aspect_ratio' => '12:5',
                 ],
                 [
                     'tracks' => [
@@ -122,21 +122,21 @@ test('sends API request to list assets', function () {
                             'max_height' => 1080,
                             'max_frame_rate' => 29.97,
                             'id' => 'RiyQPM31a1SPtfI802bEP2zD02F5FQVNL801FRHeE5t01G4',
-                            'duration' => 23.8238
+                            'duration' => 23.8238,
                         ],
                         [
                             'type' => 'audio',
                             'max_channels' => 2,
                             'id' => 'LvINTciHVoC017knMCH01y9pSi5OrDLCRaBPNDAoNJcmg',
-                            'duration' => 23.823792
-                        ]
+                            'duration' => 23.823792,
+                        ],
                     ],
                     'status' => 'ready',
                     'playback_ids' => [
                         [
                             'policy' => 'public',
-                            'id' => 'vAFLI2eKFFicXX00iHBS2vqt5JjJGg5HV6fQ4Xijgt1I'
-                        ]
+                            'id' => 'vAFLI2eKFFicXX00iHBS2vqt5JjJGg5HV6fQ4Xijgt1I',
+                        ],
                     ],
                     'max_stored_resolution' => 'HD',
                     'resolution_tier' => '1080p',
@@ -147,9 +147,9 @@ test('sends API request to list assets', function () {
                     'video_quality' => 'plus',
                     'duration' => 23.857167,
                     'created_at' => '1609868768',
-                    'aspect_ratio' => '16:9'
-                ]
-            ]
+                    'aspect_ratio' => '16:9',
+                ],
+            ],
         ]);
 
     $muxAssets = $this->service->listMuxAssets();
@@ -183,21 +183,21 @@ test('paginates API request to list all assets', function () {
                             'max_height' => 800,
                             'max_frame_rate' => 24,
                             'id' => 'HK01Bq7FrEQmIu3QpRiZZ98HQOOZjm6BYyg17eEunlyo',
-                            'duration' => 734.166667
+                            'duration' => 734.166667,
                         ],
                         [
                             'type' => 'audio',
                             'max_channels' => 2,
                             'id' => 'nNKHJqw2G9cE019AoK16CJr3O27gGnbtW4w525hJWqWw',
-                            'duration' => 734.143991
-                        ]
+                            'duration' => 734.143991,
+                        ],
                     ],
                     'status' => 'ready',
                     'playback_ids' => [
                         [
                             'policy' => 'public',
-                            'id' => '85g23gYz7NmQu02YsY81ihuod6cZMxCp017ZrfglyLCKc'
-                        ]
+                            'id' => '85g23gYz7NmQu02YsY81ihuod6cZMxCp017ZrfglyLCKc',
+                        ],
                     ],
                     'max_stored_resolution' => 'HD',
                     'resolution_tier' => '1080p',
@@ -208,9 +208,9 @@ test('paginates API request to list all assets', function () {
                     'video_quality' => 'basic',
                     'duration' => 734.25,
                     'created_at' => '1609869152',
-                    'aspect_ratio' => '12:5'
-                ]
-            ]
+                    'aspect_ratio' => '12:5',
+                ],
+            ],
         ]);
 
     $this->guzzler->expects($this->once())
@@ -231,21 +231,21 @@ test('paginates API request to list all assets', function () {
                             'max_height' => 1080,
                             'max_frame_rate' => 29.97,
                             'id' => 'RiyQPM31a1SPtfI802bEP2zD02F5FQVNL801FRHeE5t01G4',
-                            'duration' => 23.8238
+                            'duration' => 23.8238,
                         ],
                         [
                             'type' => 'audio',
                             'max_channels' => 2,
                             'id' => 'LvINTciHVoC017knMCH01y9pSi5OrDLCRaBPNDAoNJcmg',
-                            'duration' => 23.823792
-                        ]
+                            'duration' => 23.823792,
+                        ],
                     ],
                     'status' => 'ready',
                     'playback_ids' => [
                         [
                             'policy' => 'public',
-                            'id' => 'vAFLI2eKFFicXX00iHBS2vqt5JjJGg5HV6fQ4Xijgt1I'
-                        ]
+                            'id' => 'vAFLI2eKFFicXX00iHBS2vqt5JjJGg5HV6fQ4Xijgt1I',
+                        ],
                     ],
                     'max_stored_resolution' => 'HD',
                     'resolution_tier' => '1080p',
@@ -256,9 +256,9 @@ test('paginates API request to list all assets', function () {
                     'video_quality' => 'plus',
                     'duration' => 23.857167,
                     'created_at' => '1609868768',
-                    'aspect_ratio' => '16:9'
-                ]
-            ]
+                    'aspect_ratio' => '16:9',
+                ],
+            ],
         ]);
 
     $this->guzzler->expects($this->once())
@@ -270,7 +270,7 @@ test('paginates API request to list all assets', function () {
         ])
         ->willRespondJson([
             'next_cursor' => null,
-            'data' => []
+            'data' => [],
         ]);
 
     $muxAssets = $this->service->listMuxAssets(all: true);
