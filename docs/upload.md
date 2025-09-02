@@ -2,12 +2,9 @@
 
 ## Automatic Sync
 
-The addon ships with a custom **Mux Mirror** fieldtype. Add a field of this type to
-any asset container blueprint you plan on uploading videos from. The title and handle
-of the field don't matter and can be chosen freely.
-
-Whenever a new video is uploaded to a container with this field in its blueprint, it will
-be mirrored to Mux. Any videos deleted from this container will also be deleted from Mux.
+The addon ships with a **Mux Mirror** fieldtype. When a field of this type is added to an asset
+container blueprint, videos uploaded to the container will be uploaded to Mux automatically. Videos
+deleted from the container will also be deleted from Mux. The handle of the field can be chosen freely.
 
 ::: code-group
 
