@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.5.4] - 2025-09-02
+
+- Fix test case with newest Mux SDK
+- Fix some orphaned videos not being pruned in command
+
 ## [1.5.3] - 2025-08-01
 
 - Fix job constructor types
