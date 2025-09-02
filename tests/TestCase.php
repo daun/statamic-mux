@@ -34,7 +34,7 @@ abstract class TestCase extends OrchestraTestCase
 
         $this->setUpAssetTest();
 
-        // Guzzler helper: $this->guzzer->get()->ray() for debugging request and response body
+        // Guzzler helper: $this->guzzler->get()->ray() for debugging request and response body
         Expectation::macro('ray', function (Expectation $e) {
             return $e->withCallback(function (array $history) {
                 ray($history['request']->getRequestTarget())->label($history['request']->getMethod());
@@ -44,7 +44,7 @@ abstract class TestCase extends OrchestraTestCase
             });
         });
 
-        // Guzzler helper: $this->guzzer->willRespondJson() for auto-creating json responses
+        // Guzzler helper: $this->guzzler->willRespondJson() for auto-creating json responses
         Expectation::macro('willRespondJson', function (Expectation $e, $response, $times = 1) {
             return $e->will(Http::response($response), $times);
         });
