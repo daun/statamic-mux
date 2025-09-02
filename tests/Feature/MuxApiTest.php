@@ -99,5 +99,6 @@ test('sends API request to create asset', function () {
 
     $this->guzzler->assertHistoryCount(1);
 
+    expect($muxAsset)->toBeInstanceOf(\MuxPhp\Models\Asset::class);
     expect($muxAsset->getId())->toBe('SqQnqz6s5MBuXGvJaUWdXuXM93J9Q2yv');
 });
