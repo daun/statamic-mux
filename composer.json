@@ -29,7 +29,7 @@
         "laravel/framework": "^9.21 || ^10.0 || ^11.0 || ^12.0",
         "muxinc/mux-php": "^5.0",
         "srwiez/thumbhash": "^1.2",
-        "statamic/cms": "^4.0 || ^5.0"
+        "statamic/cms": "^4.0 || ^5.0 || ^6.0"
     },
     "require-dev": {
         "blastcloud/guzzler": "^2.2",
@@ -68,6 +68,7 @@
         "preferred-install": "dist",
         "sort-packages": true
     },
+    "minimum-stability": "alpha",
     "extra": {
         "laravel": {
             "providers": [
