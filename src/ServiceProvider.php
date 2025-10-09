@@ -192,6 +192,10 @@ class ServiceProvider extends AddonServiceProvider
 
     public function injectAssetThumbnail(Asset $asset, object $payload, callable $next): mixed
     {
+        if ($payload->data->thumbnail ?? null) {
+            return $next($payload);
+        }
+
         if ($playbackId = Mux::getPlaybackId($asset)) {
             if ($gifUrl = Mux::getGifUrl($playbackId, ['width' => 400])) {
                 $payload->data->thumbnail = $gifUrl;
