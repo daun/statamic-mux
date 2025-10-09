@@ -2,6 +2,7 @@
 
 namespace Daun\StatamicMux;
 
+use Daun\StatamicMux\Facades\Mux;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxClient;
 use Daun\StatamicMux\Mux\MuxService;
@@ -9,9 +10,12 @@ use Daun\StatamicMux\Mux\MuxUrls;
 use Daun\StatamicMux\Placeholders\PlaceholderService;
 use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
+use Statamic\Assets\Asset;
 use Statamic\Facades\Permission;
 use Statamic\Providers\AddonServiceProvider;
 use Statamic\Statamic;
+use Statamic\Http\Resources\CP\Assets\Asset as AssetResource;
+use Statamic\Http\Resources\CP\Assets\FolderAsset as FolderAssetResource;
 
 class ServiceProvider extends AddonServiceProvider
 {
@@ -55,6 +59,7 @@ class ServiceProvider extends AddonServiceProvider
         $this->bootPermissions();
         $this->autoPublishConfig();
         $this->publishViews();
+        $this->createThumbnailHooks();
     }
 
     protected function registerHooks()
@@ -176,6 +181,24 @@ class ServiceProvider extends AddonServiceProvider
         });
 
         return $this;
+    }
+
+    protected function createThumbnailHooks()
+    {
+        $self = $this;
+        AssetResource::hook('asset', fn ($payload, $next) => $self->injectAssetThumbnail($this->resource, $payload, $next));
+        FolderAssetResource::hook('asset', fn ($payload, $next) => $self->injectAssetThumbnail($this->resource, $payload, $next));
+    }
+
+    public function injectAssetThumbnail(Asset $asset, object $payload, callable $next): mixed
+    {
+        if ($playbackId = Mux::getPlaybackId($asset)) {
+            if ($gifUrl = Mux::getGifUrl($playbackId, ['width' => 400])) {
+                $payload->data->thumbnail = $gifUrl;
+            }
+        }
+
+        return $next($payload);
     }
 
     public function provides(): array
