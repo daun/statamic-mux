@@ -2,14 +2,16 @@
 
 namespace Daun\StatamicMux\Tags;
 
+use Closure;
 use Daun\StatamicMux\Tags\Concerns\GetsAssetFromContext;
 use Daun\StatamicMux\Tags\Concerns\ReadsMuxData;
 use Daun\StatamicMux\Tags\Concerns\RendersMuxPlayer;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use ReflectionClass;
+use Statamic\Data\AbstractAugmented;
 use Statamic\Fields\Value;
-use Statamic\Statamic;
 use Statamic\Tags\Tags;
 
 class MuxTags extends Tags
@@ -236,9 +238,11 @@ class MuxTags extends Tags
     /**
      * Wrap a resolver in a Value object for deferred evaluation.
      */
-    protected function defer(callable $resolver): mixed
+    protected function defer(Closure $resolver): mixed
     {
-        return Statamic::version() >= '5.0.0'
+        $supportsDefer = (new ReflectionClass(AbstractAugmented::class))->hasMethod('wrapDeferredValue');
+
+        return $supportsDefer
             ? new Value($resolver)
             : $resolver();
     }
