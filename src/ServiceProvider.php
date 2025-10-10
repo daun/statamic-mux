@@ -196,11 +196,17 @@ class ServiceProvider extends AddonServiceProvider
             return $next($payload);
         }
 
-        if ($playbackId = Mux::getPlaybackId($asset)) {
-            if ($gifUrl = Mux::getGifUrl($playbackId, ['width' => 400])) {
-                $payload->data->thumbnail = $gifUrl;
-            }
+        if (! Mux::getMuxId($asset)) {
+            return $next($payload);
         }
+
+        // If playback id already exists, generate gif url immediately
+        // Otherwise, delegate generation to custom route in the background
+        $playbackId = Mux::getPlaybackId($asset, requestIfMissing: false);
+
+        $payload->data->thumbnail = $playbackId
+            ? Mux::getGifUrl($playbackId, ['width' => 400])
+            : cp_route('mux.thumbnail', ['container' => $asset->container()->id(), 'path' => $asset->path()]);
 
         return $next($payload);
     }
