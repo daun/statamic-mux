@@ -8,6 +8,7 @@ use Daun\StatamicMux\Tags\Concerns\RendersMuxPlayer;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Statamic\Fields\Value;
 use Statamic\Tags\Tags;
 
 class MuxTags extends Tags
@@ -73,22 +74,22 @@ class MuxTags extends Tags
 
             $data = [
                 'mux_id' => $muxId,
-                'playback_id' => $playbackId?->id(),
+                'playback_id' => new Value(fn() => $playbackId?->id()),
                 'playback_policy' => $playbackId?->policy(),
                 'playback_modifiers' => ($playbackModifiers = $this->getPlaybackModifiers()),
-                'playback_url' => $this->getPlaybackUrl($asset),
-                'thumbnail' => $this->getThumbnailUrl($asset),
-                'gif' => $this->getGifUrl($asset),
-                'placeholder' => $this->getPlaceholderDataUri($asset),
+                'playback_url' => new Value(fn() => $this->getPlaybackUrl($asset)),
+                'thumbnail' => new Value(fn() => $this->getThumbnailUrl($asset)),
+                'gif' => new Value(fn() => $this->getGifUrl($asset)),
+                'placeholder' => new Value(fn() => $this->getPlaceholderDataUri($asset)),
                 'is_public' => $playbackId?->isPublic(),
                 'is_signed' => $playbackId?->isSigned(),
             ];
 
             if ($playbackId?->isSigned()) {
                 $data = $data + [
-                    'playback_token' => $this->getPlaybackToken($asset, $playbackModifiers),
-                    'thumbnail_token' => $this->getThumbnailToken($asset),
-                    'storyboard_token' => $this->getStoryboardToken($asset),
+                    'playback_token' => new Value(fn() => $this->getPlaybackToken($asset, $playbackModifiers)),
+                    'thumbnail_token' => new Value(fn() => $this->getThumbnailToken($asset)),
+                    'storyboard_token' => new Value(fn() => $this->getStoryboardToken($asset)),
                 ];
             }
 
@@ -148,16 +149,16 @@ class MuxTags extends Tags
             ->except($playbackModifiers->keys())
             ->except(['script', 'public', 'signed', 'background'])
             ->when($this->params->bool('background'), fn ($attr) => $attr->merge(['autoplay' => true, 'loop' => true, 'muted' => true])
-            );
+        );
 
-        $viewdata = $this->context
+        $viewData = $this->context
             ->merge($data)
             ->merge(['script' => $this->params->bool('script', false)])
             ->merge(['attributes' => $this->toHtmlAttributes($htmlAttributes)])
             ->merge(['playback_modifiers' => $this->toHtmlAttributes($playbackModifiers)])
             ->merge(['player_query' => Arr::query($playbackModifiers->merge($playerAttributes)->all())]);
 
-        return view("statamic-mux::{$view}", $viewdata)->render();
+        return view("statamic-mux::{$view}", $viewData)->render();
     }
 
     /**
