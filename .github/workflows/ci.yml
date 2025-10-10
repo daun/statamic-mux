@@ -12,33 +12,33 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        php: [8.2, 8.3, 8.4]
-        laravel: [9.*, 10.*, 11.*, 12.*]
-        statamic: [4.*, 5.*]
+        php: [8.4, 8.3, 8.2]
+        laravel: [12.*, 11.*, 10.*, 9.*]
+        statamic: [5.*, 4.*]
         include:
-          - laravel: 9.*
-            testbench: 7.*
-            pest: 1.*
-            snapshots: 1.*
-          - laravel: 10.*
-            testbench: 8.*
-            pest: 2.*
+          - laravel: 12.*
+            testbench: 10.*
+            pest: 3.*
             snapshots: 2.*
           - laravel: 11.*
             testbench: 9.*
             pest: 3.*
             snapshots: 2.*
-          - laravel: 12.*
-            testbench: 10.*
-            pest: 3.*
+          - laravel: 10.*
+            testbench: 8.*
+            pest: 2.*
             snapshots: 2.*
+          - laravel: 9.*
+            testbench: 7.*
+            pest: 1.*
+            snapshots: 1.*
         exclude:
-          - statamic: 4.*
-            laravel: 11.*
-          - statamic: 4.*
-            laravel: 12.*
           - statamic: 5.*
             laravel: 9.*
+          - statamic: 4.*
+            laravel: 12.*
+          - statamic: 4.*
+            laravel: 11.*
 
     name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }} / Statamic ${{ matrix.statamic }}
 
