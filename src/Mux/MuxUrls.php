@@ -44,7 +44,7 @@ class MuxUrls
     /**
      * Sign a URL for a given playback id and params
      */
-    public function sign(string $url, string $playbackId, MuxAudience $audience, ?array $params = null, int|string|null $expiration = null): ?string
+    public function sign(string $url, string $playbackId, MuxAudience $audience, ?array $params = null, int|string|null $expiration = null): string
     {
         $token = $this->token($playbackId, $audience, $params, $expiration);
 
