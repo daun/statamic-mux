@@ -9,6 +9,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Statamic\Fields\Value;
+use Statamic\Statamic;
 use Statamic\Tags\Tags;
 
 class MuxTags extends Tags
@@ -74,22 +75,22 @@ class MuxTags extends Tags
 
             $data = [
                 'mux_id' => $muxId,
-                'playback_id' => new Value(fn () => $playbackId?->id()),
+                'playback_id' => $this->defer(fn () => $playbackId?->id()),
                 'playback_policy' => $playbackId?->policy(),
                 'playback_modifiers' => ($playbackModifiers = $this->getPlaybackModifiers()),
-                'playback_url' => new Value(fn () => $this->getPlaybackUrl($asset)),
-                'thumbnail' => new Value(fn () => $this->getThumbnailUrl($asset)),
-                'gif' => new Value(fn () => $this->getGifUrl($asset)),
-                'placeholder' => new Value(fn () => $this->getPlaceholderDataUri($asset)),
+                'playback_url' => $this->defer(fn () => $this->getPlaybackUrl($asset)),
+                'thumbnail' => $this->defer(fn () => $this->getThumbnailUrl($asset)),
+                'gif' => $this->defer(fn () => $this->getGifUrl($asset)),
+                'placeholder' => $this->defer(fn () => $this->getPlaceholderDataUri($asset)),
                 'is_public' => $playbackId?->isPublic(),
                 'is_signed' => $playbackId?->isSigned(),
             ];
 
             if ($playbackId?->isSigned()) {
                 $data = $data + [
-                    'playback_token' => new Value(fn () => $this->getPlaybackToken($asset, $playbackModifiers)),
-                    'thumbnail_token' => new Value(fn () => $this->getThumbnailToken($asset)),
-                    'storyboard_token' => new Value(fn () => $this->getStoryboardToken($asset)),
+                    'playback_token' => $this->defer(fn () => $this->getPlaybackToken($asset, $playbackModifiers)),
+                    'thumbnail_token' => $this->defer(fn () => $this->getThumbnailToken($asset)),
+                    'storyboard_token' => $this->defer(fn () => $this->getStoryboardToken($asset)),
                 ];
             }
 
@@ -230,5 +231,15 @@ class MuxTags extends Tags
             ->keyBy(fn ($_, $key) => Str::replace('_', '-', $key))
             ->filter(fn ($_, $key) => $key)
             ->all();
+    }
+
+    /**
+     * Wrap a resolver in a Value object for deferred evaluation.
+     */
+    protected function defer(callable $resolver): mixed
+    {
+        return Statamic::version() >= '5.0.0'
+            ? new Value($resolver)
+            : $resolver();
     }
 }
