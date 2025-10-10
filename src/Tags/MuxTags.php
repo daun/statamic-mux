@@ -74,22 +74,22 @@ class MuxTags extends Tags
 
             $data = [
                 'mux_id' => $muxId,
-                'playback_id' => new Value(fn() => $playbackId?->id()),
+                'playback_id' => new Value(fn () => $playbackId?->id()),
                 'playback_policy' => $playbackId?->policy(),
                 'playback_modifiers' => ($playbackModifiers = $this->getPlaybackModifiers()),
-                'playback_url' => new Value(fn() => $this->getPlaybackUrl($asset)),
-                'thumbnail' => new Value(fn() => $this->getThumbnailUrl($asset)),
-                'gif' => new Value(fn() => $this->getGifUrl($asset)),
-                'placeholder' => new Value(fn() => $this->getPlaceholderDataUri($asset)),
+                'playback_url' => new Value(fn () => $this->getPlaybackUrl($asset)),
+                'thumbnail' => new Value(fn () => $this->getThumbnailUrl($asset)),
+                'gif' => new Value(fn () => $this->getGifUrl($asset)),
+                'placeholder' => new Value(fn () => $this->getPlaceholderDataUri($asset)),
                 'is_public' => $playbackId?->isPublic(),
                 'is_signed' => $playbackId?->isSigned(),
             ];
 
             if ($playbackId?->isSigned()) {
                 $data = $data + [
-                    'playback_token' => new Value(fn() => $this->getPlaybackToken($asset, $playbackModifiers)),
-                    'thumbnail_token' => new Value(fn() => $this->getThumbnailToken($asset)),
-                    'storyboard_token' => new Value(fn() => $this->getStoryboardToken($asset)),
+                    'playback_token' => new Value(fn () => $this->getPlaybackToken($asset, $playbackModifiers)),
+                    'thumbnail_token' => new Value(fn () => $this->getThumbnailToken($asset)),
+                    'storyboard_token' => new Value(fn () => $this->getStoryboardToken($asset)),
                 ];
             }
 
@@ -149,7 +149,7 @@ class MuxTags extends Tags
             ->except($playbackModifiers->keys())
             ->except(['script', 'public', 'signed', 'background'])
             ->when($this->params->bool('background'), fn ($attr) => $attr->merge(['autoplay' => true, 'loop' => true, 'muted' => true])
-        );
+            );
 
         $viewData = $this->context
             ->merge($data)
