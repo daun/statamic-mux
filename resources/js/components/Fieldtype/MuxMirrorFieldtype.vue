@@ -1,8 +1,7 @@
 <template>
     <div>
-        <div v-if="!isAsset || !isVideo" class="help-block mb-0 flex items-center">
-            <svg-icon name="light/hidden" class="h-4 w-4 mr-2" />
-            <span>
+        <div v-if="!isAsset || !isVideo">
+            <DescriptionWithIcon icon="eye-slash">
                 {{ __('statamic-mux::messages.mirror_fieldtype.not_mirrored') }}:
                 <template v-if="!isVideo">
                     {{ __('statamic-mux::messages.mirror_fieldtype.no_video') }}
@@ -10,15 +9,12 @@
                 <template v-else>
                     {{ __('statamic-mux::messages.mirror_fieldtype.no_asset') }}
                 </template>
-            </span>
+            </DescriptionWithIcon>
         </div>
         <div v-else-if="!isUploaded">
-            <div class="help-block mb-0 flex items-center">
-                <svg-icon name="light/hyperlink-broken" class="h-4 w-4 mr-2" />
-                <span>
-                    {{ __('statamic-mux::messages.mirror_fieldtype.not_uploaded') }}
-                </span>
-            </div>
+            <DescriptionWithIcon icon="unsynced">
+                {{ __('statamic-mux::messages.mirror_fieldtype.not_uploaded') }}
+            </DescriptionWithIcon>
             <div v-if="allowReuploads" class="flex items-center mt-3">
                 <label for="upload-missing-asset" class="help-block grow flex items-center cursor-pointer font-normal">
                     <span class="basis-6 flex items-center">
@@ -29,12 +25,11 @@
             </div>
         </div>
         <div v-else>
-            <div class="help-block mb-0 flex items-center">
-                <svg-icon name="light/hyperlink" class="h-4 w-4 mr-2" />
+            <DescriptionWithIcon icon="synced">
                 <span :title="this.value.id">
                     {{ __('statamic-mux::messages.mirror_fieldtype.uploaded') }}
                 </span>
-            </div>
+            </DescriptionWithIcon>
             <div v-if="details.length" class="mux-table-wrapper mt-3">
                 <table class="mux-table">
                     <tbody>
@@ -63,8 +58,18 @@
 </template>
 
 <script>
+import { FieldtypeMixin as Fieldtype } from '@statamic/cms';
+import { Button, Description, Icon } from '@statamic/cms/ui';
+import DescriptionWithIcon from '../DescriptionWithIcon.vue';
+
 export default {
     mixins: [Fieldtype],
+    components: {
+        Button,
+        Description,
+        DescriptionWithIcon,
+        Icon
+    },
     computed: {
         allowReuploads() {
             return this.config?.allow_reupload;
@@ -99,7 +104,7 @@ export default {
 
             for (const [policy, id] of playbackIds) {
                 const icon = playbackIds.length > 1
-                    ? (policy === 'signed' ? 'lock' : 'eye')
+                    ? (policy === 'signed' ? 'security-lock' : 'eye')
                     : null;
                 rows.push({ key: id, label: 'Playback ID', value: id, icon });
             }
