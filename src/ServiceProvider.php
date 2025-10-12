@@ -7,7 +7,7 @@ use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxClient;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Mux\MuxUrls;
-use Daun\StatamicMux\Placeholders\PlaceholderService;
+use Daun\StatamicMux\Thumbnails\PlaceholderService;
 use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
 use Statamic\Assets\Asset;

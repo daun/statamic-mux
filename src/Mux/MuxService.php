@@ -11,7 +11,7 @@ use Daun\StatamicMux\Mux\Actions\RequestPlaybackId;
 use Daun\StatamicMux\Mux\Actions\UpdateMuxAsset;
 use Daun\StatamicMux\Mux\Enums\MuxAudience;
 use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
-use Daun\StatamicMux\Placeholders\PlaceholderService;
+use Daun\StatamicMux\Thumbnails\PlaceholderService;
 use Daun\StatamicMux\Support\URL;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Arr;

@@ -3,7 +3,7 @@
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Mux\MuxUrls;
-use Daun\StatamicMux\Placeholders\PlaceholderService;
+use Daun\StatamicMux\Thumbnails\PlaceholderService;
 use Daun\StatamicMux\ServiceProvider;
 
 test('provides services', function () {
