@@ -16,12 +16,7 @@
                 {{ __('statamic-mux::messages.mirror_fieldtype.not_uploaded') }}
             </DescriptionWithIcon>
             <div v-if="allowReuploads" class="flex items-center mt-3">
-                <label for="upload-missing-asset" class="help-block grow flex items-center cursor-pointer font-normal">
-                    <span class="basis-6 flex items-center">
-                        <input type="checkbox" name="reupload" id="upload-missing-asset" class="mr-2" v-model="value.reupload">
-                    </span>
-                    <span>{{ __('statamic-mux::messages.mirror_fieldtype.upload_on_save') }}</span>
-                </label>
+                <Checkbox v-model="value.reupload" name="reupload" :label="__('statamic-mux::messages.mirror_fieldtype.upload_on_save')" />
             </div>
         </div>
         <div v-else>
@@ -31,13 +26,13 @@
                 </span>
             </DescriptionWithIcon>
             <div v-if="details.length" class="mux-table-wrapper mt-3">
-                <table class="mux-table">
+                <table class="mux-table text-sm text-gray-500 dark:text-gray-400">
                     <tbody>
                         <tr v-for="{ key, label, value, icon } in details" :key="key">
                             <th>{{ label || key }}</th>
                             <td>
                                 <div class="flex align-center">
-                                    <svg-icon v-if="icon" :name="'light/' + icon" class="h-4 w-4 mr-2 shrink-0" />
+                                    <Icon v-if="icon" :name="icon" class="s-4 mr-2" />
                                     <span>{{ value }}</span>
                                 </div>
                             </td>
@@ -46,12 +41,7 @@
                 </table>
             </div>
             <div v-if="allowReuploads" class="flex items-center mt-3">
-                <label for="reupload-existing-asset" class="help-block grow flex items-center cursor-pointer font-normal">
-                    <span class="basis-6 flex items-center">
-                        <input type="checkbox" name="reupload" id="reupload-existing-asset" class="mr-2" v-model="value.reupload">
-                    </span>
-                    <span>{{ __('statamic-mux::messages.mirror_fieldtype.reupload_on_save') }}</span>
-                </label>
+                <Checkbox v-model="value.reupload" name="reupload" :label="__('statamic-mux::messages.mirror_fieldtype.reupload_on_save')" />
             </div>
         </div>
     </div>
@@ -59,14 +49,14 @@
 
 <script>
 import { FieldtypeMixin as Fieldtype } from '@statamic/cms';
-import { Button, Description, Icon } from '@statamic/cms/ui';
+import { Button, Checkbox, Icon } from '@statamic/cms/ui';
 import DescriptionWithIcon from './DescriptionWithIcon.vue';
 
 export default {
     mixins: [Fieldtype],
     components: {
         Button,
-        Description,
+        Checkbox,
         DescriptionWithIcon,
         Icon
     },
@@ -98,14 +88,14 @@ export default {
                 playbackIds.push([playbackPolicy, playbackId]);
             }
 
+            const hasIcons = playbackIds.length > 0;
+
             const rows = [];
 
-            rows.push({ key: 'id', label: 'Mux ID', value: muxId });
+            rows.push({ key: 'id', label: 'Mux ID', value: muxId, icon: hasIcons ? 'fingerprint' : '' });
 
             for (const [policy, id] of playbackIds) {
-                const icon = playbackIds.length > 1
-                    ? (policy === 'signed' ? 'security-lock' : 'eye')
-                    : null;
+                const icon = hasIcons ? (policy === 'signed' ? 'security-lock' : 'eye') : null;
                 rows.push({ key: id, label: 'Playback ID', value: id, icon });
             }
 
@@ -117,9 +107,9 @@ export default {
 
 <style>
 .mux-table-wrapper {
-    overflow: hidden;
+    overflow: auto;
     border-radius: .25rem;
-    border-width: 1px
+    border-width: 1px;
 }
 
 .mux-table {
@@ -127,8 +117,6 @@ export default {
     border-radius: .25rem;
     text-align: left;
     font-size: 13px;
-    background-color: rgb(250 252 255 / var(--tw-bg-opacity));
-    color: rgb(115 128 140 / var(--tw-text-opacity));
 }
 
 .mux-table tr:not(:last-child) th,.mux-table tr:not(:last-child) td {
