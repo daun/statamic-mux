@@ -11,16 +11,13 @@
     "docs:preview": "cd docs && npm run preview"
   },
   "dependencies": {
-    "vue": "^2.6.14"
+    "vue": "^3.0"
   },
   "devDependencies": {
-    "@tailwindcss/container-queries": "^0.1.1",
-    "@tailwindcss/typography": "^0.5.9",
-    "@vitejs/plugin-vue2": "^2.2.0",
-    "autoprefixer": "^10.4.5",
-    "laravel-vite-plugin": "^0.7.6",
-    "postcss": "^8.4.12",
-    "tailwindcss": "^3.0.24",
-    "vite": "^4.3.9"
+        "@statamic/cms": "file:./vendor/statamic/cms/resources/dist-package",
+        "laravel-vite-plugin": "^2.0",
+        "postcss": "^8.0",
+        "tailwindcss": "^4.0",
+        "vite": "^7.0"
   }
 }
