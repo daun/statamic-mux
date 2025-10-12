@@ -18,11 +18,11 @@ jobs:
         include:
           - laravel: 12.*
             testbench: 10.*
-            pest: 4.*
+            pest: 3.*
             snapshots: 2.*
           - laravel: 11.*
             testbench: 9.*
-            pest: 4.*
+            pest: 3.*
             snapshots: 2.*
 
     name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }} / Statamic ${{ matrix.statamic }}
