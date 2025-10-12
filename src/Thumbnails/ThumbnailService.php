@@ -25,6 +25,13 @@ class ThumbnailService
 
         return $playbackId
             ? $this->service->getGifUrl($playbackId, ['width' => $this->width])
-            : cp_route('mux.thumbnail', ['container' => $asset->container()->id(), 'path' => $asset->path()]);
+            : cp_route('mux.thumbnail', base64_encode($asset->id()));
+    }
+
+    public function generateForAsset(Asset $asset): ?string
+    {
+        return ($playbackId = $this->service->getPlaybackId($asset))
+            ? $this->service->getGifUrl($playbackId, ['width' => $this->width])
+            : null;
     }
 }
