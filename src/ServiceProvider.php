@@ -8,6 +8,7 @@ use Daun\StatamicMux\Mux\MuxClient;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Mux\MuxUrls;
 use Daun\StatamicMux\Thumbnails\PlaceholderService;
+use Daun\StatamicMux\Thumbnails\ThumbnailService;
 use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
 use Statamic\Assets\Asset;
@@ -192,21 +193,7 @@ class ServiceProvider extends AddonServiceProvider
 
     public function injectAssetThumbnail(Asset $asset, object $payload, callable $next): mixed
     {
-        if ($payload->data->thumbnail ?? null) {
-            return $next($payload);
-        }
-
-        if (! Mux::getMuxId($asset)) {
-            return $next($payload);
-        }
-
-        // If playback id already exists, generate gif url immediately
-        // Otherwise, delegate generation to custom route in the background
-        $playbackId = Mux::getPlaybackId($asset, requestIfMissing: false);
-
-        $payload->data->thumbnail = $playbackId
-            ? Mux::getGifUrl($playbackId, ['width' => 400])
-            : cp_route('mux.thumbnail', ['container' => $asset->container()->id(), 'path' => $asset->path()]);
+        $payload->data->thumbnail ??= app(ThumbnailService::class)->forAsset($asset);
 
         return $next($payload);
     }
