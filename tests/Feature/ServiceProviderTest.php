@@ -3,8 +3,8 @@
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Mux\MuxUrls;
-use Daun\StatamicMux\Thumbnails\PlaceholderService;
 use Daun\StatamicMux\ServiceProvider;
+use Daun\StatamicMux\Thumbnails\PlaceholderService;
 
 test('provides services', function () {
     $provider = new ServiceProvider($this->app);

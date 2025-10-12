@@ -2,7 +2,6 @@
 
 namespace Daun\StatamicMux;
 
-use Daun\StatamicMux\Facades\Mux;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxClient;
 use Daun\StatamicMux\Mux\MuxService;
@@ -13,10 +12,10 @@ use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
 use Statamic\Assets\Asset;
 use Statamic\Facades\Permission;
-use Statamic\Providers\AddonServiceProvider;
-use Statamic\Statamic;
 use Statamic\Http\Resources\CP\Assets\Asset as AssetResource;
 use Statamic\Http\Resources\CP\Assets\FolderAsset as FolderAssetResource;
+use Statamic\Providers\AddonServiceProvider;
+use Statamic\Statamic;
 
 class ServiceProvider extends AddonServiceProvider
 {
