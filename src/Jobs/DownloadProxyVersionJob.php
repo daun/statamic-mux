@@ -3,7 +3,7 @@
 namespace Daun\StatamicMux\Jobs;
 
 use DateTime;
-use Daun\StatamicMux\Mux\Actions\CreateProxyVersion;
+use Daun\StatamicMux\Mux\Actions\DownloadProxyVersion;
 use Daun\StatamicMux\Support\Queue;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -12,12 +12,13 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Statamic\Assets\Asset;
 
-class CreateProxyVersionJob implements ShouldQueue
+class DownloadProxyVersionJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public function __construct(
-        protected Asset $asset
+        protected Asset $asset,
+        protected string $proxyId
     ) {
         $this->connection = Queue::connection();
         $this->queue = Queue::queue();
@@ -28,21 +29,21 @@ class CreateProxyVersionJob implements ShouldQueue
         return now()->addDay();
     }
 
-    public function handle(CreateProxyVersion $action): void
+    public function handle(DownloadProxyVersion $action): void
     {
         // No Mux ID? Nothing to do
-        if (! $action->canHandle($this->asset)) {
+        if (! $action->canHandle($this->asset, $this->proxyId)) {
             return;
         }
 
         // Not ready? Release back for later processing
-        if (! $action->isReady($this->asset)) {
+        if (! $action->isReady($this->asset, $this->proxyId)) {
             $this->release($this->getBackoffDelay());
             return;
         }
 
-        if ($proxyId = $action->handle($this->asset)) {
-            DownloadProxyVersionJob::dispatch($this->asset, $proxyId);
+        if ($downloaded = $action->handle($this->asset, $this->proxyId)) {
+            ray("Downloaded proxy Mux asset with ID {$this->proxyId} for asset {$this->asset->id()}");
         }
     }
 
