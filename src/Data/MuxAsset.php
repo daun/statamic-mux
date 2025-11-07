@@ -127,7 +127,7 @@ class MuxAsset implements Augmentable
         return $this;
     }
 
-    public function setDuration(float|null $duration): self
+    public function setDuration(?float $duration): self
     {
         $this->set('duration', $duration);
 

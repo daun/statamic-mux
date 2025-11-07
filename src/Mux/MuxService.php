@@ -15,7 +15,6 @@ use Daun\StatamicMux\Placeholders\PlaceholderService;
 use Daun\StatamicMux\Support\URL;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Arr;
-use MuxPhp\ApiException;
 use Statamic\Assets\Asset;
 use Statamic\Facades\Asset as Assets;
 
@@ -55,11 +54,11 @@ class MuxService
             $asset = Assets::find($asset);
         }
 
-        if ($asset) {
-            return $this->app->make(CreateMuxAsset::class)->handle($asset, $force);
+        if (! $asset) {
+            return null;
         }
 
-        return null;
+        return $this->app->make(CreateMuxAsset::class)->handle($asset, $force);
     }
 
     /**
@@ -71,11 +70,11 @@ class MuxService
             $asset = Assets::find($asset);
         }
 
-        if ($asset) {
-            return $this->app->make(UpdateMuxAsset::class)->handle($asset);
-        } else {
+        if (! $asset) {
             return false;
         }
+
+        return $this->app->make(UpdateMuxAsset::class)->handle($asset);
     }
 
     /**
@@ -83,11 +82,11 @@ class MuxService
      */
     public function deleteMuxAsset(Asset|string $asset): bool
     {
-        if ($asset) {
-            return $this->app->make(DeleteMuxAsset::class)->handle($asset);
+        if (! $asset) {
+            return false;
         }
 
-        return false;
+        return $this->app->make(DeleteMuxAsset::class)->handle($asset);
     }
 
     /**
