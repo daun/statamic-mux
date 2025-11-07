@@ -9,7 +9,9 @@ use Statamic\Assets\Asset;
 class ThumbnailService
 {
     protected bool $enabled;
+
     protected bool $animated;
+
     protected int $width = 400;
 
     public function __construct(
