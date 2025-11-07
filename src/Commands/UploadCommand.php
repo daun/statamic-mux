@@ -108,7 +108,7 @@ class UploadCommand extends Command
                 $service->createMuxAsset($asset);
                 $this->line("Uploaded <name>{$asset->id()}</name>");
             } else {
-                CreateMuxAssetJob::dispatch($asset->id());
+                CreateMuxAssetJob::dispatch($asset);
                 $this->line("Queued upload of <name>{$asset->id()}</name>");
             }
         })->whenNotEmpty(function () {
@@ -122,7 +122,7 @@ class UploadCommand extends Command
                 $service->createMuxAsset($asset, true);
                 $this->line("Reuploaded <name>{$asset->id()}</name>");
             } else {
-                CreateMuxAssetJob::dispatch($asset->id(), true);
+                CreateMuxAssetJob::dispatch($asset, true);
                 $this->line("Queued reupload of <name>{$asset->id()}</name>");
             }
         })->whenNotEmpty(function () {
