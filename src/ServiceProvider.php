@@ -12,8 +12,6 @@ use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
 use Statamic\Assets\Asset;
 use Statamic\Facades\Permission;
-use Statamic\Http\Resources\CP\Assets\Asset as AssetResource;
-use Statamic\Http\Resources\CP\Assets\FolderAsset as FolderAssetResource;
 use Statamic\Providers\AddonServiceProvider;
 use Statamic\Statamic;
 
@@ -60,7 +58,7 @@ class ServiceProvider extends AddonServiceProvider
         $this->bootPermissions();
         $this->autoPublishConfig();
         $this->publishViews();
-        $this->createThumbnailHooks();
+        $this->bootThumbnails();
     }
 
     protected function registerHooks()
@@ -189,25 +187,9 @@ class ServiceProvider extends AddonServiceProvider
         return $this;
     }
 
-    protected function createThumbnailHooks()
+    protected function bootThumbnails()
     {
-        // Don't add hooks if thumbnails are disabled
-        if (! app(ThumbnailService::class)->enabled()) {
-            return;
-        }
-
-        // $this inside the hooks closure refers to the AssetResource instance
-        // $self refers to the ServiceProvider instance
-        $self = $this;
-        AssetResource::hook('asset', fn ($payload, $next) => $self->injectAssetThumbnail($this->resource, $payload, $next));
-        FolderAssetResource::hook('asset', fn ($payload, $next) => $self->injectAssetThumbnail($this->resource, $payload, $next));
-    }
-
-    public function injectAssetThumbnail(Asset $asset, object $payload, callable $next): mixed
-    {
-        $payload->data->thumbnail ??= app(ThumbnailService::class)->forAsset($asset);
-
-        return $next($payload);
+        app(ThumbnailService::class)->createHooks();
     }
 
     public function provides(): array
@@ -219,6 +201,8 @@ class ServiceProvider extends AddonServiceProvider
             'mux.service',
             MuxUrls::class,
             'mux.urls',
+            ThumbnailService::class,
+            'mux.thumbnails',
             PlaceholderService::class,
             'mux.placeholders',
         ];

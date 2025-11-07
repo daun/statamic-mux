@@ -5,25 +5,26 @@ namespace Daun\StatamicMux\Thumbnails;
 use Daun\StatamicMux\Data\MuxPlaybackId;
 use Daun\StatamicMux\Mux\MuxService;
 use Statamic\Assets\Asset;
+use Statamic\Http\Resources\CP\Assets\Asset as AssetResource;
+use Statamic\Http\Resources\CP\Assets\FolderAsset as FolderAssetResource;
 
 class ThumbnailService
 {
-    protected bool $enabled;
-
-    protected bool $animated;
-
     protected int $width = 400;
 
     public function __construct(
         protected MuxService $service,
     ) {
-        $this->enabled = (bool) config('mux.cp_thumbnails.enabled', true);
-        $this->animated = (bool) config('mux.cp_thumbnails.animated', true);
     }
 
     public function enabled(): bool
     {
-        return $this->enabled;
+        return (bool) config('mux.cp_thumbnails.enabled', true);
+    }
+
+    public function animated(): bool
+    {
+        return (bool) config('mux.cp_thumbnails.animated', true);
     }
 
     public function forAsset(Asset $asset): ?string
@@ -46,9 +47,47 @@ class ThumbnailService
             : null;
     }
 
+    public function createHooks(): void
+    {
+        if (! $this->enabled()) {
+            return;
+        }
+
+        $service = $this;
+
+        AssetResource::hook('asset', function ($payload, $next) use ($service) {
+            $payload->data->thumbnail ??= $service->forAsset($this->resource);
+            return $next($payload);
+        });
+
+        FolderAssetResource::hook('asset', function ($payload, $next) use ($service) {
+            $payload->data->thumbnail ??= $service->forAsset($this->resource);
+            return $next($payload);
+        });
+    }
+
+    public function removeHooks(): void
+    {
+        if (! $this->enabled()) {
+            return;
+        }
+
+        $service = $this;
+
+        AssetResource::hook('asset', function ($payload, $next) use ($service) {
+            $payload->data->thumbnail ??= $service->forAsset($this->resource);
+            return $next($payload);
+        });
+
+        FolderAssetResource::hook('asset', function ($payload, $next) use ($service) {
+            $payload->data->thumbnail ??= $service->forAsset($this->resource);
+            return $next($payload);
+        });
+    }
+
     protected function getThumbnailUrl(MuxPlaybackId $playbackId): string
     {
-        return $this->animated
+        return $this->animated()
             ? $this->service->getGifUrl($playbackId, ['width' => $this->width])
             : $this->service->getThumbnailUrl($playbackId, ['width' => $this->width]);
     }
