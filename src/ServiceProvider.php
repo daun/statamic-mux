@@ -51,6 +51,7 @@ class ServiceProvider extends AddonServiceProvider
         $this->registerMuxApi();
         $this->registerMuxService();
         $this->registerUrlService();
+        $this->registerThumbnailService();
         $this->registerPlaceholderService();
     }
 
@@ -112,6 +113,11 @@ class ServiceProvider extends AddonServiceProvider
             );
         });
         $this->app->alias(MuxUrls::class, 'mux.urls');
+    }
+
+    protected function registerThumbnailService()
+    {
+        $this->app->alias(ThumbnailService::class, 'mux.thumbnails');
     }
 
     protected function registerPlaceholderService()
