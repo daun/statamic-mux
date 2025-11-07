@@ -50,8 +50,8 @@ class CreateMuxAsset
         }
 
         if ($muxId) {
-            AssetUploadedToMux::dispatch($asset, $muxId);
             MuxAsset::fromAsset($asset)->clear()->setId($muxId)->save();
+            AssetUploadedToMux::dispatch($asset, $muxId);
         }
 
         return $muxId;
