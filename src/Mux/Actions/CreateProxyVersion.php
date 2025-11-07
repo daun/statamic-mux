@@ -54,7 +54,7 @@ class CreateProxyVersion
      */
     public function isReady(Asset $asset): bool
     {
-        return ($muxId = $this->service->getMuxId($asset)) && $this->service->muxAssetIsReady($muxId);
+        return ($muxId = $this->service->getMuxId($asset)) && $this->api->assetIsReady($muxId);
     }
 
     /**

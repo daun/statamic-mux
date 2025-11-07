@@ -49,7 +49,7 @@ class MuxAsset implements Augmentable
 
     public function existsOnMux(): bool
     {
-        return $this->id() && Mux::muxAssetExists($this->id());
+        return $this->id() && Mux::api()->assetExists($this->id());
     }
 
     public function save(): self

@@ -96,49 +96,12 @@ class MuxService
     public function hasExistingMuxAsset(Asset $asset)
     {
         $muxId = $this->getMuxId($asset);
-        if ($muxId && $this->muxAssetExists($muxId)) {
+        if ($muxId && $this->api->assetExists($muxId)) {
             return true;
         } else {
             MuxAsset::fromAsset($asset)->clear()->save();
 
             return false;
-        }
-    }
-
-    /**
-     * Check if an asset with given id exists on Mux.
-     */
-    public function muxAssetExists(string $muxId): bool
-    {
-        try {
-            $muxAssetResponse = $this->api->assets()->getAsset($muxId)->getData();
-            $actualMuxId = $muxAssetResponse?->getId();
-
-            return $muxId === $actualMuxId;
-        } catch (ApiException $e) {
-            if ($e->getCode() === 404) {
-                return false;
-            } else {
-                throw $e;
-            }
-        }
-    }
-
-    /**
-     * Check if an asset with given id is ready on Mux.
-     */
-    public function muxAssetIsReady(string $muxId): bool
-    {
-        try {
-            $status = $this->api->assets()->getAsset($muxId)->getData()?->getStatus();
-
-            return $status === \MuxPhp\Models\Asset::STATUS_READY;
-        } catch (ApiException $e) {
-            if ($e->getCode() === 404) {
-                return false;
-            } else {
-                throw $e;
-            }
         }
     }
 
