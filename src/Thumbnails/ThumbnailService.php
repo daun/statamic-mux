@@ -14,8 +14,7 @@ class ThumbnailService
 
     public function __construct(
         protected MuxService $service,
-    ) {
-    }
+    ) {}
 
     public function enabled(): bool
     {

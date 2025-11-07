@@ -10,7 +10,6 @@ use Daun\StatamicMux\Thumbnails\PlaceholderService;
 use Daun\StatamicMux\Thumbnails\ThumbnailService;
 use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
-use Statamic\Assets\Asset;
 use Statamic\Facades\Permission;
 use Statamic\Providers\AddonServiceProvider;
 use Statamic\Statamic;
