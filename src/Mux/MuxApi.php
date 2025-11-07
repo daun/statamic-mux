@@ -168,4 +168,29 @@ class MuxApi
             }
         }
     }
+
+    public function assetRenditionsAreReady(string $muxId): bool
+    {
+        try {
+            $response = $this->assets()->getAsset($muxId)->getData();
+            $files = $response?->getStaticRenditions()?->getFiles() ?? [];
+            if (! count($files)) {
+                return false;
+            }
+
+            foreach ($files as $file) {
+                if ($file->getStatus() !== \MuxPhp\Models\AssetStaticRenditions::STATUS_READY) {
+                    return false;
+                }
+            }
+
+            return true;
+        } catch (ApiException $e) {
+            if ($e->getCode() === 404) {
+                return false;
+            } else {
+                throw $e;
+            }
+        }
+    }
 }
