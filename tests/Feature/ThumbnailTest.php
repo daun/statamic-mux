@@ -64,6 +64,20 @@ test('injects cdn thumbnails for mux assets with playback id', function () {
 
     expect($data)->toBeArray()->not->toBeEmpty();
     expect($data['thumbnail'])->toStartWith('https://image.mux.com');
+    expect($data['thumbnail'])->toEndWith('.gif?width=400');
+});
+
+test('injects static cdn thumbnails if configured', function () {
+    config(['mux.cp_thumbnails.animated' => false]);
+
+    $this->thumbnails->createHooks();
+
+    $asset = $this->mp4WithPlaybackId;
+    $data = $this->app->makeWith(AssetResource::class, ['resource' => $asset])->resolve()['data'] ?? null;
+
+    expect($data)->toBeArray()->not->toBeEmpty();
+    expect($data['thumbnail'])->toStartWith('https://image.mux.com');
+    expect($data['thumbnail'])->toEndWith('.jpg?width=400');
 });
 
 test('does not inject thumbnails for non-mux assets', function () {
