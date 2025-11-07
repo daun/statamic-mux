@@ -66,13 +66,15 @@ class CreateProxyVersion
 
         $request = $this->api->createAssetRequest([
             'playback_policy' => MuxPlaybackPolicy::Public->value,
-            'video_quality' => \MuxPhp\Models\Asset::VIDEO_QUALITY_BASIC,
-            'mp4_support' => \MuxPhp\Models\Asset::MP4_SUPPORT_STANDARD,
+            // 'video_quality' => \MuxPhp\Models\Asset::VIDEO_QUALITY_BASIC,
             'input' => $this->api->input([
                 'url' => "mux://assets/{$muxId}",
                 'start_time' => $start,
                 'end_time' => $start + $length,
             ]),
+            'static_renditions' => [
+                ['resolution' => \MuxPhp\Models\StaticRendition::RESOLUTION_HIGHEST],
+            ],
             'passthrough' => $this->getPassthroughData($muxId),
         ]);
 

@@ -43,6 +43,7 @@ class CreateProxyVersionJob implements ShouldQueue
 
         if ($proxyId = $action->handle($this->asset)) {
             // TODO: download proxy and replace asset file
+            ray("Created proxy Mux asset with ID {$proxyId} for asset {$this->asset->id()}");
         }
     }
 
