@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.5.4] - 2025-09-02
+
+- Fix test case with newest Mux SDK
+- Fix some orphaned videos not being pruned in command
+
+## [1.5.3] - 2025-08-01
+
+- Fix job constructor types
+
 ## [1.5.2] - 2025-05-30
 
 - Update Mux metadata when underlying Statamic asset is saved
@@ -88,6 +97,7 @@
 
 - Beta release
 
+[1.5.3]: https://github.com/daun/statamic-mux/releases/tag/1.5.3
 [1.5.2]: https://github.com/daun/statamic-mux/releases/tag/1.5.2
 [1.5.1]: https://github.com/daun/statamic-mux/releases/tag/1.5.1
 [1.5.0]: https://github.com/daun/statamic-mux/releases/tag/1.5.0

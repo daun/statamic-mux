@@ -2,12 +2,16 @@
 
 namespace Daun\StatamicMux\Tags;
 
+use Closure;
 use Daun\StatamicMux\Tags\Concerns\GetsAssetFromContext;
 use Daun\StatamicMux\Tags\Concerns\ReadsMuxData;
 use Daun\StatamicMux\Tags\Concerns\RendersMuxPlayer;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use ReflectionClass;
+use Statamic\Data\AbstractAugmented;
+use Statamic\Fields\Value;
 use Statamic\Tags\Tags;
 
 class MuxTags extends Tags
@@ -73,22 +77,22 @@ class MuxTags extends Tags
 
             $data = [
                 'mux_id' => $muxId,
-                'playback_id' => $playbackId?->id(),
+                'playback_id' => $this->defer(fn () => $playbackId?->id()),
                 'playback_policy' => $playbackId?->policy(),
                 'playback_modifiers' => ($playbackModifiers = $this->getPlaybackModifiers()),
-                'playback_url' => $this->getPlaybackUrl($asset),
-                'thumbnail' => $this->getThumbnailUrl($asset),
-                'gif' => $this->getGifUrl($asset),
-                'placeholder' => $this->getPlaceholderDataUri($asset),
+                'playback_url' => $this->defer(fn () => $this->getPlaybackUrl($asset)),
+                'thumbnail' => $this->defer(fn () => $this->getThumbnailUrl($asset)),
+                'gif' => $this->defer(fn () => $this->getGifUrl($asset)),
+                'placeholder' => $this->defer(fn () => $this->getPlaceholderDataUri($asset)),
                 'is_public' => $playbackId?->isPublic(),
                 'is_signed' => $playbackId?->isSigned(),
             ];
 
             if ($playbackId?->isSigned()) {
                 $data = $data + [
-                    'playback_token' => $this->getPlaybackToken($asset, $playbackModifiers),
-                    'thumbnail_token' => $this->getThumbnailToken($asset),
-                    'storyboard_token' => $this->getStoryboardToken($asset),
+                    'playback_token' => $this->defer(fn () => $this->getPlaybackToken($asset, $playbackModifiers)),
+                    'thumbnail_token' => $this->defer(fn () => $this->getThumbnailToken($asset)),
+                    'storyboard_token' => $this->defer(fn () => $this->getStoryboardToken($asset)),
                 ];
             }
 
@@ -150,14 +154,14 @@ class MuxTags extends Tags
             ->when($this->params->bool('background'), fn ($attr) => $attr->merge(['autoplay' => true, 'loop' => true, 'muted' => true])
             );
 
-        $viewdata = $this->context
+        $viewData = $this->context
             ->merge($data)
             ->merge(['script' => $this->params->bool('script', false)])
             ->merge(['attributes' => $this->toHtmlAttributes($htmlAttributes)])
             ->merge(['playback_modifiers' => $this->toHtmlAttributes($playbackModifiers)])
             ->merge(['player_query' => Arr::query($playbackModifiers->merge($playerAttributes)->all())]);
 
-        return view("statamic-mux::{$view}", $viewdata)->render();
+        return view("statamic-mux::{$view}", $viewData)->render();
     }
 
     /**
@@ -229,5 +233,17 @@ class MuxTags extends Tags
             ->keyBy(fn ($_, $key) => Str::replace('_', '-', $key))
             ->filter(fn ($_, $key) => $key)
             ->all();
+    }
+
+    /**
+     * Wrap a resolver in a Value object for deferred evaluation.
+     */
+    protected function defer(Closure $resolver): mixed
+    {
+        $supportsDefer = (new ReflectionClass(AbstractAugmented::class))->hasMethod('wrapDeferredValue');
+
+        return $supportsDefer
+            ? new Value($resolver)
+            : $resolver();
     }
 }

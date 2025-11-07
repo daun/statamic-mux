@@ -90,6 +90,7 @@ it('ingests assets from public containers', function () {
             'normalize_audio' => false,
             'test' => false,
             'video_quality' => 'plus',
+            'copy_overlays' => true,
             'meta' => [
                 'title' => 'test.mp4',
                 'creator_id' => 'statamic-mux',
@@ -126,6 +127,7 @@ it('uploads assets from private containers', function () {
 
     $this->guzzler->expects($this->once())
         ->post('https://api.mux.com/video/v1/uploads')
+        ->ray()
         ->withJson([
             'timeout' => 3600,
             'cors_origin' => '*',
@@ -137,6 +139,7 @@ it('uploads assets from private containers', function () {
                 'normalize_audio' => false,
                 'test' => false,
                 'video_quality' => 'plus',
+                'copy_overlays' => true,
                 'meta' => [
                     'title' => 'private.mp4',
                     'creator_id' => 'statamic-mux',
@@ -162,12 +165,14 @@ it('uploads assets from private containers', function () {
 
     $this->guzzler->expects($this->once())
         ->put('https://storage.googleapis.com/video-storage-us-east1-uploads/zd01Pe2bNpYhxbrw')
+        ->ray()
         ->withHeaders(['Content-Type' => 'application/octet-stream'])
         ->withBody($privateMp4->contents())
         ->willRespond(Http::response('', 200));
 
     $this->guzzler->expects($this->once())
         ->get('https://api.mux.com/video/v1/uploads/zd01Pe2bNpYhxbrwYABgFE01twZdtv4M00kts2i02GhbGjc')
+        ->ray()
         ->willRespondJson([
             'data' => [
                 'status' => 'asset_created',
@@ -203,6 +208,7 @@ it('uploads assets from local environment', function () {
                 'normalize_audio' => false,
                 'test' => false,
                 'video_quality' => 'plus',
+                'copy_overlays' => true,
                 'meta' => [
                     'title' => 'test.mp4',
                     'creator_id' => 'statamic-mux',

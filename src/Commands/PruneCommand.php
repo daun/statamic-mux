@@ -27,7 +27,7 @@ class PruneCommand extends Command
     public function handle(MuxService $service): void
     {
         $this->dryrun = $this->option('dry-run');
-        $this->sync = Queue::connection() === 'sync';
+        $this->sync = Queue::isSync();
 
         if (! MirrorField::configured()) {
             $this->error('Mux is not configured. Please add valid Mux credentials in your .env file.');
@@ -46,7 +46,7 @@ class PruneCommand extends Command
             $this->newLine();
         }
 
-        $muxAssets = $service->listMuxAssets();
+        $muxAssets = $service->listMuxAssets(all: true);
         $actualMuxIds = $muxAssets->pluck('id');
 
         if ($actualMuxIds->isEmpty()) {

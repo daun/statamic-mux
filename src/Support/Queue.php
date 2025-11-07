@@ -13,4 +13,9 @@ class Queue
     {
         return config('mux.queue.queue', 'default');
     }
+
+    public static function isSync(): bool
+    {
+        return self::connection() === 'sync';
+    }
 }
