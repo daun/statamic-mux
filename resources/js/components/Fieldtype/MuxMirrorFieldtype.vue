@@ -19,7 +19,7 @@
                     {{ __('statamic-mux::messages.mirror_fieldtype.not_uploaded') }}
                 </span>
             </div>
-            <div v-if="allowReuploads" class="flex items-center mt-3">
+            <div v-if="showReuploadToggle" class="flex items-center mt-3">
                 <label for="upload-missing-asset" class="help-block grow flex items-center cursor-pointer font-normal">
                     <span class="basis-6 flex items-center">
                         <input type="checkbox" name="reupload" id="upload-missing-asset" class="mr-2" v-model="value.reupload">
@@ -50,7 +50,7 @@
                     </tbody>
                 </table>
             </div>
-            <div v-if="allowReuploads" class="flex items-center mt-3">
+            <div v-if="showReuploadToggle" class="flex items-center mt-3">
                 <label for="reupload-existing-asset" class="help-block grow flex items-center cursor-pointer font-normal">
                     <span class="basis-6 flex items-center">
                         <input type="checkbox" name="reupload" id="reupload-existing-asset" class="mr-2" v-model="value.reupload">
@@ -66,6 +66,9 @@
 export default {
     mixins: [Fieldtype],
     computed: {
+        showReuploadToggle() {
+            return this.allowReuploads && ! this.isProxy;
+        },
         allowReuploads() {
             return this.config?.allow_reupload;
         },
@@ -77,6 +80,9 @@ export default {
         },
         isVideo() {
             return this.meta?.is_video || false;
+        },
+        isProxy() {
+            return this.meta?.is_proxy || false;
         },
         isUploaded() {
             return this.value.id;
