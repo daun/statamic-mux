@@ -20,25 +20,15 @@ class ProxyVersionSubscriber implements ShouldQueue
 
     public function subscribe(): array
     {
-        if (! $this->shouldHandle()) {
+        if (! config('mux.storage.store_placeholders', false)) {
             return [];
         }
 
-        return [
-            AssetUploadedToMux::class => 'createProxy',
-        ];
+        return [AssetUploadedToMux::class => 'createProxy'];
     }
 
-    /**
-     * Create a proxy version of the uploaded asset.
-     */
     public function createProxy(AssetUploadedToMux $event): void
     {
         CreateProxyVersionJob::dispatch($event->asset);
-    }
-
-    protected function shouldHandle(): bool
-    {
-        return config('mux.storage.store_placeholders', false);
     }
 }
