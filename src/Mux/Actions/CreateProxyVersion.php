@@ -64,6 +64,10 @@ class CreateProxyVersion
     {
         $muxId = $this->service->getMuxId($asset);
 
+        if (($asset->duration() ?? 999) <= $length) {
+            return null;
+        }
+
         $request = $this->api->createAssetRequest([
             'playback_policy' => MuxPlaybackPolicy::Public->value,
             // 'video_quality' => \MuxPhp\Models\Asset::VIDEO_QUALITY_BASIC,
