@@ -191,6 +191,11 @@ class ServiceProvider extends AddonServiceProvider
 
     protected function createThumbnailHooks()
     {
+        // Don't add hooks if thumbnails are disabled
+        if (! app(ThumbnailService::class)->enabled()) {
+            return;
+        }
+
         // $this inside the hooks closure refers to the AssetResource instance
         // $self refers to the ServiceProvider instance
         $self = $this;
