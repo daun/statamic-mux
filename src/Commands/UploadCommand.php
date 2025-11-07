@@ -3,6 +3,7 @@
 namespace Daun\StatamicMux\Commands;
 
 use Daun\StatamicMux\Concerns\HasCommandOutputStyles;
+use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Jobs\CreateMuxAssetJob;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Support\MirrorField;
@@ -92,7 +93,13 @@ class UploadCommand extends Command
 
         $assetGroups = $assets->mapToGroups(function ($asset) use ($service) {
             $exists = $service->hasExistingMuxAsset($asset);
-            $action = ! $exists ? 'upload' : ($this->force ? 'reupload' : 'skip');
+            $proxy = MuxAsset::fromAsset($asset)->isProxy();
+            $action = ! $exists
+                ? 'upload'
+                : ($this->force && ! $proxy
+                    ? 'reupload'
+                    : 'skip'
+                );
 
             return [$action => $asset];
         });
