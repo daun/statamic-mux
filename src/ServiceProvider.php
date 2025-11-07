@@ -191,6 +191,8 @@ class ServiceProvider extends AddonServiceProvider
 
     protected function createThumbnailHooks()
     {
+        // $this inside the hooks closure refers to the AssetResource instance
+        // $self refers to the ServiceProvider instance
         $self = $this;
         AssetResource::hook('asset', fn ($payload, $next) => $self->injectAssetThumbnail($this->resource, $payload, $next));
         FolderAssetResource::hook('asset', fn ($payload, $next) => $self->injectAssetThumbnail($this->resource, $payload, $next));
