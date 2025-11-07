@@ -39,7 +39,7 @@ class UploadCommand extends Command
         $this->container = $this->option('container');
         $this->force = $this->option('force');
         $this->dryrun = $this->option('dry-run');
-        $this->sync = Queue::connection() === 'sync';
+        $this->sync = Queue::isSync();
 
         if (! MirrorField::configured()) {
             $this->error('Mux is not configured. Please add valid Mux credentials in your .env file.');
