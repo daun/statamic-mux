@@ -43,8 +43,6 @@ class CreateProxyVersion
 
             throw new \Exception("Failed to generate proxy from Mux asset: {$th->getMessage()}");
         }
-
-        return null;
     }
 
     /**
@@ -73,10 +71,6 @@ class CreateProxyVersion
     protected function createClipFromAsset(Asset $asset, float $start, float $length): ?string
     {
         $muxId = $this->service->getMuxId($asset);
-
-        if (($asset->duration() ?? 999) <= $length) {
-            return null;
-        }
 
         $request = $this->api->createAssetRequest([
             'playback_policy' => MuxPlaybackPolicy::Public->value,
