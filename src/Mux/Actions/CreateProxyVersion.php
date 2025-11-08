@@ -12,6 +12,7 @@ use Statamic\Assets\Asset;
 class CreateProxyVersion
 {
     protected int $start = 0;
+
     protected int $length = 10;
 
     public function __construct(

@@ -21,19 +21,19 @@ class ProxyVersionSubscriber implements ShouldQueue
 
     public function subscribe(): array
     {
+        if (! config('mux.storage.store_placeholders', false)) {
+            return [];
+        }
+
+        if (Queue::isSync()) {
+            return [];
+        }
+
         return [AssetUploadedToMux::class => 'createProxy'];
     }
 
     public function createProxy(AssetUploadedToMux $event): void
     {
-        if (! config('mux.storage.store_placeholders', false)) {
-            return;
-        }
-
-        if (Queue::isSync()) {
-            return;
-        }
-
         CreateProxyVersionJob::dispatch($event->asset);
     }
 }
