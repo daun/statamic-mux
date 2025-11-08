@@ -29,6 +29,10 @@ class CreateMuxAsset
             return null;
         }
 
+        if (MuxAsset::fromAsset($asset)->isProxy()) {
+            return null;
+        }
+
         if (! $force && $this->service->hasExistingMuxAsset($asset)) {
             return null;
         }

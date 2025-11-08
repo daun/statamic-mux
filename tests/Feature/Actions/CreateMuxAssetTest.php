@@ -1,5 +1,6 @@
 <?php
 
+use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Events\AssetUploadedToMux;
 use Daun\StatamicMux\Events\AssetUploadingToMux;
 use Daun\StatamicMux\Facades\Mux;
@@ -51,6 +52,26 @@ it('ignores existing mux asset', function () {
     $this->createMuxAsset->shouldNotReceive('ingestAssetToMux');
 
     $result = $this->createMuxAsset->handle($this->mp4);
+
+    expect($result)->toBeNull();
+    $this->guzzler->assertHistoryCount(0);
+    Event::assertNotDispatched(AssetUploadingToMux::class);
+    Event::assertNotDispatched(AssetUploadedToMux::class);
+});
+
+it('ignores proxy versions', function () {
+    Event::fake([AssetUploadingToMux::class, AssetUploadedToMux::class]);
+
+    $this->service->shouldReceive('hasExistingMuxAsset')->andReturn(true);
+
+    $this->createMuxAsset->shouldNotReceive('uploadAssetToMux');
+    $this->createMuxAsset->shouldNotReceive('ingestAssetToMux');
+
+    $proxy = $this->uploadTestFileToTestContainer('test.mp4', 'proxy.mp4');
+    $proxy->set('mux', ['id' => 123, 'is_proxy' => true]);
+    $proxy->save();
+
+    $result = $this->createMuxAsset->handle($proxy);
 
     expect($result)->toBeNull();
     $this->guzzler->assertHistoryCount(0);
