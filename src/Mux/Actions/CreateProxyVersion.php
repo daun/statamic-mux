@@ -11,16 +11,21 @@ use Statamic\Assets\Asset;
 
 class CreateProxyVersion
 {
+    protected int $start = 0;
+    protected int $length = 10;
+
     public function __construct(
         protected Application $app,
         protected MuxService $service,
         protected MuxApi $api,
-    ) {}
+    ) {
+        $this->length = (int) config('mux.storage.placeholder_length', 10);
+    }
 
     /**
      * Generate a short proxy version of an existing Mux asset.
      */
-    public function handle(Asset $asset, float $start = 0, float $length = 5): ?string
+    public function handle(Asset $asset): ?string
     {
         if (! $this->canHandle($asset)) {
             return null;
@@ -31,7 +36,7 @@ class CreateProxyVersion
         }
 
         try {
-            return $this->createClipFromAsset($asset, $start, $length);
+            return $this->createClipFromAsset($asset, $this->start, $this->length);
         } catch (\Throwable $th) {
             Log::error($th->getMessage());
 
@@ -46,7 +51,9 @@ class CreateProxyVersion
      */
     public function canHandle(Asset $asset): bool
     {
-        return $asset->isVideo() && $this->service->hasExistingMuxAsset($asset);
+        return $asset->isVideo()
+            && ($asset->duration() ?? 0) > $this->length
+            && $this->service->hasExistingMuxAsset($asset);
     }
 
     /**
@@ -54,7 +61,8 @@ class CreateProxyVersion
      */
     public function isReady(Asset $asset): bool
     {
-        return ($muxId = $this->service->getMuxId($asset)) && $this->api->assetIsReady($muxId);
+        return ($muxId = $this->service->getMuxId($asset))
+            && $this->api->assetIsReady($muxId);
     }
 
     /**

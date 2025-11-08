@@ -30,7 +30,7 @@ class CreateProxyVersionJob implements ShouldQueue
 
     public function handle(CreateProxyVersion $action): void
     {
-        // No Mux ID? Nothing to do
+        // Check if we need to process this at all
         if (! $action->canHandle($this->asset)) {
             return;
         }

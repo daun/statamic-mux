@@ -53,8 +53,11 @@ return [
     |--------------------------------------------------------------------------
     |
     | Adding a `mux_mirror` field to an asset blueprint will upload any local
-    | videos with that blueprint to Mux. The flag below allows disabling this
-    | feature without removing the existing field from the blueprint.
+    | videos with that blueprint to Mux. The `enabled` flag below allows
+    | toggling this feature without removing the field from the blueprint.
+    |
+    | The `sync_meta` option will update asset metadata (title and filename) on
+    | Mux whenever changed in Statamic. Disable to save API calls if not needed.
     |
     */
 
@@ -63,6 +66,28 @@ return [
         'enabled' => env('MUX_MIRROR_ENABLED', true),
 
         'sync_meta' => true,
+
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Optimize Storage
+    |--------------------------------------------------------------------------
+    |
+    | To preserve storage space, the addon can replace original video files with
+    | a smaller placeholder version after uploading to Mux. A short 10s clip of
+    | the video will remain available in the control panel for previewing.
+    |
+    | Note that this makes the original file unavailable for download or
+    | playback without going through Mux.
+    |
+    */
+
+    'storage' => [
+
+        'store_placeholders' => false,
+
+        'placeholder_length' => 10, // seconds
 
     ],
 
@@ -126,23 +151,6 @@ return [
         // 'max_resolution' => '1440p',
 
         // 'redundant_streams' => true,
-
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Optimize Storage
-    |--------------------------------------------------------------------------
-    |
-    | To preserve storage space, the addon can replace original video files with
-    | a smaller placeholder version after uploading to Mux. A short clip of the
-    | video will remain available in the control panel for previewing.
-    |
-    */
-
-    'storage' => [
-
-        'store_placeholders' => false,
 
     ],
 

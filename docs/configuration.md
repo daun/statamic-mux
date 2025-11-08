@@ -173,10 +173,12 @@ stick with the default behavior and keep the original MP4 files around to ensure
 long-term independence from any one video provider.
 
 If you need to save storage space on the server and are fine with having the
-original files on Mux only, you can configure the addon to only store low-quality
-placeholders on disk. This will save a small placeholder video that can be
-previewed in the backend, but requires Mux to properly stream high-quality
-videos from your frontend.
+original files on Mux only, you can configure the addon to replace video files
+with a smaller placeholder version. This will store a short 10s clip of the
+video for previewing in the backend, but requires Mux for streaming and
+downloading the full video.
+
+Any videos shorter than the defined placeholder length will keep the original.
 
 ```php
     /*
@@ -188,6 +190,8 @@ videos from your frontend.
     'storage' => [
 
         'store_placeholders' => true, // [!code focus]
+
+        'placeholder_length' => 10, // seconds // [!code focus]
 
     ],
 ```
