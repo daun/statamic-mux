@@ -50,7 +50,6 @@ class DownloadProxyVersion
     public function canHandle(Asset $asset, string $proxyId): bool
     {
         return $asset->isVideo()
-            && $asset->extension() === 'mp4'
             && $this->service->hasExistingMuxAsset($asset)
             && $this->api->assetExists($proxyId);
     }

@@ -53,6 +53,7 @@ class CreateProxyVersion
     public function canHandle(Asset $asset): bool
     {
         return $asset->isVideo()
+            && $asset->extension() === 'mp4'
             && ($asset->duration() ?? 0) > $this->length
             && $this->service->hasExistingMuxAsset($asset);
     }

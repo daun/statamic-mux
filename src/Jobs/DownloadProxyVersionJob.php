@@ -31,7 +31,7 @@ class DownloadProxyVersionJob implements ShouldQueue
 
     public function handle(DownloadProxyVersion $action): void
     {
-        // No Mux ID? Nothing to do
+        // Check if we need to process this at all
         if (! $action->canHandle($this->asset, $this->proxyId)) {
             return;
         }
@@ -42,9 +42,7 @@ class DownloadProxyVersionJob implements ShouldQueue
             return;
         }
 
-        if ($downloaded = $action->handle($this->asset, $this->proxyId)) {
-            ray("Downloaded proxy Mux asset with ID {$this->proxyId} for asset {$this->asset->id()}");
-        }
+        $action->handle($this->asset, $this->proxyId);
     }
 
     private function getBackoffDelay(): int
