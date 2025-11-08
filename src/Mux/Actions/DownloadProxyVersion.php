@@ -9,7 +9,6 @@ use Daun\StatamicMux\Mux\MuxUrls;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use MuxPhp\Models\Asset as MuxAssetModel;
 use Statamic\Assets\Asset;
 
@@ -77,8 +76,6 @@ class DownloadProxyVersion
         $rendition = $this->getRenditionName($data);
 
         $url = $this->urls->download($playbackId, $rendition, $asset->filename());
-        $path = "mux/proxies/{$asset->basename()}";
-        $disk = Storage::disk('local');
 
         try {
             $contents = Http::get($url)->body();
@@ -97,11 +94,7 @@ class DownloadProxyVersion
             MuxAsset::fromAsset($asset)->setProxy(false)->save();
 
             throw $th;
-        } finally {
-            $disk->delete($path);
         }
-
-        return false;
     }
 
     protected function getPlaybackId(MuxAssetModel $data): ?string
