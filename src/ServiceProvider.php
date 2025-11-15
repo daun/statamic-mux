@@ -23,6 +23,7 @@ class ServiceProvider extends AddonServiceProvider
 
     protected $subscribe = [
         Subscribers\MirrorFieldSubscriber::class,
+        Subscribers\ProxyVersionSubscriber::class,
     ];
 
     protected $fieldtypes = [

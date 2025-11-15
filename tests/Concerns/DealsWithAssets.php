@@ -27,7 +27,8 @@ trait DealsWithAssets
         $this->artisan(GlideClear::class);
 
         $this->createAssetContainer();
-        $this->createAssetContainer('private', ['url' => null]);
+        $this->createAssetContainer('private', ['visibility' => 'private']);
+        $this->createAssetContainer('inaccessible', ['url' => null]);
     }
 
     protected function tearDownAssetTest(): void
@@ -73,6 +74,7 @@ trait DealsWithAssets
             'driver' => 'local',
             'root' => $this->getTempDirectory("assets_{$name}"),
             'url' => "/assets/{$name}",
+            'visibility' => 'public',
             ...$config,
         ]]);
 

@@ -2,7 +2,7 @@
 
 namespace Daun\StatamicMux\Jobs;
 
-use Daun\StatamicMux\Mux\MuxService;
+use Daun\StatamicMux\Mux\Actions\CreateMuxAsset;
 use Daun\StatamicMux\Support\Queue;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -23,8 +23,8 @@ class CreateMuxAssetJob implements ShouldQueue
         $this->queue = Queue::queue();
     }
 
-    public function handle(MuxService $service): void
+    public function handle(CreateMuxAsset $action): void
     {
-        $service->createMuxAsset($this->asset, $this->force);
+        $action->handle($this->asset, $this->force);
     }
 }
