@@ -104,7 +104,7 @@ it('creates a clip from existing mux asset', function () {
             'playback_policy' => [
                 'public',
             ],
-            'passthrough' => 'proxy::123',
+            'passthrough' => 'statamic-proxy::123',
             'normalize_audio' => false,
             'test' => false,
             'static_renditions' => [

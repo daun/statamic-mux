@@ -97,6 +97,6 @@ class CreateProxyVersion
      */
     protected function getPassthroughData(string $muxId): string
     {
-        return "proxy::{$muxId}";
+        return "statamic-proxy::{$muxId}";
     }
 }
