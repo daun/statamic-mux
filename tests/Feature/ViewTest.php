@@ -46,6 +46,19 @@ test('embeds video scripts', function () {
         ->assertSee('<script async src="https://unpkg.com/@mux/mux-video@0"></script>', false);
 });
 
+test('lazyloads video scripts', function () {
+    $this->antlers('{{ mux:video src="test_container_assets::test.mp4" }}')
+        ->assertDontSee('<is-land', false);
+
+    $this->antlers('{{ mux:video src="test_container_assets::test.mp4" script="true" lazyload="true" }}')
+        ->assertSeeInOrder([
+            'https://unpkg.com/@11ty/is-land',
+            '<is-land on:visible>',
+            '<script async src="https://unpkg.com/@mux/mux-video@0"></script>',
+            '</is-land>',
+        ], false);
+});
+
 test('renders player component', function () {
     $this->antlers('{{ mux:player src="test_container_assets::test.mp4" }}')
         ->assertSeeInOrder([
@@ -80,6 +93,19 @@ test('embeds player scripts', function () {
 
     $this->antlers('{{ mux:player src="test_container_assets::test.mp4" script="true" }}')
         ->assertSee('<script async src="https://unpkg.com/@mux/mux-player@3"></script>', false);
+});
+
+test('lazyloads player scripts', function () {
+    $this->antlers('{{ mux:player src="test_container_assets::test.mp4" }}')
+        ->assertDontSee('<is-land', false);
+
+    $this->antlers('{{ mux:player src="test_container_assets::test.mp4" script="true" lazyload="true" }}')
+        ->assertSeeInOrder([
+            'https://unpkg.com/@11ty/is-land',
+            '<is-land on:visible>',
+            '<script async src="https://unpkg.com/@mux/mux-player@3"></script>',
+            '</is-land>',
+        ], false);
 });
 
 test('renders iframe embed', function () {
