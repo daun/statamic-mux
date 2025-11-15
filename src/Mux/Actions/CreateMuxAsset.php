@@ -37,10 +37,10 @@ class CreateMuxAsset
         }
 
         try {
-            if (app()->isLocal() || $asset->container()->private()) {
-                $muxId = $this->uploadAssetToMux($asset);
-            } else {
+            if ($this->assetIsPubliclyAccessible($asset)) {
                 $muxId = $this->ingestAssetToMux($asset);
+            } else {
+                $muxId = $this->uploadAssetToMux($asset);
             }
         } catch (\Throwable $th) {
             Log::error($th->getMessage());
@@ -53,6 +53,28 @@ class CreateMuxAsset
         }
 
         return $muxId;
+    }
+
+    /**
+     * Determine whether an asset can be ingested from a public url.
+     */
+    protected function assetIsPubliclyAccessible(Asset $asset): bool
+    {
+        $filesystem = $asset->container()->disk()->filesystem()->getConfig();
+
+        if (empty($filesystem['url'] ?? null)) {
+            return false;
+        }
+
+        if (($filesystem['visibility'] ?? null) !== 'public') {
+            return false;
+        }
+
+        if (app()->isLocal() && $filesystem['driver'] === 'local') {
+            return false;
+        }
+
+        return true;
     }
 
     /**
