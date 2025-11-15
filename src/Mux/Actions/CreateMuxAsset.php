@@ -67,7 +67,7 @@ class CreateMuxAsset
 
         $this->api->client()->put($muxUpload->getUrl(), [
             'headers' => ['Content-Type' => 'application/octet-stream'],
-            'body' => $asset->contents(),
+            'body' => $asset->stream(),
         ]);
 
         $muxUpload = $this->api->directUploads()->getDirectUpload($uploadId)->getData();
