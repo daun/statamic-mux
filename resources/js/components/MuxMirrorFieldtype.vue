@@ -15,7 +15,7 @@
             <DescriptionWithIcon icon="unsynced">
                 {{ __('statamic-mux::messages.mirror_fieldtype.not_uploaded') }}
             </DescriptionWithIcon>
-            <div v-if="allowReuploads" class="flex items-center mt-3">
+            <div v-if="showReuploadToggle" class="flex items-center mt-3">
                 <Checkbox v-model="value.reupload" name="reupload" :label="__('statamic-mux::messages.mirror_fieldtype.upload_on_save')" />
             </div>
         </div>
@@ -40,7 +40,7 @@
                     </tbody>
                 </table>
             </div>
-            <div v-if="allowReuploads" class="flex items-center mt-3">
+            <div v-if="showReuploadToggle" class="flex items-center mt-3">
                 <Checkbox v-model="value.reupload" name="reupload" :label="__('statamic-mux::messages.mirror_fieldtype.reupload_on_save')" />
             </div>
         </div>
@@ -61,6 +61,9 @@ export default {
         Icon
     },
     computed: {
+        showReuploadToggle() {
+            return this.allowReuploads && ! this.isProxy;
+        },
         allowReuploads() {
             return this.config?.allow_reupload;
         },
@@ -72,6 +75,9 @@ export default {
         },
         isVideo() {
             return this.meta?.is_video || false;
+        },
+        isProxy() {
+            return this.meta?.is_proxy || false;
         },
         isUploaded() {
             return this.value.id;

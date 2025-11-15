@@ -76,3 +76,8 @@ test('generates animated gif url', function () {
     expect(Str::containsAll($this->urls->animated('playback-id'), ['image.mux.com', 'animated.gif', 'playback-id']))->toBeTrue();
     expect(Str::containsAll($this->urls->animated('playback-id', 'webp'), ['image.mux.com', 'animated.webp', 'playback-id']))->toBeTrue();
 });
+
+test('generates rendition download url', function () {
+    expect(Str::containsAll($this->urls->download('playback-id', 'rendition-name'), ['stream.mux.com', 'playback-id', 'rendition-name', 'download=download']))->toBeTrue();
+    expect(Str::containsAll($this->urls->download('playback-id', 'rendition-name', 'filename'), ['stream.mux.com', 'playback-id', 'rendition-name', 'download=filename']))->toBeTrue();
+});

@@ -3,12 +3,13 @@
     "file": "assets/addon-CVEcGEqT.css",
     "src": "resources/css/addon.css",
     "isEntry": true,
+    "name": "addon",
     "names": [
       "addon.css"
     ]
   },
   "resources/js/addon.js": {
-    "file": "assets/addon-BcjMHALm.js",
+    "file": "assets/addon-C3jCnHio.js",
     "name": "addon",
     "src": "resources/js/addon.js",
     "isEntry": true,

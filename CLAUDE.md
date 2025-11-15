@@ -168,28 +168,19 @@ The addon provides three custom Artisan commands:
 - Frontend rendering with video, player, and embed tags
 - Security with signed URLs and playback policies
 - CLI commands for asset operations
+- Replace original videos with short placeholder clip to optimize storage
 
 ### In Progress
 
-- Lo-res video placeholder download
-- Expanding test coverage for critical paths
+- Expand test coverage for critical paths
 
 ### Planned
 
-- Architecture overhaul
-  - Move more logic into dedicated action classes
-  - Decouple services from the Mux API client
 - Control panel dashboard for Mux asset management
 
 ## Feature Plans
 
-### Low-Res Placeholder File
+### Control panel dashboard
 
-- Provide a strategy for dealing with very large source files
-- Replace uploaded video with a proxy/placeholder file (low-res and/or clipped)
-- Polling and/or webhook to check status of proxy creation
-- Download proxy video and locally replace files in Statamic assets
-
-It should be possible to get the lowest resolution video from the playback manifest.
-
-`ffmpeg -i "https://stream.mux.com/{{ PLAYBACK_ID }}.m3u8?rendition_order=desc" -c copy -map 0:3 -map 0:a low.mp4`
+- List all Mux assets in a dedicated listing view
+- Allow manual sync, deletion, and link to local assets

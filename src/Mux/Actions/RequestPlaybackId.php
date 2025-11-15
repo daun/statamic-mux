@@ -3,6 +3,7 @@
 namespace Daun\StatamicMux\Mux\Actions;
 
 use Daun\StatamicMux\Data\MuxAsset;
+use Daun\StatamicMux\Data\MuxPlaybackId;
 use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
@@ -20,17 +21,23 @@ class RequestPlaybackId
     /**
      * Request a new playback id for a video asset.
      */
-    public function handle(Asset $asset, ?MuxPlaybackPolicy $policy = null): array
+    public function handle(Asset $asset, ?MuxPlaybackPolicy $policy = null): ?MuxPlaybackId
     {
         $muxId = MuxAsset::fromAsset($asset)->id();
-
-        if ($muxId) {
-            $playbackId = $this->get($muxId, $policy) ?? $this->create($muxId, $policy);
-
-            return [$playbackId?->getId(), $playbackId?->getPolicy()];
+        if (! $muxId) {
+            return null;
         }
 
-        return [null, null];
+        $result = $this->get($muxId, $policy) ?? $this->create($muxId, $policy);
+        if (! $result) {
+            return null;
+        }
+
+        $muxAsset = MuxAsset::fromAsset($asset);
+        $playbackId = $muxAsset->addPlaybackId($result->getId(), (string) $result->getPolicy());
+        $muxAsset->save();
+
+        return $playbackId;
     }
 
     /**

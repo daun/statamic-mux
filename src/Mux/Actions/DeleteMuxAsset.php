@@ -2,11 +2,13 @@
 
 namespace Daun\StatamicMux\Mux\Actions;
 
+use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Events\AssetDeletedFromMux;
 use Daun\StatamicMux\Events\AssetDeletingFromMux;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Statamic\Assets\Asset;
 
 class DeleteMuxAsset
@@ -25,13 +27,17 @@ class DeleteMuxAsset
             return false;
         }
 
+        // Special case: delete Mux asset by its ID
         if (is_string($asset)) {
-            // Special case: delete Mux asset by its ID
             return $this->deleteOrphanedMuxAsset($asset);
-        } else {
-            // Delete Mux asset tied to local Statamic asset
-            return $this->deleteConnectedMuxAsset($asset);
         }
+
+        // Delete Mux asset tied to local Statamic asset
+        if ($deleted = $this->deleteConnectedMuxAsset($asset)) {
+            MuxAsset::fromAsset($asset)->clear()->save();
+        }
+
+        return $deleted;
     }
 
     /**
@@ -92,8 +98,9 @@ class DeleteMuxAsset
      */
     protected function wasAssetCreatedByAddon(mixed $muxAsset): bool
     {
-        $identifier = $muxAsset['passthrough'] ?? $muxAsset ?? '';
+        $identifier = $muxAsset['passthrough'] ?? $muxAsset ?? null;
 
-        return is_string($identifier) && str_starts_with($identifier, 'statamic::');
+        return is_string($identifier)
+            && Str::startsWith($identifier, ['statamic::', 'statamic-proxy::']);
     }
 }

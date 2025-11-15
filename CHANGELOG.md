@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0] - 2025-11-15
+
+- Add option to optimize storage by replacing original video with placeholder
+- Lower memory usage by streaming uploads
+- Support ingestion from public url in more scenarios
+- Improve dispatch speed on async queues
+
 ## [1.6.0] - 2025-10-10
 
 - Improve Antlers rendering performance by augmenting on request
@@ -101,6 +108,7 @@
 
 - Beta release
 
+[1.7.0]: https://github.com/daun/statamic-mux/releases/tag/1.7.0
 [1.6.0]: https://github.com/daun/statamic-mux/releases/tag/1.6.0
 [1.5.3]: https://github.com/daun/statamic-mux/releases/tag/1.5.3
 [1.5.2]: https://github.com/daun/statamic-mux/releases/tag/1.5.2

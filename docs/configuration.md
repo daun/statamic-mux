@@ -192,6 +192,38 @@ return [
 ];
 ```
 
+## Storage Optimization
+
+Define how the addon handles original video files. In most cases, you'll want to
+stick with the default behavior and keep the original video files around to ensure
+long-term independence from any one video provider.
+
+If you need to save storage space on the server, you can configure the addon to
+replace video files with a smaller placeholder version. This will store a short
+10s clip of the video for previewing in the backend, but will require Mux for
+streaming and downloading the full video.
+
+Any videos shorter than the defined placeholder length will keep the original.
+
+Note that this feature requires a [queue worker](https://laravel.com/docs/12.x/queues#running-the-queue-worker)
+to be running, as the video processing can take some time depending on the file size.
+
+```php
+    /*
+    |--------------------------------------------------------------------------
+    | Optimize Storage
+    |--------------------------------------------------------------------------
+    */
+
+    'storage' => [
+
+        'store_placeholders' => true, // [!code focus]
+
+        'placeholder_length' => 10, // [!code focus]
+
+    ],
+```
+
 ## Queue Driver
 
 Define the queue driver to be used for uploads and other long-running requests to Mux.

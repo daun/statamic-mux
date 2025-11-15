@@ -47,6 +47,18 @@ one of the available [Artisan Commands](/commands), e.g.:
 php please mux:upload
 ```
 
+## Optimize Storage
+
+By default, the addon will keep the original video files on your configured asset disk. In general,
+this is a good idea to ensure long-term independence from any one video provider and allow downloads
+and streaming from your origin server as a fallback.
+
+If you need to save storage space on the server, you can configure the addon to replace video files
+with a smaller placeholder version. This will store a short 10s clip of the video for previewing in
+the backend, but requires Mux for streaming and downloading the full video.
+
+See the configuration docs on [Storage Optimization](/configuration#storage-optimization) for details.
+
 ## Video Metadata
 
 Mux videos support a set of [metadata fields](https://www.mux.com/docs/guides/add-metadata-to-your-videos)
