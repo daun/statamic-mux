@@ -9,10 +9,10 @@ use Statamic\Facades\Stache;
 beforeEach(function () {
     $this->app->bind(MuxClient::class, fn () => $this->guzzler->getClient());
 
-    $this->api = $this->app->make(MuxApi::class);
-    $this->app->bind(MuxApi::class, fn () => $this->api);
+    // $this->api = $this->app->make(MuxApi::class);
+    // $this->app->bind(MuxApi::class, fn () => $this->api);
 
-    // $this->api = Mockery::spy($this->app->make(MuxApi::class))->makePartial();
+    $this->api = Mockery::spy($this->app->make(MuxApi::class))->makePartial();
     $this->service = Mockery::spy($this->app->make(MuxService::class))->makePartial();
 
     $this->createProxyVersion = Mockery::spy($this->app->makeWith(CreateProxyVersion::class, ['api' => $this->api, 'service' => $this->service]))
@@ -87,19 +87,19 @@ it('handles videos with mux asset', function () {
     $asset->save();
 
     expect($this->createProxyVersion->canHandle($asset))->toBeTrue();
-
-    $result = $this->createProxyVersion->handle($asset);
-
-    expect($result)->toBe('new-mux-asset-id');
-})->only();
+});
 
 it('creates a clip from existing mux asset', function () {
+    config(['mux.storage.placeholder_length' => 7]);
+
     $this->guzzler->expects($this->once())
         ->ray()
         ->post('https://api.mux.com/video/v1/assets')
         ->withJson([
             'input' => [
                 'url' => 'mux://assets/123',
+                'start_time' => 0,
+                'end_time' => 7,
             ],
             'playback_policy' => [
                 'public',
@@ -108,8 +108,9 @@ it('creates a clip from existing mux asset', function () {
             'normalize_audio' => false,
             'test' => false,
             'static_renditions' => [
-                'resolution' => 'highest',
+                ['resolution' => 'highest'],
             ],
+            'video_quality' => 'plus',
         ])
         ->willRespondJson([
             'data' => [
