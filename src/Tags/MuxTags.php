@@ -232,7 +232,7 @@ class MuxTags extends Tags
     {
         return collect($params)
             ->keyBy(fn ($_, $key) => Str::replace('_', '-', $key))
-            ->filter(fn ($_, $key) => !! $key)
+            ->filter(fn ($_, $key) => (bool) $key)
             ->all();
     }
 
