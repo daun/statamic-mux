@@ -11,7 +11,7 @@ class Queue
 
     public static function queue(): ?string
     {
-        return config('mux.queue.queue', 'default');
+        return config('mux.queue.queue') ?? 'default';
     }
 
     public static function isSync(): bool

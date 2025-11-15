@@ -208,6 +208,76 @@ it('uploads assets from private containers', function () {
     Event::assertDispatched(AssetUploadedToMux::class);
 });
 
+it('uploads assets from inaccessible containers', function () {
+    Event::fake([AssetUploadedToMux::class]);
+
+    $inaccessibleMp4 = $this->uploadTestFileToTestContainer('test.mp4', filename: 'inaccessible.mp4', container: 'inaccessible');
+
+    $this->service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
+
+    $this->guzzler->expects($this->once())
+        ->post('https://api.mux.com/video/v1/uploads')
+        ->ray()
+        ->withJson([
+            'timeout' => 3600,
+            'cors_origin' => '*',
+            'new_asset_settings' => [
+                'playback_policy' => [
+                    'public',
+                ],
+                'passthrough' => 'statamic::test_container_inaccessible::inaccessible.mp4',
+                'normalize_audio' => false,
+                'test' => false,
+                'video_quality' => 'plus',
+                'copy_overlays' => true,
+                'meta' => [
+                    'title' => 'inaccessible.mp4',
+                    'creator_id' => 'statamic-mux',
+                    'external_id' => 'test_container_inaccessible::inaccessible.mp4',
+                ],
+            ],
+            'test' => false,
+        ])
+        ->willRespondJson([
+            'data' => [
+                'url' => 'https://storage.googleapis.com/video-storage-us-east1-uploads/zd01Pe2bNpYhxbrw',
+                'timeout' => 3600,
+                'status' => 'waiting',
+                'new_asset_settings' => [
+                    'playback_policies' => [
+                        'public',
+                    ],
+                    'video_quality' => 'plus',
+                ],
+                'id' => 'zd01Pe2bNpYhxbrwYABgFE01twZdtv4M00kts2i02GhbGjc',
+            ],
+        ]);
+
+    $this->guzzler->expects($this->once())
+        ->put('https://storage.googleapis.com/video-storage-us-east1-uploads/zd01Pe2bNpYhxbrw')
+        ->ray()
+        ->withHeaders(['Content-Type' => 'application/octet-stream'])
+        ->withBody($inaccessibleMp4->contents())
+        ->willRespond(Http::response('', 200));
+
+    $this->guzzler->expects($this->once())
+        ->get('https://api.mux.com/video/v1/uploads/zd01Pe2bNpYhxbrwYABgFE01twZdtv4M00kts2i02GhbGjc')
+        ->ray()
+        ->willRespondJson([
+            'data' => [
+                'status' => 'asset_created',
+                'id' => 'zd01Pe2bNpYhxbrwYABgFE01twZdtv4M00kts2i02GhbGjc',
+                'asset_id' => '123456789',
+            ],
+        ]);
+
+    $result = $this->createMuxAsset->handle($inaccessibleMp4);
+
+    expect($result)->toBe('123456789');
+    $this->guzzler->assertHistoryCount(3);
+    Event::assertDispatched(AssetUploadedToMux::class);
+});
+
 it('uploads assets from local environment', function () {
     Event::fake([AssetUploadedToMux::class]);
 
