@@ -47,7 +47,7 @@ one of the available [Artisan Commands](/commands), e.g.:
 php please mux:upload
 ```
 
-## Optimize Storage
+## Optimizing Storage
 
 By default, the addon will keep the original video files on your configured asset disk. In general,
 this is a good idea to ensure long-term independence from any one video provider and allow downloads
