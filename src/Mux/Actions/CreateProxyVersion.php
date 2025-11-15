@@ -69,8 +69,7 @@ class CreateProxyVersion
         $muxId = $this->service->getMuxId($asset);
 
         $request = $this->api->createAssetRequest([
-            'playback_policy' => MuxPlaybackPolicy::Public->value,
-            // 'video_quality' => \MuxPhp\Models\Asset::VIDEO_QUALITY_BASIC,
+            'playback_policy' => [MuxPlaybackPolicy::Public->value],
             'input' => $this->api->input([
                 'url' => "mux://assets/{$muxId}",
                 'start_time' => $start,
