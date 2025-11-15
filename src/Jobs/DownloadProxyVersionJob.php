@@ -42,7 +42,9 @@ class DownloadProxyVersionJob implements ShouldQueue
             return;
         }
 
-        $action->handle($this->asset, $this->proxyId);
+        if ($downloaded = $action->handle($this->asset, $this->proxyId)) {
+            DeleteMuxAssetJob::dispatch($this->proxyId);
+        }
     }
 
     private function getBackoffDelay(): int
