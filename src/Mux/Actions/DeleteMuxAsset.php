@@ -8,6 +8,7 @@ use Daun\StatamicMux\Events\AssetDeletingFromMux;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Statamic\Assets\Asset;
 
 class DeleteMuxAsset
@@ -97,8 +98,9 @@ class DeleteMuxAsset
      */
     protected function wasAssetCreatedByAddon(mixed $muxAsset): bool
     {
-        $identifier = $muxAsset['passthrough'] ?? $muxAsset ?? '';
+        $identifier = $muxAsset['passthrough'] ?? $muxAsset ?? null;
 
-        return is_string($identifier) && str_starts_with($identifier, 'statamic::');
+        return is_string($identifier)
+            && Str::startsWith($identifier, ['statamic::', 'statamic-proxy::']);
     }
 }
