@@ -13,15 +13,11 @@ class CreateProxyVersion
 {
     protected int $start = 0;
 
-    protected int $length = 10;
-
     public function __construct(
         protected Application $app,
         protected MuxService $service,
         protected MuxApi $api,
-    ) {
-        $this->length = (int) config('mux.storage.placeholder_length', 10);
-    }
+    ) {}
 
     /**
      * Generate a short proxy version of an existing Mux asset.
@@ -37,7 +33,7 @@ class CreateProxyVersion
         }
 
         try {
-            return $this->createClipFromAsset($asset, $this->start, $this->length);
+            return $this->createClipFromAsset($asset, $this->start, $this->getLength());
         } catch (\Throwable $th) {
             Log::error($th->getMessage());
 
@@ -52,7 +48,7 @@ class CreateProxyVersion
     {
         return $asset->isVideo()
             && $asset->extension() === 'mp4'
-            && ($asset->duration() ?? 0) > $this->length
+            && ($asset->duration() ?? 0) > $this->getLength()
             && $this->service->hasExistingMuxAsset($asset);
     }
 
@@ -90,6 +86,14 @@ class CreateProxyVersion
             ->createAsset($request)
             ->getData()
             ?->getId();
+    }
+
+    /**
+     * Get configured length of proxy versions.
+     */
+    protected function getLength(): float
+    {
+        return (float) config('mux.storage.placeholder_length', 10);
     }
 
     /**
