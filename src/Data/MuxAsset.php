@@ -47,9 +47,21 @@ class MuxAsset implements Augmentable
         return $this->has('id');
     }
 
+    public function duration(): ?float
+    {
+        return ($duration = $this->get('duration'))
+            ? floatval($duration)
+            : null;
+    }
+
     public function existsOnMux(): bool
     {
-        return $this->id() && Mux::muxAssetExists($this->id());
+        return $this->id() && Mux::api()->assetExists($this->id());
+    }
+
+    public function isProxy(): bool
+    {
+        return (bool) $this->get('is_proxy', false);
     }
 
     public function save(): self
@@ -104,6 +116,20 @@ class MuxAsset implements Augmentable
     public function setId(?string $id): self
     {
         $this->set('id', $id);
+
+        return $this;
+    }
+
+    public function setProxy(bool $proxy = true): self
+    {
+        $this->set('is_proxy', $proxy);
+
+        return $this;
+    }
+
+    public function setDuration(?float $duration): self
+    {
+        $this->set('duration', $duration);
 
         return $this;
     }

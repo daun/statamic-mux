@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Facade;
 
 /**
  * @method static \Daun\StatamicMux\Mux\MuxApi api()
- * @method static bool muxAssetExists(string $muxId)
  * @method static string|null createMuxAsset(\Statamic\Assets\Asset|string $asset, bool $force = false)
  * @method static bool deleteMuxAsset(\Statamic\Assets\Asset|string $asset)
  * @method static void listMuxAssets(int $limit = 100, int $page = 1)

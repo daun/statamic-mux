@@ -55,6 +55,7 @@ class MuxMirrorFieldtype extends Fieldtype
         return [
             'is_asset' => (bool) $asset,
             'is_video' => $asset && $asset->isVideo(),
+            'is_proxy' => $asset && MuxAsset::fromAsset($asset)->isProxy(),
         ];
     }
 

@@ -10,6 +10,7 @@ use MuxPhp\Api\DirectUploadsApi;
 use MuxPhp\Api\LiveStreamsApi;
 use MuxPhp\Api\PlaybackIDApi;
 use MuxPhp\Api\URLSigningKeysApi;
+use MuxPhp\ApiException;
 use MuxPhp\Configuration;
 use MuxPhp\Models\CreateAssetRequest;
 use MuxPhp\Models\CreatePlaybackIDRequest;
@@ -134,5 +135,62 @@ class MuxApi
         return new CreatePlaybackIDRequest([
             'policy' => $policy ?: $this->playbackPolicy,
         ]);
+    }
+
+    public function assetExists(string $muxId): bool
+    {
+        try {
+            $response = $this->assets()->getAsset($muxId)->getData();
+            $actualMuxId = $response?->getId();
+
+            return $muxId === $actualMuxId;
+        } catch (ApiException $e) {
+            if ($e->getCode() === 404) {
+                return false;
+            } else {
+                throw $e;
+            }
+        }
+    }
+
+    public function assetIsReady(string $muxId): bool
+    {
+        try {
+            $response = $this->assets()->getAsset($muxId)->getData();
+            $status = $response?->getStatus();
+
+            return $status === \MuxPhp\Models\Asset::STATUS_READY;
+        } catch (ApiException $e) {
+            if ($e->getCode() === 404) {
+                return false;
+            } else {
+                throw $e;
+            }
+        }
+    }
+
+    public function assetRenditionsAreReady(string $muxId): bool
+    {
+        try {
+            $response = $this->assets()->getAsset($muxId)->getData();
+            $files = $response?->getStaticRenditions()?->getFiles() ?? [];
+            if (! count($files)) {
+                return false;
+            }
+
+            foreach ($files as $file) {
+                if ($file->getStatus() !== \MuxPhp\Models\AssetStaticRenditions::STATUS_READY) {
+                    return false;
+                }
+            }
+
+            return true;
+        } catch (ApiException $e) {
+            if ($e->getCode() === 404) {
+                return false;
+            } else {
+                throw $e;
+            }
+        }
     }
 }

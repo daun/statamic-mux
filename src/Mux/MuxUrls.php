@@ -42,6 +42,14 @@ class MuxUrls
     }
 
     /**
+     * Create a URL for downloading a static rendition
+     */
+    public function download(string $playbackId, string $rendition, string $filename = 'download'): string
+    {
+        return "https://stream.mux.com/{$playbackId}/{$rendition}?download={$filename}";
+    }
+
+    /**
      * Sign a URL for a given playback id and params
      */
     public function sign(string $url, string $playbackId, MuxAudience $audience, ?array $params = null, int|string|null $expiration = null): string

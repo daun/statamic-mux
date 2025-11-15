@@ -15,7 +15,6 @@ use Daun\StatamicMux\Placeholders\PlaceholderService;
 use Daun\StatamicMux\Support\URL;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Arr;
-use MuxPhp\ApiException;
 use Statamic\Assets\Asset;
 use Statamic\Facades\Asset as Assets;
 
@@ -55,13 +54,11 @@ class MuxService
             $asset = Assets::find($asset);
         }
 
-        if ($asset) {
-            if ($muxId = $this->app->make(CreateMuxAsset::class)->handle($asset, $force)) {
-                MuxAsset::fromAsset($asset)->clear()->setId($muxId)->save();
-            }
+        if (! $asset) {
+            return null;
         }
 
-        return $muxId ?? null;
+        return $this->app->make(CreateMuxAsset::class)->handle($asset, $force);
     }
 
     /**
@@ -73,11 +70,11 @@ class MuxService
             $asset = Assets::find($asset);
         }
 
-        if ($asset) {
-            return $this->app->make(UpdateMuxAsset::class)->handle($asset);
-        } else {
+        if (! $asset) {
             return false;
         }
+
+        return $this->app->make(UpdateMuxAsset::class)->handle($asset);
     }
 
     /**
@@ -85,18 +82,11 @@ class MuxService
      */
     public function deleteMuxAsset(Asset|string $asset): bool
     {
-        if ($asset) {
-            $deleted = $this->app->make(DeleteMuxAsset::class)->handle($asset);
-            if ($deleted) {
-                if ($asset instanceof Asset) {
-                    MuxAsset::fromAsset($asset)->clear()->save();
-                }
-
-                return true;
-            }
+        if (! $asset) {
+            return false;
         }
 
-        return false;
+        return $this->app->make(DeleteMuxAsset::class)->handle($asset);
     }
 
     /**
@@ -105,31 +95,12 @@ class MuxService
     public function hasExistingMuxAsset(Asset $asset)
     {
         $muxId = $this->getMuxId($asset);
-        if ($muxId && $this->muxAssetExists($muxId)) {
+        if ($muxId && $this->api->assetExists($muxId)) {
             return true;
         } else {
             MuxAsset::fromAsset($asset)->clear()->save();
 
             return false;
-        }
-    }
-
-    /**
-     * Check if an asset with given id exists on Mux.
-     */
-    public function muxAssetExists(string $muxId): bool
-    {
-        try {
-            $muxAssetResponse = $this->api->assets()->getAsset($muxId)->getData();
-            $actualMuxId = $muxAssetResponse?->getId();
-
-            return $muxId === $actualMuxId;
-        } catch (ApiException $e) {
-            if ($e->getCode() === 404) {
-                return false;
-            } else {
-                throw $e;
-            }
         }
     }
 
@@ -188,19 +159,7 @@ class MuxService
             return $playbackId;
         }
 
-        $result = $this->app->make(RequestPlaybackId::class)->handle($asset, $policy);
-        if ($result) {
-            [$id, $policy] = $result;
-            if ($id && $policy) {
-                $muxAsset = MuxAsset::fromAsset($asset);
-                $playbackId = $muxAsset->addPlaybackId($id, $policy);
-                $muxAsset->save();
-
-                return $playbackId;
-            }
-        }
-
-        return null;
+        return $this->app->make(RequestPlaybackId::class)->handle($asset, $policy);
     }
 
     public function getPlaybackUrl(MuxPlaybackId $playbackId, array $params = []): string

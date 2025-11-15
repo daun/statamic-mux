@@ -3,6 +3,7 @@
 namespace Daun\StatamicMux\Mux\Actions;
 
 use Daun\StatamicMux\Concerns\GeneratesAssetData;
+use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Events\AssetUploadedToMux;
 use Daun\StatamicMux\Events\AssetUploadingToMux;
 use Daun\StatamicMux\Mux\MuxApi;
@@ -28,6 +29,10 @@ class CreateMuxAsset
             return null;
         }
 
+        if (MuxAsset::fromAsset($asset)->isProxy()) {
+            return null;
+        }
+
         if (! $force && $this->service->hasExistingMuxAsset($asset)) {
             return null;
         }
@@ -49,6 +54,7 @@ class CreateMuxAsset
         }
 
         if ($muxId) {
+            MuxAsset::fromAsset($asset)->clear()->setId($muxId)->save();
             AssetUploadedToMux::dispatch($asset, $muxId);
         }
 
