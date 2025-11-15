@@ -169,7 +169,7 @@ return [
 ## Storage Optimization
 
 Define how the addon handles original video files. In most cases, you'll want to
-stick with the default behavior and keep the original MP4 files around to ensure
+stick with the default behavior and keep the original video files around to ensure
 long-term independence from any one video provider.
 
 If you need to save storage space on the server and are fine with having the
@@ -191,7 +191,7 @@ Any videos shorter than the defined placeholder length will keep the original.
 
         'store_placeholders' => true, // [!code focus]
 
-        'placeholder_length' => 10, // seconds // [!code focus]
+        'placeholder_length' => 10, // [!code focus]
 
     ],
 ```
