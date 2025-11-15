@@ -150,13 +150,14 @@ class MuxTags extends Tags
         $htmlAttributes = collect($this->params->all())
             ->except($this->assetParams)
             ->except($playbackModifiers->keys())
-            ->except(['script', 'public', 'signed', 'background'])
+            ->except(['script', 'lazyload', 'public', 'signed', 'background'])
             ->when($this->params->bool('background'), fn ($attr) => $attr->merge(['autoplay' => true, 'loop' => true, 'muted' => true])
             );
 
         $viewData = $this->context
             ->merge($data)
             ->merge(['script' => $this->params->bool('script', false)])
+            ->merge(['lazyload' => $this->params->bool('lazyload', false)])
             ->merge(['attributes' => $this->toHtmlAttributes($htmlAttributes)])
             ->merge(['playback_modifiers' => $this->toHtmlAttributes($playbackModifiers)])
             ->merge(['player_query' => Arr::query($playbackModifiers->merge($playerAttributes)->all())]);
@@ -231,7 +232,7 @@ class MuxTags extends Tags
     {
         return collect($params)
             ->keyBy(fn ($_, $key) => Str::replace('_', '-', $key))
-            ->filter(fn ($_, $key) => $key)
+            ->filter(fn ($_, $key) => !! $key)
             ->all();
     }
 
