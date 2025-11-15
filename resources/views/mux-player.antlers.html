@@ -19,5 +19,14 @@
 ></mux-player>
 
 {{ if script }}
-  <script async src="https://unpkg.com/@mux/mux-player@3"></script>
+  {{ if lazyload }}
+    <script type="module" src="https://unpkg.com/@11ty/is-land"></script>
+    <is-land on:visible>
+      <template data-island="once">
+        <script async src="https://unpkg.com/@mux/mux-player@3"></script>
+      </template>
+    </is-land>
+  {{ else }}
+    <script async src="https://unpkg.com/@mux/mux-player@3"></script>
+  {{ /if }}
 {{ /if }}

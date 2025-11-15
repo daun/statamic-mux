@@ -34,6 +34,16 @@ Setting the tag's `script` attribute will render the required script tag for you
 <script async src="https://unpkg.com/@mux/mux-player@3"></script> // [!code focus]
 ```
 
+## Lazyloading the scripts
+
+To improve page load performance, you can lazyload the web component scripts using the `lazyload`
+parameter. This will use the [`is-land`](https://github.com/11ty/is-land) package to only load the
+scripts when the video scrolls into view.
+
+```antlers
+{{ mux:player src="assets::video.mp4" script="true" lazyload="true" }}
+```
+
 ## Custom attributes
 
 Any other attributes will be passed along to the the web component itself to allow for customization.

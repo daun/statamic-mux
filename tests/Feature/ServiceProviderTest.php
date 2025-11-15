@@ -3,8 +3,9 @@
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Mux\MuxUrls;
-use Daun\StatamicMux\Placeholders\PlaceholderService;
 use Daun\StatamicMux\ServiceProvider;
+use Daun\StatamicMux\Thumbnails\PlaceholderService;
+use Daun\StatamicMux\Thumbnails\ThumbnailService;
 
 test('provides services', function () {
     $provider = new ServiceProvider($this->app);
@@ -19,6 +20,11 @@ test('binds mux service', function () {
 test('binds mux api', function () {
     expect($this->app[MuxApi::class])->toBeInstanceOf(MuxApi::class);
     expect($this->app['mux.api'])->toBeInstanceOf(MuxApi::class);
+});
+
+test('binds thumbnail service', function () {
+    expect($this->app[ThumbnailService::class])->toBeInstanceOf(ThumbnailService::class);
+    expect($this->app['mux.thumbnails'])->toBeInstanceOf(ThumbnailService::class);
 });
 
 test('binds placeholder service', function () {
