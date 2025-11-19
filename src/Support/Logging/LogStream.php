@@ -47,9 +47,7 @@ class LogStream
         return strlen($data);
     }
 
-    public function stream_close(): void
-    {
-    }
+    public function stream_close(): void {}
 
     public function stream_flush(): bool
     {

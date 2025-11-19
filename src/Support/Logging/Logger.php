@@ -19,7 +19,7 @@ class Logger
     public function resolveChannel(): LoggerInterface
     {
         if (! $this->enabled) {
-            return new NullLogger();
+            return new NullLogger;
         }
 
         try {
