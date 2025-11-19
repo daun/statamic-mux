@@ -171,4 +171,25 @@ return [
         'queue' => env('MUX_QUEUE', 'default'),
 
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Logging
+    |--------------------------------------------------------------------------
+    |
+    | Configure logging for the addon.
+    |
+    */
+
+    'logging' => [
+
+        'enabled' => env('MUX_LOG_ENABLED', true),
+
+        // Which channel to use; can be a stack or a specific channel
+        'channel' => env('MUX_LOG_CHANNEL', 'mux'),
+
+        // Minimum level for package logs (debug, info, notice, warning, error, critical, alert, emergency)
+        'level' => env('MUX_LOG_LEVEL', 'warning'),
+
+    ],
 ];

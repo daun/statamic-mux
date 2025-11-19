@@ -7,6 +7,7 @@ use Daun\StatamicMux\Mux\MuxClient;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Mux\MuxUrls;
 use Daun\StatamicMux\Placeholders\PlaceholderService;
+use Daun\StatamicMux\Support\Logger;
 use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
 use Statamic\Facades\Permission;
@@ -45,6 +46,7 @@ class ServiceProvider extends AddonServiceProvider
     public function register()
     {
         $this->registerHooks();
+        $this->registerLogger();
         $this->registerMuxApi();
         $this->registerMuxService();
         $this->registerUrlService();
@@ -61,6 +63,13 @@ class ServiceProvider extends AddonServiceProvider
     protected function registerHooks()
     {
         $this->app->instance('mux.hooks', collect());
+    }
+
+    protected function registerLogger()
+    {
+        $this->app->singleton(Logger::class, function (Application $app) {
+            return $app->make(Logger::class)->make();
+        });
     }
 
     protected function registerMuxApi()
