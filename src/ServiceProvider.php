@@ -8,6 +8,7 @@ use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Mux\MuxUrls;
 use Daun\StatamicMux\Placeholders\PlaceholderService;
 use Daun\StatamicMux\Support\Logging\Logger;
+use Daun\StatamicMux\Support\Logging\LogStream;
 use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
 use Illuminate\Log\LogManager;
@@ -75,6 +76,12 @@ class ServiceProvider extends AddonServiceProvider
                 (bool) $app['config']->get('mux.logging.enabled', true),
             )->resolveChannel();
         });
+
+        $this->app->afterResolving(Logger::class, function (Logger $logger) {
+            LogStream::register($logger);
+        });
+
+        $this->app->alias(Logger::class, 'mux.log');
     }
 
     protected function registerMuxApi()
