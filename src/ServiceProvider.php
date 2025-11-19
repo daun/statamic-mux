@@ -88,7 +88,7 @@ class ServiceProvider extends AddonServiceProvider
                 $app['mux.client'],
                 $app['config']->get('mux.credentials.token_id'),
                 $app['config']->get('mux.credentials.token_secret'),
-                $app['config']->get('app.debug', false),
+                $app['config']->get('app.debug', false) || $app['config']->get('mux.logging.level') === 'debug',
                 $app['config']->get('mux.test_mode', false),
                 $app['config']->get('mux.playback_policy', null),
                 $app['config']->get('mux.video_quality', null),
