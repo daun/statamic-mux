@@ -1,6 +1,6 @@
 <?php
 
-namespace Daun\StatamicMux\Support;
+namespace Daun\StatamicMux\Support\Logging;
 
 use Illuminate\Log\LogManager;
 use Psr\Log\LoggerInterface;

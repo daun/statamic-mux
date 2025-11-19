@@ -7,7 +7,7 @@ use Daun\StatamicMux\Mux\MuxClient;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Mux\MuxUrls;
 use Daun\StatamicMux\Placeholders\PlaceholderService;
-use Daun\StatamicMux\Support\Logger;
+use Daun\StatamicMux\Support\Logging\Logger;
 use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
 use Illuminate\Log\LogManager;
