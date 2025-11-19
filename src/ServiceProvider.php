@@ -10,6 +10,7 @@ use Daun\StatamicMux\Placeholders\PlaceholderService;
 use Daun\StatamicMux\Support\Logger;
 use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
+use Illuminate\Log\LogManager;
 use Statamic\Facades\Permission;
 use Statamic\Providers\AddonServiceProvider;
 use Statamic\Statamic;

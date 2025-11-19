@@ -9,32 +9,21 @@ use Psr\Log\NullLogger;
 class Logger
 {
     public function __construct(
-        private LogManager $log
+        protected LogManager $log,
+        protected ?string $channel = null,
+        protected bool $enabled = true,
     ) {
         $this->registerChannel();
     }
 
-    public function make(): LoggerInterface
+    public function resolveChannel(): LoggerInterface
     {
-        return $this->enabled()
-            ? $this->resolveChannel()
-            : new NullLogger();
-    }
+        if (! $this->enabled) {
+            return new NullLogger();
+        }
 
-    protected function enabled(): bool
-    {
-        return (bool) config('mux.logging.enabled', true);
-    }
-
-    protected function channel(): ?string
-    {
-        return config('mux.logging.channel', 'mux');
-    }
-
-    protected function resolveChannel(): LoggerInterface
-    {
         try {
-            return $this->log->channel($this->channel());
+            return $this->log->channel($this->channel);
         } catch (\Throwable $e) {
             return $this->log; // default app logger
         }
