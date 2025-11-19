@@ -177,7 +177,11 @@ return [
     | Logging
     |--------------------------------------------------------------------------
     |
-    | Configure logging for the addon.
+    | Configure logging for the addon by writing to a custom channel defined in
+    | your app's `logging` config, or use the default 'mux' channel.
+    |
+    | Set a minimum log level to control the verbosity of logs:
+    | debug, info, notice, warning, error, critical, alert, emergency
     |
     */
 
@@ -188,7 +192,6 @@ return [
         // Which channel to use; can be a stack or a specific channel
         'channel' => env('MUX_LOG_CHANNEL', 'mux'),
 
-        // Minimum level for package logs (debug, info, notice, warning, error, critical, alert, emergency)
         'level' => env('MUX_LOG_LEVEL', 'warning'),
 
     ],
