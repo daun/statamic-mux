@@ -5,6 +5,7 @@ namespace Daun\StatamicMux\Mux;
 use Daun\StatamicMux\Concerns\ProcessesHooks;
 use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Data\MuxPlaybackId;
+use Daun\StatamicMux\Facades\Log;
 use Daun\StatamicMux\Mux\Actions\CreateMuxAsset;
 use Daun\StatamicMux\Mux\Actions\DeleteMuxAsset;
 use Daun\StatamicMux\Mux\Actions\RequestPlaybackId;
@@ -50,12 +51,20 @@ class MuxService
      */
     public function createMuxAsset(Asset|string $asset, bool $force = false): ?string
     {
-        if (is_string($asset)) {
-            $asset = Assets::find($asset);
-        }
-
         if (! $asset) {
             return null;
+        }
+
+        if (is_string($asset)) {
+            if ($instance = Assets::find($asset)) {
+                $asset = $instance;
+            } else {
+                Log::warning('Cannot create Mux asset: local asset not found', [
+                    'asset_id' => $asset,
+                ]);
+
+                return null;
+            }
         }
 
         return $this->app->make(CreateMuxAsset::class)->handle($asset, $force);
@@ -66,12 +75,20 @@ class MuxService
      */
     public function updateMuxAsset(Asset|string $asset): bool
     {
-        if (is_string($asset)) {
-            $asset = Assets::find($asset);
-        }
-
         if (! $asset) {
             return false;
+        }
+
+        if (is_string($asset)) {
+            if ($instance = Assets::find($asset)) {
+                $asset = $instance;
+            } else {
+                Log::warning('Cannot update Mux asset: local asset not found', [
+                    'asset_id' => $asset,
+                ]);
+
+                return false;
+            }
         }
 
         return $this->app->make(UpdateMuxAsset::class)->handle($asset);
@@ -98,6 +115,11 @@ class MuxService
         if ($muxId && $this->api->assetExists($muxId)) {
             return true;
         } else {
+            Log::notice('Asset does not exist on Mux, clearing stale local data', [
+                'asset_id' => $asset->id(),
+                'mux_id' => $muxId,
+            ]);
+
             MuxAsset::fromAsset($asset)->clear()->save();
 
             return false;

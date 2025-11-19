@@ -1,7 +1,5 @@
 <?php
 
-use Daun\StatamicMux\Mux\MuxApi;
-use Daun\StatamicMux\Support\Logging\LogStream;
 use Daun\StatamicMux\Support\Logging\Logger as PackageLogger;
 use Illuminate\Log\LogManager;
 use Illuminate\Support\Facades\Log;
@@ -30,7 +28,7 @@ it('can be disabled from the config', function () {
 });
 
 it('respects the channel from the config', function () {
-    $inMemory = new InMemoryLogger();
+    $inMemory = new InMemoryLogger;
 
     Log::extend('in-memory', fn () => $inMemory);
 

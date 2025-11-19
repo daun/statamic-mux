@@ -2,6 +2,7 @@
 
 namespace Daun\StatamicMux\Mux;
 
+use Daun\StatamicMux\Facades\Log;
 use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use GuzzleHttp\Client;
 use MuxPhp\Api\AssetsApi;
@@ -44,12 +45,21 @@ class MuxApi
         protected mixed $playbackPolicy = null,
         protected ?string $videoQuality = null,
     ) {
+        Log::debug('Initializing Mux API', [
+            'token_id' => $this->tokenId,
+            'token_secret' => $this->tokenSecret,
+            'test_mode' => $this->testMode,
+        ]);
+
         $this->config = Configuration::getDefaultConfiguration()
             ->setUsername($this->tokenId)
             ->setPassword($this->tokenSecret)
-            ->setDebug($this->debug)
-            ->setDebugFile('mux://debug')
             ->setUserAgent(self::userAgent);
+
+        // Debug output stream is redirected to the package logger
+        $this->config
+            ->setDebug($this->debug)
+            ->setDebugFile('mux://debug');
     }
 
     public function client(): Client
@@ -116,30 +126,61 @@ class MuxApi
 
     public function createAssetRequest(array $options = []): CreateAssetRequest
     {
-        return new CreateAssetRequest([
+        $data = [
             'test' => $this->testMode,
             'playback_policy' => MuxPlaybackPolicy::makeMany($this->playbackPolicy)->pluck('value')->all(),
             'video_quality' => $this->videoQuality,
             ...$options,
-        ]);
+        ];
+
+        try {
+            return new CreateAssetRequest($data);
+        } catch (\Throwable $th) {
+            Log::error(
+                "Failed to create Mux asset request: {$th->getMessage()}",
+                ['data' => $data, 'exception' => $th],
+            );
+
+            throw $th;
+        }
     }
 
     public function createUploadRequest(array $options = []): CreateUploadRequest
     {
-        return new CreateUploadRequest([
+        $data = [
             'test' => $options['test'] ?? $this->testMode,
             'new_asset_settings' => $this->createAssetRequest($options),
             'cors_origin' => '*',
-        ]);
+        ];
+
+        try {
+            return new CreateUploadRequest($data);
+        } catch (\Throwable $th) {
+            Log::error(
+                "Failed to create Mux upload request: {$th->getMessage()}",
+                ['data' => $data, 'exception' => $th],
+            );
+
+            throw $th;
+        }
     }
 
     public function createPlaybackIdRequest(array $options = []): CreatePlaybackIDRequest
     {
-        $policy = (string) ($options['policy'] ?? '');
+        $data = [
+            'policy' => (string) ($options['policy'] ?? '') ?: $this->playbackPolicy,
+        ];
 
-        return new CreatePlaybackIDRequest([
-            'policy' => $policy ?: $this->playbackPolicy,
-        ]);
+        try {
+            return new CreatePlaybackIDRequest($data);
+        } catch (\Throwable $th) {
+            Log::error(
+                "Failed to create Mux playback ID request: {$th->getMessage()}",
+                ['data' => $data, 'exception' => $th],
+            );
+
+            throw $th;
+        }
     }
 
     public function assetExists(string $muxId): bool
@@ -148,6 +189,11 @@ class MuxApi
             $response = $this->assets()->getAsset($muxId)->getData();
             $actualMuxId = $response?->getId();
 
+            Log::debug(
+                'Checking asset existence: '.($muxId === $actualMuxId ? 'exists' : 'does not exist'),
+                ['asset_id' => $muxId, 'returned_id' => $actualMuxId],
+            );
+
             return $muxId === $actualMuxId;
         } catch (ApiException $e) {
             if ($e->getCode() === 404) {
@@ -155,6 +201,13 @@ class MuxApi
             } else {
                 throw $e;
             }
+        } catch (\Throwable $th) {
+            Log::error(
+                "Failed to check Mux asset existence: {$th->getMessage()}",
+                ['asset_id' => $muxId, 'exception' => $th],
+            );
+
+            throw $th;
         }
     }
 
@@ -163,14 +216,27 @@ class MuxApi
         try {
             $response = $this->assets()->getAsset($muxId)->getData();
             $status = $response?->getStatus();
+            $expected = \MuxPhp\Models\Asset::STATUS_READY;
 
-            return $status === \MuxPhp\Models\Asset::STATUS_READY;
+            Log::debug(
+                'Checking asset status: '.($status === $expected ? 'ready' : 'not ready'),
+                ['asset_id' => $muxId, 'status' => $status, 'expected' => $expected],
+            );
+
+            return $status === $expected;
         } catch (ApiException $e) {
             if ($e->getCode() === 404) {
                 return false;
             } else {
                 throw $e;
             }
+        } catch (\Throwable $th) {
+            Log::error(
+                "Failed to check Mux asset status: {$th->getMessage()}",
+                ['asset_id' => $muxId, 'exception' => $th],
+            );
+
+            throw $th;
         }
     }
 
@@ -179,23 +245,30 @@ class MuxApi
         try {
             $response = $this->assets()->getAsset($muxId)->getData();
             $files = $response?->getStaticRenditions()?->getFiles() ?? [];
-            if (! count($files)) {
-                return false;
-            }
 
-            foreach ($files as $file) {
-                if ($file->getStatus() !== \MuxPhp\Models\AssetStaticRenditions::STATUS_READY) {
-                    return false;
-                }
-            }
+            $ready = array_reduce($files, function ($carry, $file) {
+                return $carry && $file->getStatus() === \MuxPhp\Models\AssetStaticRenditions::STATUS_READY;
+            }, count($files) > 0);
 
-            return true;
+            Log::debug(
+                'Checking asset renditions status: '.($ready ? 'all ready' : 'not all ready'),
+                ['asset_id' => $muxId, 'renditions' => $files],
+            );
+
+            return $ready;
         } catch (ApiException $e) {
             if ($e->getCode() === 404) {
                 return false;
             } else {
                 throw $e;
             }
+        } catch (\Throwable $th) {
+            Log::error(
+                "Failed to check Mux renditions status: {$th->getMessage()}",
+                ['asset_id' => $muxId, 'exception' => $th],
+            );
+
+            throw $th;
         }
     }
 }

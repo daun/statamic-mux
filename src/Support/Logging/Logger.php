@@ -3,7 +3,7 @@
 namespace Daun\StatamicMux\Support\Logging;
 
 use Illuminate\Log\LogManager;
-use Psr\Log\LoggerInterface;
+use Psr\Log\LoggerInterface as PsrLogger;
 use Psr\Log\NullLogger;
 
 class Logger
@@ -16,7 +16,7 @@ class Logger
         $this->registerChannel();
     }
 
-    public function resolveChannel(): LoggerInterface
+    public function resolveChannel(): PsrLogger
     {
         if (! $this->enabled) {
             return new NullLogger;

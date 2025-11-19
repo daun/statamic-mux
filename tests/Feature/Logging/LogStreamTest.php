@@ -1,14 +1,14 @@
 <?php
 
 use Daun\StatamicMux\Mux\MuxApi;
-use Daun\StatamicMux\Support\Logging\LogStream;
 use Daun\StatamicMux\Support\Logging\Logger as PackageLogger;
+use Daun\StatamicMux\Support\Logging\LogStream;
 use Illuminate\Log\LogManager;
 use Illuminate\Support\Facades\Log;
 use Tests\Support\InMemoryLogger;
 
 it('passes mux api debug output through the mux logger', function () {
-    $logger = new InMemoryLogger();
+    $logger = new InMemoryLogger;
 
     Log::extend('in-memory', function ($app, array $config) use ($logger) {
         return $logger;
