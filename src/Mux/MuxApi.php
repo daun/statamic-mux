@@ -48,7 +48,7 @@ class MuxApi
             ->setUsername($this->tokenId)
             ->setPassword($this->tokenSecret)
             ->setDebug($this->debug)
-            ->setDebugFile(storage_path('logs/mux.log'))
+            ->setDebugFile(storage_path('logs/mux-sdk.log'))
             ->setUserAgent(self::userAgent);
     }
 
