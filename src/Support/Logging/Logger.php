@@ -41,6 +41,7 @@ class Logger
             'level' => config('mux.logging.level', 'warning'),
             'days' => config('logging.channels.daily.days', 14),
             'replace_placeholders' => true,
+            'tap' => [Scrubber::class],
         ]);
     }
 }
