@@ -119,7 +119,7 @@ class MuxMirrorType extends \Rebing\GraphQL\Support\Type
             'playback_modifiers' => [
                 'type' => GraphQL::type(JsonArgument::NAME),
                 'description' => 'Playback modifiers included in playback urls by default',
-                'resolve' => fn () => Arr::wrap(config('mux.playback_modifiers', [])),
+                'resolve' => fn () => Mux::getDefaultPlaybackModifiers(),
             ],
         ];
     }

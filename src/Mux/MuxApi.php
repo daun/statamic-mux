@@ -62,6 +62,11 @@ class MuxApi
         return $this->config;
     }
 
+    public function configured(): bool
+    {
+        return $this->tokenId && $this->tokenSecret;
+    }
+
     public function assets(): AssetsApi
     {
         $this->assetsApi ??= new AssetsApi($this->client, $this->config);

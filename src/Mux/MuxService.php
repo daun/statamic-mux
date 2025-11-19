@@ -38,11 +38,11 @@ class MuxService
     }
 
     /**
-     * Whether the service is configured.
+     * Whether the Mux service is configured with the required credentials.
      */
     public function configured(): bool
     {
-        return config('mux.credentials.token_id') && config('mux.credentials.token_secret');
+        return $this->api->configured();
     }
 
     /**
