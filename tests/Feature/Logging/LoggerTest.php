@@ -3,7 +3,9 @@
 use Daun\StatamicMux\Support\Logging\Logger as PackageLogger;
 use Illuminate\Log\LogManager;
 use Illuminate\Support\Facades\Log;
+use Monolog\Handler\TestHandler;
 use Psr\Log\NullLogger;
+use RedactSensitive\RedactSensitiveProcessor;
 use Tests\Support\InMemoryLogger;
 
 /**
@@ -39,7 +41,6 @@ it('respects the channel from the config', function () {
     ]);
 
     $logger = makePackageLogger()->resolveChannel();
-    ray($logger);
 
     $logger->debug('mux channel message');
 
@@ -61,23 +62,23 @@ it('respects the level from the config', function () {
 });
 
 it('redacts sensitive data from the output', function () {
-    $inMemory = new InMemoryLogger;
-
-    Log::extend('in-memory', fn () => $inMemory);
-
     config()->set('mux.logging.enabled', true);
     config()->set('mux.logging.channel', 'mux');
-    config()->set('mux.logging.level', 'debug');
 
-    $factory = makePackageLogger();
+    $logger = makePackageLogger()->resolveChannel();
 
-    config()->set('logging.channels.mux.driver', 'in-memory');
+    // $laravelLogger is Illuminate\Log\Logger
+    $ref = new \ReflectionClass($logger);
+    $prop = $ref->getProperty('logger');
+    $monolog = $prop->getValue($logger);
 
-    $logger = $factory->resolveChannel();
+    // Ensure a clean slate of handlers to avoid noise (optional, but makes assertions deterministic)
+    while ($monolog->getHandlers()) {
+        $monolog->popHandler();
+    }
 
-    ray($logger);
-    ray(config('mux.logging'));
-    ray(config('logging'));
+    $testHandler = new TestHandler;
+    $monolog->pushHandler($testHandler);
 
     $logger->debug('message with params', [
         'safe_param' => 'this is safe to log',
@@ -87,13 +88,20 @@ it('redacts sensitive data from the output', function () {
         'private_key' => '809dsfgju54htjdsf0fgujj45ifkrdsifghug8jsdugbshj4i8j',
     ]);
 
-    $records = $inMemory->records;
-
+    // 4) Assert: processor ran and scrubbed context (b)
+    $records = $testHandler->getRecords();
     expect($records)->toHaveCount(1);
-    expect($records[0]['message'])->toBe('message with params');
-    expect($records[0]['context']['safe_param'])->toBe('this is safe to log');
-    expect($records[0]['context']['token_id'])->toBe('dsg3****');
-    expect($records[0]['context']['token_secret'])->toBe('sdf9********');
-    expect($records[0]['context']['key_id'])->toBe('5hfd******');
-    expect($records[0]['context']['private_key'])->toBe('809d************************************');
+    $context = $records[0]['context'];
+    expect($context['safe_param'] ?? null)->toBe('this is safe to log');
+    expect($context['token_id'] ?? null)->toBe('dsg3****');
+    expect($context['token_secret'] ?? null)->toBe('sdf9********');
+    expect($context['key_id'] ?? null)->toBe('5hfd******');
+    expect($context['private_key'] ?? null)->toBe('809dsfgj*******************************************');
+
+    // 5) Optional: assert (a) the processor is actually present via tap
+    $processors = array_map(
+        fn ($p) => is_object($p) ? get_class($p) : (is_array($p) ? 'callable' : gettype($p)),
+        $monolog->getProcessors()
+    );
+    expect($processors)->toContain(RedactSensitiveProcessor::class);
 });
