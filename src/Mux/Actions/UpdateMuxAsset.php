@@ -49,7 +49,7 @@ class UpdateMuxAsset
     }
 
     /**
-     * Determine if the action should handle the asset.
+     * Whether the Mux asset of this asset can be updated.
      */
     protected function shouldHandle(Asset $asset): bool
     {

@@ -67,33 +67,25 @@ class CreateMuxAsset
     }
 
     /**
-     * Determine if the action should handle the asset.
+     * Whether a Mux asset can be created for this asset.
      */
     protected function shouldHandle(Asset $asset, bool $force = false): bool
     {
-        if (! $asset->isVideo()) {
-            return false;
-        }
+        $skip = match (true) {
+            ! $asset->isVideo() => 'not a video asset',
+            MuxAsset::fromAsset($asset)->isProxy() => 'asset is a proxy',
+            ! $force && $this->service->hasExistingMuxAsset($asset) => 'asset already exists on Mux',
+            default => null,
+        };
 
-        if (MuxAsset::fromAsset($asset)->isProxy()) {
+        if ($skip) {
             Log::debug(
-                'Skipping upload of asset to Mux: asset is a proxy',
-                ['asset' => $asset->id()],
+                "Skipping upload of asset to Mux: {$skip}",
+                ['asset' => $asset->id(), 'reason' => $skip],
             );
-
-            return false;
         }
 
-        if (! $force && $this->service->hasExistingMuxAsset($asset)) {
-            Log::debug(
-                'Skipping upload of asset to Mux: already exists on Mux',
-                ['asset' => $asset->id(), 'mux_id' => $this->service->getMuxId($asset)],
-            );
-
-            return false;
-        }
-
-        return true;
+        return ! $skip;
     }
 
     /**

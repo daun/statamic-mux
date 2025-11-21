@@ -26,7 +26,7 @@ class DownloadProxyVersion
      */
     public function handle(Asset $asset, string $proxyId): bool
     {
-        if (! $this->canHandle($asset, $proxyId)) {
+        if (! $this->shouldHandle($asset, $proxyId)) {
             return false;
         }
 
@@ -46,7 +46,7 @@ class DownloadProxyVersion
     /**
      * Whether a proxy can be downloaded for this asset.
      */
-    public function canHandle(Asset $asset, string $proxyId): bool
+    public function shouldHandle(Asset $asset, string $proxyId): bool
     {
         return $asset->isVideo()
             && $this->service->hasExistingMuxAsset($asset)

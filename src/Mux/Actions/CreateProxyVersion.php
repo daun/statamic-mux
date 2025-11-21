@@ -2,11 +2,11 @@
 
 namespace Daun\StatamicMux\Mux\Actions;
 
+use Daun\StatamicMux\Facades\Log;
 use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
 use Illuminate\Foundation\Application;
-use Illuminate\Support\Facades\Log;
 use Statamic\Assets\Asset;
 
 class CreateProxyVersion
@@ -24,7 +24,7 @@ class CreateProxyVersion
      */
     public function handle(Asset $asset): ?string
     {
-        if (! $this->canHandle($asset)) {
+        if (! $this->shouldHandle($asset)) {
             return null;
         }
 
@@ -33,23 +33,45 @@ class CreateProxyVersion
         }
 
         try {
-            return $this->createClipFromAsset($asset, $this->start, $this->getLength());
-        } catch (\Throwable $th) {
-            Log::error($th->getMessage());
+            $proxyId = $this->createClipFromAsset($asset, $this->start, $this->getLength());
 
-            throw new \Exception("Failed to generate proxy from Mux asset: {$th->getMessage()}");
+            Log::info(
+                'Created proxy version of Mux asset',
+                ['asset' => $asset->id(), 'proxy_id' => $proxyId, 'start' => $this->start, 'length' => $this->getLength()],
+            );
+
+            return $proxyId;
+        } catch (\Throwable $th) {
+            Log::error(
+                "Error generating proxy version of Mux asset: {$th->getMessage()}",
+                ['asset' => $asset->id(), 'exception' => $th],
+            );
+
+            throw new \Exception("Error generating proxy version of Mux asset: {$th->getMessage()}", previous: $th);
         }
     }
 
     /**
      * Whether a proxy can be created for this asset.
      */
-    public function canHandle(Asset $asset): bool
+    public function shouldHandle(Asset $asset): bool
     {
-        return $asset->isVideo()
-            && $asset->extension() === 'mp4'
-            && ($asset->duration() ?? 0) > $this->getLength()
-            && $this->service->hasExistingMuxAsset($asset);
+        $skip = match (true) {
+            ! $asset->isVideo() => 'not a video asset',
+            $asset->extension() !== 'mp4' => 'not an mp4 file',
+            ($asset->duration() ?? 0) <= $this->getLength() => 'shorter than configured proxy length',
+            ! $this->service->hasExistingMuxAsset($asset) => 'no existing Mux asset',
+            default => null,
+        };
+
+        if ($skip) {
+            Log::debug(
+                "Skipping creation of proxy version: {$skip}",
+                ['asset' => $asset->id(), 'reason' => $skip, 'asset_duration' => $asset->duration(), 'proxy_length' => $this->getLength()],
+            );
+        }
+
+        return ! $skip;
     }
 
     /**
@@ -57,8 +79,22 @@ class CreateProxyVersion
      */
     public function isReady(Asset $asset): bool
     {
-        return ($muxId = $this->service->getMuxId($asset))
-            && $this->api->assetIsReady($muxId);
+        $muxId = $this->service->getMuxId($asset);
+
+        $unready = match (true) {
+            ! $muxId => 'no existing Mux asset',
+            ! $this->api->assetIsReady($muxId) => 'Mux asset is not ready',
+            default => null,
+        };
+
+        if ($unready) {
+            Log::debug(
+                "Delaying creation of proxy version: {$unready}",
+                ['asset' => $asset->id(), 'reason' => $unready],
+            );
+        }
+
+        return ! $unready;
     }
 
     /**
@@ -68,7 +104,7 @@ class CreateProxyVersion
     {
         $muxId = $this->service->getMuxId($asset);
 
-        $request = $this->api->createAssetRequest([
+        $payload = [
             'playback_policy' => [MuxPlaybackPolicy::Public->value],
             'input' => $this->api->input([
                 'url' => "mux://assets/{$muxId}",
@@ -79,7 +115,14 @@ class CreateProxyVersion
                 ['resolution' => \MuxPhp\Models\StaticRendition::RESOLUTION_HIGHEST],
             ],
             'passthrough' => $this->getPassthroughData($muxId),
-        ]);
+        ];
+
+        $request = $this->api->createAssetRequest($payload);
+
+        Log::debug(
+            'Creating clip from Mux asset',
+            ['asset' => $asset->id(), 'mux_id' => $muxId, 'payload' => $payload],
+        );
 
         return $this->api->assets()
             ->createAsset($request)

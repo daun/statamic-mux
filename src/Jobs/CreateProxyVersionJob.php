@@ -31,7 +31,7 @@ class CreateProxyVersionJob implements ShouldQueue
     public function handle(CreateProxyVersion $action): void
     {
         // Check if we need to process this at all
-        if (! $action->canHandle($this->asset)) {
+        if (! $action->shouldHandle($this->asset)) {
             return;
         }
 

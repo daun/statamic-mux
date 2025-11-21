@@ -67,7 +67,7 @@ class RequestPlaybackId
     }
 
     /**
-     * Determine if the action should handle the asset.
+     * Whether a playback id can be requested for this asset.
      */
     protected function shouldHandle(Asset $asset): bool
     {
