@@ -25,31 +25,13 @@ class CreateMuxAsset
      */
     public function handle(Asset $asset, bool $force = false): ?string
     {
-        if (! $asset->isVideo()) {
-            return null;
-        }
-
-        if (MuxAsset::fromAsset($asset)->isProxy()) {
-            Log::debug(
-                'Skipping upload of asset to Mux: asset is a proxy',
-                ['asset' => $asset->id()],
-            );
-
-            return null;
-        }
-
-        if (! $force && $this->service->hasExistingMuxAsset($asset)) {
-            Log::debug(
-                'Skipping upload of asset to Mux: already exists on Mux',
-                ['asset' => $asset->id(), 'mux_id' => $this->service->getMuxId($asset)],
-            );
-
+        if (! $this->shouldHandle($asset, $force)) {
             return null;
         }
 
         if (AssetUploadingToMux::dispatch($asset) === false) {
             Log::debug(
-                'Canceled upload of asset to Mux via event listener',
+                'Canceled video upload to Mux via event listener',
                 ['asset' => $asset->id(), 'event' => 'AssetUploadingToMux'],
             );
 
@@ -64,14 +46,16 @@ class CreateMuxAsset
             }
         } catch (\Throwable $th) {
             Log::error(
-                "Failed to upload video to Mux: {$th->getMessage()}",
+                "Error uploading video to Mux: {$th->getMessage()}",
                 ['asset' => $asset->id(), 'exception' => $th],
             );
+
+            throw new \Exception("Error uploading video to Mux: {$th->getMessage()}", previous: $th);
         }
 
         if ($muxId) {
             Log::info(
-                'Successfully uploaded asset to Mux',
+                'Video uploaded to Mux',
                 ['asset' => $asset->id(), 'mux_id' => $muxId],
             );
 
@@ -83,25 +67,62 @@ class CreateMuxAsset
     }
 
     /**
+     * Determine if the action should handle the asset.
+     */
+    protected function shouldHandle(Asset $asset, bool $force = false): bool
+    {
+        if (! $asset->isVideo()) {
+            return false;
+        }
+
+        if (MuxAsset::fromAsset($asset)->isProxy()) {
+            Log::debug(
+                'Skipping upload of asset to Mux: asset is a proxy',
+                ['asset' => $asset->id()],
+            );
+
+            return false;
+        }
+
+        if (! $force && $this->service->hasExistingMuxAsset($asset)) {
+            Log::debug(
+                'Skipping upload of asset to Mux: already exists on Mux',
+                ['asset' => $asset->id(), 'mux_id' => $this->service->getMuxId($asset)],
+            );
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Determine whether an asset can be ingested from a public url.
      */
     protected function assetIsPubliclyAccessible(Asset $asset): bool
     {
         $filesystem = $asset->container()->disk()->filesystem()->getConfig();
 
+        $public = true;
+
         if (empty($filesystem['url'] ?? null)) {
-            return false;
+            $public = false;
         }
 
         if (($filesystem['visibility'] ?? null) !== 'public') {
-            return false;
+            $public = false;
         }
 
         if (app()->isLocal() && $filesystem['driver'] === 'local') {
-            return false;
+            $public = false;
         }
 
-        return true;
+        Log::debug(
+            'Asset is publicly accessible: '.($public ? 'yes' : 'no'),
+            ['asset' => $asset->id(), 'public' => $public, 'filesystem' => $filesystem],
+        );
+
+        return $public;
     }
 
     /**
@@ -128,7 +149,7 @@ class CreateMuxAsset
 
         if (! $muxId) {
             Log::error(
-                'Failed to retrieve Mux asset id from direct upload',
+                'Error retrieving Mux asset id from direct upload',
                 ['asset' => $asset->id(), 'upload_id' => $muxUpload?->getId(), 'response' => $muxUpload],
             );
 
@@ -157,7 +178,7 @@ class CreateMuxAsset
 
         if (! $muxId) {
             Log::error(
-                'Failed to retrieve Mux asset id from public url upload',
+                'Error retrieving Mux asset id from public url upload',
                 ['asset' => $asset->id(), 'response' => $muxAsset],
             );
 
