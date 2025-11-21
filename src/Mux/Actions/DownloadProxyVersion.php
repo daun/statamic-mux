@@ -3,12 +3,12 @@
 namespace Daun\StatamicMux\Mux\Actions;
 
 use Daun\StatamicMux\Data\MuxAsset;
+use Daun\StatamicMux\Facades\Log;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Mux\MuxUrls;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use MuxPhp\Models\Asset as MuxAssetModel;
 use Statamic\Assets\Asset;
 
@@ -35,11 +35,21 @@ class DownloadProxyVersion
         }
 
         try {
-            return $this->downloadRendition($asset, $proxyId);
-        } catch (\Throwable $th) {
-            Log::error($th->getMessage());
+            $this->downloadRendition($asset, $proxyId);
 
-            throw new \Exception("Failed to download proxy of Mux asset: {$th->getMessage()}");
+            Log::info(
+                'Downloaded proxy version of Mux asset',
+                ['asset' => $asset->id(), 'proxy_id' => $proxyId],
+            );
+
+            return true;
+        } catch (\Throwable $th) {
+            Log::error(
+                "Error downloading proxy version of Mux asset: {$th->getMessage()}",
+                ['asset' => $asset->id(), 'proxy_id' => $proxyId, 'exception' => $th],
+            );
+
+            throw new \Exception("Error downloading proxy version of Mux asset: {$th->getMessage()}", previous: $th);
         }
     }
 
@@ -48,9 +58,21 @@ class DownloadProxyVersion
      */
     public function shouldHandle(Asset $asset, string $proxyId): bool
     {
-        return $asset->isVideo()
-            && $this->service->hasExistingMuxAsset($asset)
-            && $this->api->assetExists($proxyId);
+        $skip = match (true) {
+            ! $asset->isVideo() => 'not a video asset',
+            ! $this->service->hasExistingMuxAsset($asset) => 'no existing Mux asset',
+            ! $this->api->assetExists($proxyId) => 'proxy asset does not exist on Mux',
+            default => null,
+        };
+
+        if ($skip) {
+            Log::debug(
+                "Skipping download of proxy version: {$skip}",
+                ['asset' => $asset->id(), 'reason' => $skip, 'proxy_id' => $proxyId],
+            );
+        }
+
+        return ! $skip;
     }
 
     /**
@@ -58,8 +80,20 @@ class DownloadProxyVersion
      */
     public function isReady(Asset $asset, string $proxyId): bool
     {
-        return $this->api->assetIsReady($proxyId)
-            && $this->api->assetRenditionsAreReady($proxyId);
+        $unready = match (true) {
+            ! $this->api->assetIsReady($proxyId) => 'Mux asset is not ready',
+            ! $this->api->assetRenditionsAreReady($proxyId) => 'Mux asset renditions are not ready',
+            default => null,
+        };
+
+        if ($unready) {
+            Log::debug(
+                "Delaying download of proxy version: {$unready}",
+                ['asset' => $asset->id(), 'proxy_id' => $proxyId, 'reason' => $unready],
+            );
+        }
+
+        return ! $unready;
     }
 
     /**
@@ -77,6 +111,11 @@ class DownloadProxyVersion
 
         $url = $this->urls->download($playbackId, $rendition, $asset->filename());
 
+        Log::debug(
+            'Downloading proxy rendition from Mux url',
+            ['asset' => $asset->id(), 'url' => $url, 'playback_id' => $playbackId, 'rendition' => $rendition],
+        );
+
         try {
             $contents = Http::get($url)->body();
             $asset->disk()->put($asset->path(), $contents);
@@ -90,7 +129,6 @@ class DownloadProxyVersion
 
             return true;
         } catch (\Throwable $th) {
-            Log::error($th->getMessage());
             MuxAsset::fromAsset($asset)->setProxy(false)->save();
 
             throw $th;
