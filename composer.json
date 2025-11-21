@@ -85,7 +85,7 @@
     },
     "scripts": {
         "analyse": "./vendor/bin/phpstan analyse --memory-limit=2G",
-        "facade": "php -f vendor/bin/facade.php -- \\\\Daun\\\\StatamicMux\\\\Facades\\\\Mux",
+        "facade": "php -f vendor/bin/facade.php -- \\\\Daun\\\\StatamicMux\\\\Facades\\\\Mux \\\\Daun\\\\StatamicMux\\\\Facades\\\\Log",
         "format": "./vendor/bin/pint",
         "lint": "./vendor/bin/pint --test",
         "test": "./vendor/bin/pest",
