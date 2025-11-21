@@ -60,7 +60,7 @@ class MuxService
                 $asset = $instance;
             } else {
                 Log::warning('Cannot create Mux asset: local asset not found', [
-                    'asset_id' => $asset,
+                    'asset' => $asset,
                 ]);
 
                 return null;
@@ -84,7 +84,7 @@ class MuxService
                 $asset = $instance;
             } else {
                 Log::warning('Cannot update Mux asset: local asset not found', [
-                    'asset_id' => $asset,
+                    'asset' => $asset,
                 ]);
 
                 return false;
@@ -116,7 +116,7 @@ class MuxService
             return true;
         } else {
             Log::notice('Asset does not exist on Mux, clearing stale local data', [
-                'asset_id' => $asset->id(),
+                'asset' => $asset->id(),
                 'mux_id' => $muxId,
             ]);
 

@@ -190,8 +190,8 @@ class MuxApi
             $actualMuxId = $response?->getId();
 
             Log::debug(
-                'Checking asset existence: '.($muxId === $actualMuxId ? 'exists' : 'does not exist'),
-                ['asset_id' => $muxId, 'returned_id' => $actualMuxId],
+                'Checking Mux asset existence: '.($muxId === $actualMuxId ? 'exists' : 'does not exist'),
+                ['mux_id' => $muxId, 'returned_id' => $actualMuxId],
             );
 
             return $muxId === $actualMuxId;
@@ -204,7 +204,7 @@ class MuxApi
         } catch (\Throwable $th) {
             Log::error(
                 "Failed to check Mux asset existence: {$th->getMessage()}",
-                ['asset_id' => $muxId, 'exception' => $th],
+                ['mux_id' => $muxId, 'exception' => $th],
             );
 
             throw $th;
@@ -219,8 +219,8 @@ class MuxApi
             $expected = \MuxPhp\Models\Asset::STATUS_READY;
 
             Log::debug(
-                'Checking asset status: '.($status === $expected ? 'ready' : 'not ready'),
-                ['asset_id' => $muxId, 'status' => $status, 'expected' => $expected],
+                'Checking Mux asset status: '.($status === $expected ? 'ready' : 'not ready'),
+                ['mux_id' => $muxId, 'status' => $status, 'expected' => $expected],
             );
 
             return $status === $expected;
@@ -233,7 +233,7 @@ class MuxApi
         } catch (\Throwable $th) {
             Log::error(
                 "Failed to check Mux asset status: {$th->getMessage()}",
-                ['asset_id' => $muxId, 'exception' => $th],
+                ['mux_id' => $muxId, 'exception' => $th],
             );
 
             throw $th;
@@ -251,8 +251,8 @@ class MuxApi
             }, count($files) > 0);
 
             Log::debug(
-                'Checking asset renditions status: '.($ready ? 'all ready' : 'not all ready'),
-                ['asset_id' => $muxId, 'renditions' => $files],
+                'Checking Mux renditions status: '.($ready ? 'all ready' : 'not all ready'),
+                ['mux_id' => $muxId, 'renditions' => $files],
             );
 
             return $ready;
@@ -265,7 +265,7 @@ class MuxApi
         } catch (\Throwable $th) {
             Log::error(
                 "Failed to check Mux renditions status: {$th->getMessage()}",
-                ['asset_id' => $muxId, 'exception' => $th],
+                ['mux_id' => $muxId, 'exception' => $th],
             );
 
             throw $th;
