@@ -189,10 +189,9 @@ return [
 
         'enabled' => env('MUX_LOG_ENABLED', true),
 
-        // Which channel to use; can be a stack or a specific channel
         'channel' => env('MUX_LOG_CHANNEL', 'mux'),
 
-        'level' => env('MUX_LOG_LEVEL', 'warning'),
+        'level' => env('MUX_LOG_LEVEL', 'notice'),
 
     ],
 ];
