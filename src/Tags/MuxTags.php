@@ -3,11 +3,11 @@
 namespace Daun\StatamicMux\Tags;
 
 use Closure;
+use Daun\StatamicMux\Facades\Log;
 use Daun\StatamicMux\Tags\Concerns\GetsAssetFromContext;
 use Daun\StatamicMux\Tags\Concerns\ReadsMuxData;
 use Daun\StatamicMux\Tags\Concerns\RendersMuxPlayer;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use ReflectionClass;
 use Statamic\Data\AbstractAugmented;
@@ -65,6 +65,10 @@ class MuxTags extends Tags
     {
         $asset = $this->getAssetFromContext($asset);
         if (! $asset) {
+            Log::debug(
+                'Cannot generate data for Mux Antlers tag: no asset found in context or parameters',
+            );
+
             return [];
         }
 
@@ -72,6 +76,11 @@ class MuxTags extends Tags
             $muxId = $this->getMuxId($asset);
             $playbackId = $this->getPlaybackId($asset);
             if (! $playbackId) {
+                Log::debug(
+                    'Cannot generate data for Mux Antlers tag: missing playback id',
+                    ['asset' => $asset->id(), 'mux_id' => $muxId],
+                );
+
                 return [];
             }
 
@@ -98,7 +107,10 @@ class MuxTags extends Tags
 
             return array_merge($asset->toAugmentedArray(), $data);
         } catch (\Throwable $th) {
-            Log::error($th->getMessage());
+            Log::error(
+                "Error generating data for Mux Antlers tag: {$th->getMessage()}",
+                ['asset' => $asset->id(), 'mux_id' => $muxId, 'exception' => $th],
+            );
         }
 
         return [];
@@ -151,7 +163,9 @@ class MuxTags extends Tags
             ->except($this->assetParams)
             ->except($playbackModifiers->keys())
             ->except(['script', 'lazyload', 'public', 'signed', 'background'])
-            ->when($this->params->bool('background'), fn ($attr) => $attr->merge(['autoplay' => true, 'loop' => true, 'muted' => true])
+            ->when(
+                $this->params->bool('background'),
+                fn ($attr) => $attr->merge(['autoplay' => true, 'loop' => true, 'muted' => true])
             );
 
         $viewData = $this->context
