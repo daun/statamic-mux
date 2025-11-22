@@ -179,7 +179,7 @@ streaming and downloading the full video.
 
 Any videos shorter than the defined placeholder length will keep the original.
 
-Note that this feature requires a [queue worker](https://laravel.com/docs/12.x/queues#running-the-queue-worker)
+Note that this feature requires a [queue worker](https://laravel.com/docs/queues#running-the-queue-worker)
 to be running, as the video processing can take some time depending on the file size.
 
 ```php
