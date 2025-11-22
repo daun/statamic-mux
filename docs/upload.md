@@ -49,10 +49,12 @@ php please mux:upload
 
 ## Troubleshooting
 
-If videos are not uploading as expected, check the addon's error logs in `storage/logs/mux.log` for
-any issues. You can also temporarily increase the global or addon log level to `debug` to get more insight
-into the queueing and processing of video files. See the configuration docs on
-[Logging](/configuration#logging) for details and more options.
+If videos are not uploading as expected, run the [debug command](/commands/mux-debug)
+to ensure everything is configured correctly and check the addon's error logs in
+`storage/logs/mux.log` for any issues. You can also temporarily increase the global
+or addon log level to `debug` to get more insight into the queueing and processing
+of video files. See the configuration docs on [Logging](/configuration#logging)
+for details and more options.
 
 ```ini
 LOG_LEVEL=debug        # global log level
