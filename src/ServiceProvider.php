@@ -7,8 +7,12 @@ use Daun\StatamicMux\Mux\MuxClient;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Mux\MuxUrls;
 use Daun\StatamicMux\Placeholders\PlaceholderService;
+use Daun\StatamicMux\Support\Logging\LoggerInterface;
+use Daun\StatamicMux\Support\Logging\LogManager;
+use Daun\StatamicMux\Support\Logging\LogStream;
 use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
+use Illuminate\Log\LogManager as IlluminateLog;
 use Statamic\Facades\Permission;
 use Statamic\Providers\AddonServiceProvider;
 use Statamic\Statamic;
@@ -45,6 +49,7 @@ class ServiceProvider extends AddonServiceProvider
     public function register()
     {
         $this->registerHooks();
+        $this->registerLogger();
         $this->registerMuxApi();
         $this->registerMuxService();
         $this->registerUrlService();
@@ -63,6 +68,25 @@ class ServiceProvider extends AddonServiceProvider
         $this->app->instance('mux.hooks', collect());
     }
 
+    protected function registerLogger()
+    {
+        $this->app->singleton(LoggerInterface::class, function (Application $app) {
+            $logger = new LogManager(
+                $app->make(IlluminateLog::class),
+                $app['config']->get('mux.logging.channel', 'mux'),
+                (bool) $app['config']->get('mux.logging.enabled', true),
+            );
+
+            return $logger->resolveStack();
+        });
+
+        $this->app->afterResolving(LoggerInterface::class, function ($logger) {
+            LogStream::register($logger);
+        });
+
+        $this->app->alias(LoggerInterface::class, 'mux.log');
+    }
+
     protected function registerMuxApi()
     {
         $this->app->bind(MuxClient::class, function (Application $app) {
@@ -74,7 +98,7 @@ class ServiceProvider extends AddonServiceProvider
                 $app['mux.client'],
                 $app['config']->get('mux.credentials.token_id'),
                 $app['config']->get('mux.credentials.token_secret'),
-                $app['config']->get('app.debug', false),
+                $app['config']->get('app.debug', false) || $app['config']->get('mux.logging.level') === 'debug',
                 $app['config']->get('mux.test_mode', false),
                 $app['config']->get('mux.playback_policy', null),
                 $app['config']->get('mux.video_quality', null),

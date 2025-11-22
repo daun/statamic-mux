@@ -9,10 +9,6 @@ use Statamic\Facades\Stache;
 
 beforeEach(function () {
     $this->app->bind(MuxClient::class, fn () => $this->guzzler->getClient());
-    $this->api = $this->app->make(MuxApi::class);
-    $this->app->bind(MuxApi::class, fn () => $this->api);
-
-    $this->service = $this->app->make(MuxService::class);
 
     $this->addMirrorFieldToAssetBlueprint();
     $this->mp4 = $this->uploadTestFileToTestContainer('test.mp4');
@@ -27,48 +23,70 @@ beforeEach(function () {
 });
 
 test('returns an api instance', function () {
-    expect($this->service->api())->toBeInstanceOf(MuxApi::class);
+    $service = $this->app->make(MuxService::class);
+    expect($service->api())->toBeInstanceOf(MuxApi::class);
 });
 
-test('returns the configuration state', function () {
-    expect($this->service->configured())->toBeBool();
-    expect($this->service->configured())->toBeFalse();
+test('returns the configuration state by default', function () {
+    $service = $this->app->make(MuxService::class);
+    expect($service->configured())->toBeFalse();
+});
 
-    config(['mux.credentials.token_id' => 'test', 'mux.credentials.token_secret' => null]);
-    expect($this->service->configured())->toBeFalse();
+test('returns the configuration state when missing id and secret', function () {
+    config(['mux.credentials.token_id' => null, 'mux.credentials.token_secret' => null]);
+    $service = $this->app->make(MuxService::class);
+    expect($service->configured())->toBeFalse();
+});
 
-    config(['mux.credentials.token_id' => null, 'mux.credentials.token_secret' => 'test']);
-    expect($this->service->configured())->toBeFalse();
+test('returns the configuration state when missing id', function () {
+    config(['mux.credentials.token_id' => null, 'mux.credentials.token_secret' => 'token-secret']);
+    $service = $this->app->make(MuxService::class);
+    expect($service->configured())->toBeFalse();
+});
 
-    config(['mux.credentials.token_id' => 'test', 'mux.credentials.token_secret' => 'test']);
-    expect($this->service->configured())->toBeTrue();
+test('returns the configuration state when missing secret', function () {
+    config(['mux.credentials.token_id' => 'token-id', 'mux.credentials.token_secret' => null]);
+    $service = $this->app->make(MuxService::class);
+    expect($service->configured())->toBeFalse();
+});
+
+test('returns the configuration state when correct', function () {
+    config(['mux.credentials.token_id' => 'token-id', 'mux.credentials.token_secret' => 'token-secret']);
+    $service = $this->app->make(MuxService::class);
+    expect($service->configured())->toBeTrue();
 });
 
 test('returns the default playback policy', function () {
+    $service = $this->app->make(MuxService::class);
+
     config(['mux.playback_policy' => null]);
-    expect($this->service->getDefaultPlaybackPolicy())->toBeNull();
+    expect($service->getDefaultPlaybackPolicy())->toBeNull();
 
     config(['mux.playback_policy' => 'public']);
-    expect($this->service->getDefaultPlaybackPolicy())->toBeInstanceOf(MuxPlaybackPolicy::class);
-    expect($this->service->getDefaultPlaybackPolicy()->isPublic())->toBeTrue();
+    expect($service->getDefaultPlaybackPolicy())->toBeInstanceOf(MuxPlaybackPolicy::class);
+    expect($service->getDefaultPlaybackPolicy()->isPublic())->toBeTrue();
 
     config(['mux.playback_policy' => 'signed']);
-    expect($this->service->getDefaultPlaybackPolicy())->toBeInstanceOf(MuxPlaybackPolicy::class);
-    expect($this->service->getDefaultPlaybackPolicy()->isSigned())->toBeTrue();
+    expect($service->getDefaultPlaybackPolicy())->toBeInstanceOf(MuxPlaybackPolicy::class);
+    expect($service->getDefaultPlaybackPolicy()->isSigned())->toBeTrue();
 });
 
 test('returns the default playback modifiers', function () {
+    $service = $this->app->make(MuxService::class);
+
     config(['mux.playback_modifiers' => null]);
-    expect($this->service->getDefaultPlaybackModifiers())->toBeArray()->toHaveCount(0);
+    expect($service->getDefaultPlaybackModifiers())->toBeArray()->toHaveCount(0);
 
     config(['mux.playback_modifiers' => []]);
-    expect($this->service->getDefaultPlaybackModifiers())->toBeArray()->toHaveCount(0);
+    expect($service->getDefaultPlaybackModifiers())->toBeArray()->toHaveCount(0);
 
     config(['mux.playback_modifiers' => ['width' => 100, 'height' => 100]]);
-    expect($this->service->getDefaultPlaybackModifiers())->toEqual(['width' => 100, 'height' => 100]);
+    expect($service->getDefaultPlaybackModifiers())->toEqual(['width' => 100, 'height' => 100]);
 });
 
 test('sends API request to list assets', function () {
+    $service = $this->app->make(MuxService::class);
+
     $this->guzzler->expects($this->once())
         ->ray()
         ->get('https://api.mux.com/video/v1/assets')
@@ -152,7 +170,7 @@ test('sends API request to list assets', function () {
             ],
         ]);
 
-    $muxAssets = $this->service->listMuxAssets();
+    $muxAssets = $service->listMuxAssets();
 
     $this->guzzler->assertHistoryCount(1);
 
@@ -165,6 +183,8 @@ test('sends API request to list assets', function () {
 });
 
 test('paginates API request to list all assets', function () {
+    $service = $this->app->make(MuxService::class);
+
     $this->guzzler->expects($this->once())
         ->ray()
         ->get('https://api.mux.com/video/v1/assets')
@@ -273,7 +293,7 @@ test('paginates API request to list all assets', function () {
             'data' => [],
         ]);
 
-    $muxAssets = $this->service->listMuxAssets(limit: 0);
+    $muxAssets = $service->listMuxAssets(limit: 0);
 
     $this->guzzler->assertHistoryCount(3);
 

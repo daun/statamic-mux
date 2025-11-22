@@ -171,4 +171,27 @@ return [
         'queue' => env('MUX_QUEUE', 'default'),
 
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Logging
+    |--------------------------------------------------------------------------
+    |
+    | Configure logging for the addon by writing to a custom channel defined in
+    | your app's `logging` config, or use the default 'mux' channel.
+    |
+    | Set a minimum log level to control the verbosity of logs:
+    | debug, info, notice, warning, error, critical, alert, emergency
+    |
+    */
+
+    'logging' => [
+
+        'enabled' => env('MUX_LOG_ENABLED', true),
+
+        'channel' => env('MUX_LOG_CHANNEL', 'mux'),
+
+        'level' => env('MUX_LOG_LEVEL', 'notice'),
+
+    ],
 ];
