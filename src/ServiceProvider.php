@@ -76,7 +76,8 @@ class ServiceProvider extends AddonServiceProvider
                 $app['config']->get('mux.logging.channel', 'mux'),
                 (bool) $app['config']->get('mux.logging.enabled', true),
             );
-            return $logger->resolveChannel();
+
+            return $logger->resolveStack();
         });
 
         $this->app->afterResolving(LoggerInterface::class, function ($logger) {

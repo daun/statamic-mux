@@ -36,6 +36,7 @@ it('respects the channel from the config', function () {
 
     config()->set('mux.logging.enabled', true);
     config()->set('mux.logging.channel', 'mux-in-memory');
+    config()->set('logging.channels.mux', null);
     config()->set('logging.channels.mux-in-memory', [
         'driver' => 'in-memory',
     ]);

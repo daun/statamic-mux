@@ -16,7 +16,7 @@ class Logger
         $this->registerStack();
     }
 
-    public function resolveChannel(): PsrLogger
+    public function resolveStack(): PsrLogger
     {
         if (! $this->enabled) {
             return new NullLogger;
@@ -24,6 +24,19 @@ class Logger
 
         try {
             return $this->log->channel('mux_stack');
+        } catch (\Throwable $e) {
+            return $this->log; // default app logger
+        }
+    }
+
+    public function resolveChannel(): PsrLogger
+    {
+        if (! $this->enabled) {
+            return new NullLogger;
+        }
+
+        try {
+            return $this->log->channel($this->channel);
         } catch (\Throwable $e) {
             return $this->log; // default app logger
         }
