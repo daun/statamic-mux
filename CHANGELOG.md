@@ -2,7 +2,8 @@
 
 ## [2.0.0] - 2025-11-22
 
-- Add configurable logging for improved troubleshooting
+- Add configurable logging for simpler troubleshooting
+- Add debug command for ensuring correct configuration
 - Remove support for Laravel 9 and PHP 8.1 (breaking change)
 
 ## [1.8.0] - 2025-11-15
