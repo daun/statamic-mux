@@ -93,7 +93,13 @@ it('uploads new videos', function () {
         ->expectsOutputToContain('✓ Queued 1 videos for background upload, skipped 0 videos')
         ->assertSuccessful();
 
-    Queue::assertPushed(CreateMuxAssetJob::class, 1);
+    Queue::assertPushed(CreateMuxAssetJob::class, function ($job) use ($video) {
+        $class = new \ReflectionClass($job);
+        $asset = $class->getProperty('asset')->getValue($job);
+        $force = $class->getProperty('force')->getValue($job);
+
+        return $asset->id() === $video->id() && $force === false;
+    });
 });
 
 it('uploads new videos in sync mode', function () {
@@ -163,7 +169,13 @@ it('reuploads existing videos with force flag', function () {
         ->expectsOutputToContain('✓ Queued 1 videos for background upload, skipped 0 videos')
         ->assertSuccessful();
 
-    Queue::assertPushed(CreateMuxAssetJob::class, 1);
+    Queue::assertPushed(CreateMuxAssetJob::class, function ($job) use ($video) {
+        $class = new \ReflectionClass($job);
+        $asset = $class->getProperty('asset')->getValue($job);
+        $force = $class->getProperty('force')->getValue($job);
+
+        return $asset->id() === $video->id() && $force === true;
+    });
 });
 
 it('reuploads existing videos with force flag in sync mode', function () {
@@ -373,6 +385,26 @@ it('handles mixed scenarios with uploads, reuploads, and skips', function () {
         ->expectsOutputToContain('✓ Queued 3 videos for background upload, skipped 0 videos')
         ->assertSuccessful();
 
+    // Verify 1 job with force=false (new video)
+    Queue::assertPushed(CreateMuxAssetJob::class, function ($job) use ($newVideo) {
+        $class = new \ReflectionClass($job);
+        $asset = $class->getProperty('asset')->getValue($job);
+        $force = $class->getProperty('force')->getValue($job);
+
+        return $asset->id() === $newVideo->id() && $force === false;
+    });
+
+    // Verify 2 jobs with force=true (existing videos)
+    Queue::assertPushed(CreateMuxAssetJob::class, function ($job) use ($existingVideo, $reuploadVideo) {
+        $class = new \ReflectionClass($job);
+        $asset = $class->getProperty('asset')->getValue($job);
+        $force = $class->getProperty('force')->getValue($job);
+
+        return $force === true
+            && ($asset->id() === $existingVideo->id() || $asset->id() === $reuploadVideo->id());
+    });
+
+    // Verify total count
     Queue::assertPushed(CreateMuxAssetJob::class, 3);
 });
 
