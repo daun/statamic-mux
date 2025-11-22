@@ -293,7 +293,7 @@ test('paginates API request to list all assets', function () {
             'data' => [],
         ]);
 
-    $muxAssets = $service->listMuxAssets(all: true);
+    $muxAssets = $this->service->listMuxAssets(limit: 0);
 
     $this->guzzler->assertHistoryCount(3);
 
