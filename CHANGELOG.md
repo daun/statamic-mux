@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.8.0] - 2025-11-15
+
+- Add option to lazyload web component scripts
+
 ## [1.7.0] - 2025-11-15
 
 - Add option to optimize storage by replacing original video with placeholder
@@ -108,6 +112,7 @@
 
 - Beta release
 
+[1.8.0]: https://github.com/daun/statamic-mux/releases/tag/1.8.0
 [1.7.0]: https://github.com/daun/statamic-mux/releases/tag/1.7.0
 [1.6.0]: https://github.com/daun/statamic-mux/releases/tag/1.6.0
 [1.5.3]: https://github.com/daun/statamic-mux/releases/tag/1.5.3
