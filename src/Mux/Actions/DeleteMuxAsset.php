@@ -76,8 +76,6 @@ class DeleteMuxAsset
 
             throw new \Exception("Error deleting asset from Mux: {$th->getMessage()}", previous: $th);
         }
-
-        return false;
     }
 
     /**
