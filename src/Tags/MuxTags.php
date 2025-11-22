@@ -109,7 +109,7 @@ class MuxTags extends Tags
         } catch (\Throwable $th) {
             Log::error(
                 "Error generating data for Mux Antlers tag: {$th->getMessage()}",
-                ['asset' => $asset->id(), 'mux_id' => $muxId, 'exception' => $th],
+                ['asset' => $asset->id(), 'mux_id' => $muxId ?? null, 'exception' => $th],
             );
         }
 

@@ -111,7 +111,7 @@ class MuxUrls
      */
     public function timestamp(int|string|null $expiration = null): int
     {
-        $expiration = $expiration ?? $this->defaultExpiration ?? 0;
+        $expiration = $expiration ?? $this->defaultExpiration;
 
         $interval = match (true) {
             is_string($expiration) => CarbonInterval::make($expiration),
