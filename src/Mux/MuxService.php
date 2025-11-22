@@ -107,12 +107,12 @@ class MuxService
     /**
      * List existing Mux assets
      */
-    public function listMuxAssets(int $limit = 100, int $page = 1, bool $all = false)
+    public function listMuxAssets(int $limit = 100, int $page = 1)
     {
-        // Paginate to fetch all assets
-        if ($all) {
+        if ($limit <= 0) {
             $assets = collect();
             $new = null;
+            $page = 1;
 
             do {
                 $new = $this->api->assets()->listAssets(100, $page)->getData();
