@@ -86,7 +86,7 @@ class UploadCommand extends Command
         );
 
         if ($assets->isEmpty()) {
-            $this->line("No videos found in containers: <name>{$this->containers->implode(', ')}</name>");
+            $this->line("No videos found in containers: <name>{$this->containers->map->handle()->implode(', ')}</name>");
 
             return;
         }
