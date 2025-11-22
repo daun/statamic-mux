@@ -82,7 +82,8 @@ return [
 ## Test Mode
 
 Mux offers a test mode for evaluating their service without incurring charges for storage or streaming.
-All videos uploaded in test mode are watermarked and deleted after 24 hours.
+All videos uploaded in test mode are watermarked and deleted after 24 hours. This is recommended during
+initial setup and on development machines.
 
 ```php
 return [
@@ -179,7 +180,7 @@ streaming and downloading the full video.
 
 Any videos shorter than the defined placeholder length will keep the original.
 
-Note that this feature requires a [queue worker](https://laravel.com/docs/12.x/queues#running-the-queue-worker)
+Note that this feature requires a [queue worker](https://laravel.com/docs/queues#running-the-queue-worker)
 to be running, as the video processing can take some time depending on the file size.
 
 ```php
@@ -216,6 +217,39 @@ return [
         'connection' => env('MUX_QUEUE_CONNECTION', null), // [!code focus]
 
         'queue' => env('MUX_QUEUE', null), // [!code focus]
+
+    ],
+];
+```
+
+## Logging
+
+Configure the output and verbosity of the addon's logs.
+
+For troubleshooting uploads and getting insight into the processing of video files,
+you can increase the log level to `debug` temporarily. Make sure to set it back to
+`notice` or `warning` in production to avoid excessive log output.
+
+The addon creates its own log channel, writing to `storage/logs/mux.log` and
+rotating biweekly. You can customize the log channel by either defining a `mux`
+channel of your own in `config/logging.php` or telling the addon to use a
+different channel entirely.
+
+```php
+return [
+    /*
+    |--------------------------------------------------------------------------
+    | Logging
+    |--------------------------------------------------------------------------
+    */
+
+    'logging' => [
+
+        'enabled' => env('MUX_LOG_ENABLED', true),
+
+        'channel' => env('MUX_LOG_CHANNEL', 'mux'), // [!code focus]
+
+        'level' => env('MUX_LOG_LEVEL', env('LOG_LEVEL', 'debug')), // [!code focus]
 
     ],
 ];

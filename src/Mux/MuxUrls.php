@@ -4,10 +4,10 @@ namespace Daun\StatamicMux\Mux;
 
 use Carbon\Carbon;
 use Carbon\CarbonInterval;
+use Daun\StatamicMux\Facades\Log;
 use Daun\StatamicMux\Mux\Enums\MuxAudience;
 use Daun\StatamicMux\Support\URL;
 use Firebase\JWT\JWT;
-use Illuminate\Support\Facades\Log;
 
 class MuxUrls
 {
@@ -56,11 +56,18 @@ class MuxUrls
     {
         $token = $this->token($playbackId, $audience, $params, $expiration);
 
-        if ($token) {
-            return URL::withQuery($url, ['token' => $token]);
-        } else {
-            return URL::withQuery($url, $params);
-        }
+        $signed = $token
+            ? URL::withQuery($url, ['token' => $token])
+            : URL::withQuery($url, $params);
+
+        Log::debug("Signed url: {$signed}", [
+            'url' => $url,
+            'token' => $token,
+            'audience' => $audience,
+            'params' => $params,
+        ]);
+
+        return $signed;
     }
 
     /**
@@ -88,10 +95,15 @@ class MuxUrls
         try {
             return JWT::encode($claims, base64_decode($this->privateKey), 'RS256');
         } catch (\Throwable $th) {
-            Log::error($th->getMessage());
+            Log::error("Error encoding url token: {$th->getMessage()}", [
+                'payload' => $claims,
+                'playback_id' => $playbackId,
+                'key_id' => $this->keyId,
+                'private_key' => $this->privateKey,
+            ]);
+
             return null;
         }
-
     }
 
     /**
@@ -99,7 +111,7 @@ class MuxUrls
      */
     public function timestamp(int|string|null $expiration = null): int
     {
-        $expiration = $expiration ?? $this->defaultExpiration ?? 0;
+        $expiration = $expiration ?? $this->defaultExpiration;
 
         $interval = match (true) {
             is_string($expiration) => CarbonInterval::make($expiration),

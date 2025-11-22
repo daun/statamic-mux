@@ -5,6 +5,7 @@ namespace Daun\StatamicMux\Mux;
 use Daun\StatamicMux\Concerns\ProcessesHooks;
 use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Data\MuxPlaybackId;
+use Daun\StatamicMux\Facades\Log;
 use Daun\StatamicMux\Mux\Actions\CreateMuxAsset;
 use Daun\StatamicMux\Mux\Actions\DeleteMuxAsset;
 use Daun\StatamicMux\Mux\Actions\RequestPlaybackId;
@@ -38,11 +39,11 @@ class MuxService
     }
 
     /**
-     * Whether the service is configured.
+     * Whether the Mux service is configured with the required credentials.
      */
     public function configured(): bool
     {
-        return config('mux.credentials.token_id') && config('mux.credentials.token_secret');
+        return $this->api->configured();
     }
 
     /**
@@ -50,12 +51,20 @@ class MuxService
      */
     public function createMuxAsset(Asset|string $asset, bool $force = false): ?string
     {
-        if (is_string($asset)) {
-            $asset = Assets::find($asset);
-        }
-
         if (! $asset) {
             return null;
+        }
+
+        if (is_string($asset)) {
+            if ($instance = Assets::find($asset)) {
+                $asset = $instance;
+            } else {
+                Log::warning('Cannot create Mux asset: local asset not found', [
+                    'asset' => $asset,
+                ]);
+
+                return null;
+            }
         }
 
         return $this->app->make(CreateMuxAsset::class)->handle($asset, $force);
@@ -66,12 +75,20 @@ class MuxService
      */
     public function updateMuxAsset(Asset|string $asset): bool
     {
-        if (is_string($asset)) {
-            $asset = Assets::find($asset);
-        }
-
         if (! $asset) {
             return false;
+        }
+
+        if (is_string($asset)) {
+            if ($instance = Assets::find($asset)) {
+                $asset = $instance;
+            } else {
+                Log::warning('Cannot update Mux asset: local asset not found', [
+                    'asset' => $asset,
+                ]);
+
+                return false;
+            }
         }
 
         return $this->app->make(UpdateMuxAsset::class)->handle($asset);
@@ -98,6 +115,11 @@ class MuxService
         if ($muxId && $this->api->assetExists($muxId)) {
             return true;
         } else {
+            Log::notice('Asset does not exist on Mux, clearing stale local data', [
+                'asset' => $asset->id(),
+                'mux_id' => $muxId,
+            ]);
+
             MuxAsset::fromAsset($asset)->clear()->save();
 
             return false;
@@ -107,18 +129,18 @@ class MuxService
     /**
      * List existing Mux assets
      */
-    public function listMuxAssets(int $limit = 100, int $page = 1, bool $all = false)
+    public function listMuxAssets(int $limit = 100, int $page = 1)
     {
-        // Paginate to fetch all assets
-        if ($all) {
+        if ($limit <= 0) {
             $assets = collect();
             $new = null;
+            $page = 1;
 
             do {
                 $new = $this->api->assets()->listAssets(100, $page)->getData();
                 $assets->push(...$new);
                 $page++;
-            } while ($new !== [] && ($limit <= 0 || $assets->count() < $limit));
+            } while (count($new ?? []));
 
             return $assets;
         }

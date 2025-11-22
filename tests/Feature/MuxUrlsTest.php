@@ -45,7 +45,7 @@ test('token returns string', function () {
 });
 
 test('token returns null for bad private keys', function () {
-    config(['mux.signing_key.private_key' => 'bad-key']);
+    config(['mux.signing_key.private_key' => 'bad-private-key']);
     $urls = $this->app->make(MuxUrls::class);
 
     expect($urls->token('playback-id', MuxAudience::Gif))->toBeNull();

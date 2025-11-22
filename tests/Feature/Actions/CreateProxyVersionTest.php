@@ -33,7 +33,7 @@ it('ignores non-video asset', function () {
     $this->createProxyVersion->shouldNotReceive('createClipFromAsset');
 
     $asset = $this->jpg;
-    expect($this->createProxyVersion->canHandle($asset))->toBeFalse();
+    expect($this->createProxyVersion->shouldHandle($asset))->toBeFalse();
 
     $result = $this->createProxyVersion->handle($asset);
 
@@ -45,7 +45,7 @@ it('ignores non-mp4 videos', function () {
     $this->createProxyVersion->shouldNotReceive('createClipFromAsset');
 
     $asset = $this->m4a;
-    expect($this->createProxyVersion->canHandle($asset))->toBeFalse();
+    expect($this->createProxyVersion->shouldHandle($asset))->toBeFalse();
 
     $result = $this->createProxyVersion->handle($asset);
 
@@ -57,7 +57,7 @@ it('ignores short videos', function () {
     $this->createProxyVersion->shouldNotReceive('createClipFromAsset');
 
     $asset = $this->shortMp4;
-    expect($this->createProxyVersion->canHandle($asset))->toBeFalse();
+    expect($this->createProxyVersion->shouldHandle($asset))->toBeFalse();
 
     $result = $this->createProxyVersion->handle($asset);
 
@@ -70,7 +70,7 @@ it('ignores videos without mux asset', function () {
     $this->createProxyVersion->shouldNotReceive('createClipFromAsset');
 
     $asset = $this->mp4;
-    expect($this->createProxyVersion->canHandle($asset))->toBeFalse();
+    expect($this->createProxyVersion->shouldHandle($asset))->toBeFalse();
 
     $result = $this->createProxyVersion->handle($asset);
 
@@ -86,7 +86,7 @@ it('handles videos with mux asset', function () {
     $asset->set('mux', ['id' => 123]);
     $asset->save();
 
-    expect($this->createProxyVersion->canHandle($asset))->toBeTrue();
+    expect($this->createProxyVersion->shouldHandle($asset))->toBeTrue();
 });
 
 it('creates a clip from existing mux asset', function () {

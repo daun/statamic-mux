@@ -31,6 +31,14 @@ test('creates config from constructor arguments', function () {
     expect($api->assets()->getConfig()->getDebug())->toBeTrue();
 });
 
+test('returns the configuration state', function () {
+    $client = new Client;
+    expect((new MuxApi($client, '', ''))->configured())->toBeFalse();
+    expect((new MuxApi($client, '', 'token-secret'))->configured())->toBeFalse();
+    expect((new MuxApi($client, 'token-id', ''))->configured())->toBeFalse();
+    expect((new MuxApi($client, 'token-id', 'token-secret'))->configured())->toBeTrue();
+});
+
 test('returns a configured AssetsApi instance', function () {
     expect($this->api->assets())->toBeInstanceOf(AssetsApi::class);
     expect($this->api->assets()->getConfig())->toBe($this->api->config());
