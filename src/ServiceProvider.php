@@ -20,6 +20,7 @@ use Statamic\Statamic;
 class ServiceProvider extends AddonServiceProvider
 {
     protected $commands = [
+        Commands\DebugCommand::class,
         Commands\MirrorCommand::class,
         Commands\PruneCommand::class,
         Commands\UploadCommand::class,
