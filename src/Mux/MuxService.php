@@ -140,7 +140,7 @@ class MuxService
                 $new = $this->api->assets()->listAssets(100, $page)->getData();
                 $assets->push(...$new);
                 $page++;
-            } while ($new !== [] && ($limit <= 0 || $assets->count() < $limit));
+            } while (count($new ?? []));
 
             return $assets;
         }
