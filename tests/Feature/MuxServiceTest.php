@@ -39,19 +39,19 @@ test('returns the configuration state when missing id and secret', function () {
 });
 
 test('returns the configuration state when missing id', function () {
-    config(['mux.credentials.token_id' => null, 'mux.credentials.token_secret' => 'secret']);
+    config(['mux.credentials.token_id' => null, 'mux.credentials.token_secret' => 'token-secret']);
     $service = $this->app->make(MuxService::class);
     expect($service->configured())->toBeFalse();
 });
 
 test('returns the configuration state when missing secret', function () {
-    config(['mux.credentials.token_id' => 'id', 'mux.credentials.token_secret' => null]);
+    config(['mux.credentials.token_id' => 'token-id', 'mux.credentials.token_secret' => null]);
     $service = $this->app->make(MuxService::class);
     expect($service->configured())->toBeFalse();
 });
 
 test('returns the configuration state when correct', function () {
-    config(['mux.credentials.token_id' => 'id', 'mux.credentials.token_secret' => 'secret']);
+    config(['mux.credentials.token_id' => 'token-id', 'mux.credentials.token_secret' => 'token-secret']);
     $service = $this->app->make(MuxService::class);
     expect($service->configured())->toBeTrue();
 });
