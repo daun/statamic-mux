@@ -66,7 +66,7 @@ class UploadCommand extends Command
         if ($this->container) {
             $container = AssetContainer::find($this->container);
             if ($container) {
-                $this->containers = collect($container);
+                $this->containers = collect([$container]);
             } else {
                 $this->error("Asset container '{$this->container}' not found");
 

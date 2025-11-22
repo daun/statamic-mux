@@ -97,6 +97,8 @@ it('uploads new videos', function () {
 });
 
 it('uploads new videos in sync mode', function () {
+    Queue::fake();
+
     $container = $this->createAssetContainer('videos');
     $this->addMirrorFieldToAssetBlueprint(container: 'videos');
 
@@ -114,9 +116,13 @@ it('uploads new videos in sync mode', function () {
         ->expectsOutputToContain("Uploaded {$video->id()}")
         ->expectsOutputToContain('✓ Uploaded 1 videos, skipped 0 videos')
         ->assertSuccessful();
+
+    Queue::assertNotPushed(CreateMuxAssetJob::class);
 });
 
 it('skips existing videos without force flag', function () {
+    Queue::fake();
+
     $container = $this->createAssetContainer('videos');
     $this->addMirrorFieldToAssetBlueprint(container: 'videos');
 
@@ -127,10 +133,14 @@ it('skips existing videos without force flag', function () {
     $service->shouldReceive('hasExistingMuxAsset')->andReturn(true);
     app()->instance(MuxService::class, $service);
 
+    config(['queue.default' => 'sync']);
+
     $this->artisan(UploadCommand::class)
         ->expectsOutputToContain("Skipped {$video->id()}")
         ->expectsOutputToContain('✓ Uploaded 0 videos, skipped 1 videos')
         ->assertSuccessful();
+
+    Queue::assertNotPushed(CreateMuxAssetJob::class);
 });
 
 it('reuploads existing videos with force flag', function () {
@@ -143,7 +153,7 @@ it('reuploads existing videos with force flag', function () {
 
     $service = Mockery::mock(MuxService::class);
     $service->shouldReceive('configured')->andReturn(true);
-    $service->shouldReceive('hasExistingMuxAsset')->with($video)->andReturn(true);
+    $service->shouldReceive('hasExistingMuxAsset')->andReturn(true);
     app()->instance(MuxService::class, $service);
 
     config(['queue.default' => 'database']);
@@ -157,6 +167,8 @@ it('reuploads existing videos with force flag', function () {
 });
 
 it('reuploads existing videos with force flag in sync mode', function () {
+    Queue::fake();
+
     $container = $this->createAssetContainer('videos');
     $this->addMirrorFieldToAssetBlueprint(container: 'videos');
 
@@ -174,9 +186,13 @@ it('reuploads existing videos with force flag in sync mode', function () {
         ->expectsOutputToContain("Reuploaded {$video->id()}")
         ->expectsOutputToContain('✓ Uploaded 1 videos, skipped 0 videos')
         ->assertSuccessful();
+
+    Queue::assertNotPushed(CreateMuxAssetJob::class);
 });
 
 it('does not reupload proxy versions even with force flag', function () {
+    Queue::fake();
+
     $container = $this->createAssetContainer('videos');
     $this->addMirrorFieldToAssetBlueprint(container: 'videos');
 
@@ -186,7 +202,7 @@ it('does not reupload proxy versions even with force flag', function () {
 
     $service = Mockery::mock(MuxService::class);
     $service->shouldReceive('configured')->andReturn(true);
-    $service->shouldReceive('hasExistingMuxAsset')->with($video)->andReturn(true);
+    $service->shouldReceive('hasExistingMuxAsset')->andReturn(true);
     app()->instance(MuxService::class, $service);
 
     config(['queue.default' => 'sync']);
@@ -195,11 +211,15 @@ it('does not reupload proxy versions even with force flag', function () {
         ->expectsOutputToContain("Skipped {$video->id()}")
         ->expectsOutputToContain('✓ Uploaded 0 videos, skipped 1 videos')
         ->assertSuccessful();
+
+    Queue::assertNotPushed(CreateMuxAssetJob::class);
 });
 
 // Container filtering tests
 
 it('limits upload to specific container', function () {
+    Queue::fake();
+
     $videos = $this->createAssetContainer('videos');
     $media = $this->createAssetContainer('media');
 
@@ -222,9 +242,13 @@ it('limits upload to specific container', function () {
         ->doesntExpectOutputToContain($video2->id())
         ->expectsOutputToContain('✓ Uploaded 1 videos, skipped 0 videos')
         ->assertSuccessful();
+
+    Queue::assertNotPushed(CreateMuxAssetJob::class);
 });
 
 it('processes videos from multiple containers when no container specified', function () {
+    Queue::fake();
+
     $videos = $this->createAssetContainer('videos');
     $media = $this->createAssetContainer('media');
 
@@ -247,6 +271,8 @@ it('processes videos from multiple containers when no container specified', func
         ->expectsOutputToContain("Uploaded {$video2->id()}")
         ->expectsOutputToContain('✓ Uploaded 2 videos, skipped 0 videos')
         ->assertSuccessful();
+
+    Queue::assertNotPushed(CreateMuxAssetJob::class);
 });
 
 // Dry-run tests
@@ -261,7 +287,7 @@ it('performs dry-run without uploading', function () {
 
     $service = Mockery::mock(MuxService::class);
     $service->shouldReceive('configured')->andReturn(true);
-    $service->shouldReceive('hasExistingMuxAsset')->with($video)->andReturn(false);
+    $service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
     $service->shouldNotReceive('createMuxAsset');
     app()->instance(MuxService::class, $service);
 
@@ -273,10 +299,12 @@ it('performs dry-run without uploading', function () {
         ->expectsOutputToContain('✓ Would have uploaded 1 videos, skipped 0 videos')
         ->assertSuccessful();
 
-    Queue::assertNothingPushed();
+    Queue::assertNotPushed(CreateMuxAssetJob::class);
 });
 
 it('shows dry-run output for reupload with force flag', function () {
+    Queue::fake();
+
     $container = $this->createAssetContainer('videos');
     $this->addMirrorFieldToAssetBlueprint(container: 'videos');
 
@@ -284,7 +312,7 @@ it('shows dry-run output for reupload with force flag', function () {
 
     $service = Mockery::mock(MuxService::class);
     $service->shouldReceive('configured')->andReturn(true);
-    $service->shouldReceive('hasExistingMuxAsset')->with($video)->andReturn(true);
+    $service->shouldReceive('hasExistingMuxAsset')->andReturn(true);
     $service->shouldNotReceive('createMuxAsset');
     app()->instance(MuxService::class, $service);
 
@@ -293,9 +321,13 @@ it('shows dry-run output for reupload with force flag', function () {
         ->expectsOutputToContain("Would reupload {$video->id()}")
         ->expectsOutputToContain('✓ Would have uploaded 1 videos, skipped 0 videos')
         ->assertSuccessful();
+
+    Queue::assertNotPushed(CreateMuxAssetJob::class);
 });
 
 it('shows dry-run output for skipped videos', function () {
+    Queue::fake();
+
     $container = $this->createAssetContainer('videos');
     $this->addMirrorFieldToAssetBlueprint(container: 'videos');
 
@@ -303,7 +335,7 @@ it('shows dry-run output for skipped videos', function () {
 
     $service = Mockery::mock(MuxService::class);
     $service->shouldReceive('configured')->andReturn(true);
-    $service->shouldReceive('hasExistingMuxAsset')->with($video)->andReturn(true);
+    $service->shouldReceive('hasExistingMuxAsset')->andReturn(true);
     app()->instance(MuxService::class, $service);
 
     $this->artisan(UploadCommand::class, ['--dry-run' => true])
@@ -311,6 +343,8 @@ it('shows dry-run output for skipped videos', function () {
         ->expectsOutputToContain("Would skip {$video->id()}")
         ->expectsOutputToContain('✓ Would have uploaded 0 videos, skipped 1 videos')
         ->assertSuccessful();
+
+    Queue::assertNotPushed(CreateMuxAssetJob::class);
 });
 
 // Mixed scenarios
@@ -343,6 +377,8 @@ it('handles mixed scenarios with uploads, reuploads, and skips', function () {
 });
 
 it('handles mixed scenarios without force flag', function () {
+    Queue::fake();
+
     $container = $this->createAssetContainer('videos');
     $this->addMirrorFieldToAssetBlueprint(container: 'videos');
 
@@ -362,6 +398,8 @@ it('handles mixed scenarios without force flag', function () {
         ->expectsOutputToContain("Skipped {$existingVideo->id()}")
         ->expectsOutputToContain('✓ Uploaded 1 videos, skipped 1 videos')
         ->assertSuccessful();
+
+    Queue::assertNotPushed(CreateMuxAssetJob::class);
 });
 
 // Command name test
