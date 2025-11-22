@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.0.0] - 2025-11-22
+
+- Add configurable logging for improved troubleshooting
+- Remove support for Laravel 9 and PHP 8.1 (breaking change)
+
 ## [1.8.0] - 2025-11-15
 
 - Add option to lazyload web component scripts
@@ -112,6 +117,7 @@
 
 - Beta release
 
+[2.0.0]: https://github.com/daun/statamic-mux/releases/tag/2.0.0
 [1.8.0]: https://github.com/daun/statamic-mux/releases/tag/1.8.0
 [1.7.0]: https://github.com/daun/statamic-mux/releases/tag/1.7.0
 [1.6.0]: https://github.com/daun/statamic-mux/releases/tag/1.6.0
