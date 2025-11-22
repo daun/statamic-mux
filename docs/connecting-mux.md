@@ -22,8 +22,8 @@ MUX_TOKEN_SECRET=YjNiN2ZhOWItZWZkNi00NzIzLWJlZDItMDMyYjA0ZTYxNDg4/l0eZQPmr1S+z+b
 ## Test Mode
 
 Mux offers a test mode for evaluating their service without incurring charges for storage or streaming.
-All videos uploaded in test mode are watermarked and deleted after 24 hours. You can enable test mode
-from an environment variable.
+All videos uploaded in test mode are watermarked and deleted after 24 hours. This is recommended during
+initial setup and on development machines. You can enable test mode from an environment variable.
 
 ```env
 MUX_TEST_MODE=true

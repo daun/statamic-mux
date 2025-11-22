@@ -47,6 +47,18 @@ one of the available [Artisan Commands](/commands), e.g.:
 php please mux:upload
 ```
 
+## Troubleshooting
+
+If videos are not uploading as expected, check the addon's error logs in `storage/logs/mux.log` for
+any issues. You can also temporarily increase the global or addon log level to `debug` to get more insight
+into the queueing and processing of video files. See the configuration docs on
+[Logging](/configuration#logging) for details and more options.
+
+```ini
+LOG_LEVEL=debug        # global log level
+MUX_LOG_LEVEL=debug    # addon log level
+```
+
 ## Optimizing Storage
 
 By default, the addon will keep the original video files on your configured asset disk. In general,
