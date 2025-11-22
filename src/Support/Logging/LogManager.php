@@ -2,14 +2,14 @@
 
 namespace Daun\StatamicMux\Support\Logging;
 
-use Illuminate\Log\LogManager;
+use Illuminate\Log\LogManager as IlluminateLog;
 use Psr\Log\LoggerInterface as PsrLogger;
 use Psr\Log\NullLogger;
 
-class Logger
+class LogManager
 {
     public function __construct(
-        protected LogManager $log,
+        protected IlluminateLog $log,
         protected ?string $channel = null,
         protected bool $enabled = true,
     ) {
@@ -54,7 +54,7 @@ class Logger
                 'level' => config('mux.logging.level', 'warning'),
                 'days' => config('logging.channels.daily.days', 14),
                 'replace_placeholders' => true,
-                'tap' => [Scrubber::class],
+                'tap' => [LogScrubber::class],
             ]);
         }
 
@@ -72,7 +72,7 @@ class Logger
             'driver' => 'stack',
             'channels' => [$this->channel, 'mux_errors'],
             'ignore_exceptions' => false,
-            'tap' => [Scrubber::class],
+            'tap' => [LogScrubber::class],
         ]);
     }
 }

@@ -4,7 +4,7 @@ namespace Daun\StatamicMux\Support\Logging;
 
 use RedactSensitive\RedactSensitiveProcessor;
 
-final class Scrubber
+final class LogScrubber
 {
     protected array $sensitiveKeys = [
         'token_id' => 4,

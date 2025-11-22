@@ -1,7 +1,7 @@
 <?php
 
-use Daun\StatamicMux\Support\Logging\Logger as PackageLogger;
-use Illuminate\Log\LogManager;
+use Daun\StatamicMux\Support\Logging\LogManager;
+use Illuminate\Log\LogManager as IlluminateLog;
 use Illuminate\Support\Facades\Log;
 use Monolog\Handler\TestHandler;
 use Psr\Log\NullLogger;
@@ -9,12 +9,12 @@ use RedactSensitive\RedactSensitiveProcessor;
 use Tests\Support\InMemoryLogger;
 
 /**
- * @return PackageLogger
+ * @return LogManager
  */
-function makePackageLogger()
+function makeLogManager()
 {
-    return new PackageLogger(
-        app(LogManager::class),
+    return new LogManager(
+        app(IlluminateLog::class),
         config('mux.logging.channel', 'mux'),
         (bool) config('mux.logging.enabled', true),
     );
@@ -24,7 +24,7 @@ it('can be disabled from the config', function () {
     config()->set('mux.logging.enabled', false);
     config()->set('mux.logging.channel', 'mux');
 
-    $logger = makePackageLogger()->resolveChannel();
+    $logger = makeLogManager()->resolveChannel();
 
     expect($logger)->toBeInstanceOf(NullLogger::class);
 });
@@ -41,7 +41,7 @@ it('respects the channel from the config', function () {
         'driver' => 'in-memory',
     ]);
 
-    $logger = makePackageLogger()->resolveChannel();
+    $logger = makeLogManager()->resolveChannel();
 
     $logger->debug('mux channel message');
 
@@ -57,7 +57,7 @@ it('respects the level from the config', function () {
     config()->set('logging.channels.mux', null);
     config()->set('mux.logging.level', 'error');
 
-    makePackageLogger();
+    makeLogManager();
 
     expect(config('logging.channels.mux.level'))->toBe('error');
 });
@@ -66,7 +66,7 @@ it('redacts sensitive data from the output', function () {
     config()->set('mux.logging.enabled', true);
     config()->set('mux.logging.channel', 'mux');
 
-    $logger = makePackageLogger()->resolveChannel();
+    $logger = makeLogManager()->resolveChannel();
 
     // $laravelLogger is Illuminate\Log\Logger
     $ref = new \ReflectionClass($logger);

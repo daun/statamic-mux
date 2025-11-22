@@ -7,12 +7,12 @@ use Daun\StatamicMux\Mux\MuxClient;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Mux\MuxUrls;
 use Daun\StatamicMux\Placeholders\PlaceholderService;
-use Daun\StatamicMux\Support\Logging\Logger;
 use Daun\StatamicMux\Support\Logging\LoggerInterface;
+use Daun\StatamicMux\Support\Logging\LogManager;
 use Daun\StatamicMux\Support\Logging\LogStream;
 use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
-use Illuminate\Log\LogManager;
+use Illuminate\Log\LogManager as IlluminateLog;
 use Statamic\Facades\Permission;
 use Statamic\Providers\AddonServiceProvider;
 use Statamic\Statamic;
@@ -71,8 +71,8 @@ class ServiceProvider extends AddonServiceProvider
     protected function registerLogger()
     {
         $this->app->singleton(LoggerInterface::class, function (Application $app) {
-            $logger = new Logger(
-                $app->make(LogManager::class),
+            $logger = new LogManager(
+                $app->make(IlluminateLog::class),
                 $app['config']->get('mux.logging.channel', 'mux'),
                 (bool) $app['config']->get('mux.logging.enabled', true),
             );

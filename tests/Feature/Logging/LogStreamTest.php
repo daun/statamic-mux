@@ -1,9 +1,9 @@
 <?php
 
 use Daun\StatamicMux\Mux\MuxApi;
-use Daun\StatamicMux\Support\Logging\Logger as PackageLogger;
+use Daun\StatamicMux\Support\Logging\LogManager;
 use Daun\StatamicMux\Support\Logging\LogStream;
-use Illuminate\Log\LogManager;
+use Illuminate\Log\LogManager as IlluminateLog;
 use Illuminate\Support\Facades\Log;
 use Tests\Support\InMemoryLogger;
 
@@ -22,8 +22,8 @@ it('passes mux api debug output through the mux logger', function () {
         'driver' => 'in-memory',
     ]);
 
-    $logManager = app(LogManager::class);
-    $resolvedLogger = (new PackageLogger($logManager, 'mux-in-memory', true))->resolveChannel();
+    $logManager = app(IlluminateLog::class);
+    $resolvedLogger = (new LogManager($logManager, 'mux-in-memory', true))->resolveChannel();
 
     LogStream::register($resolvedLogger);
 
