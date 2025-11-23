@@ -3,7 +3,9 @@
 namespace Daun\StatamicMux\Support\Logging;
 
 use Daun\StatamicMux\Support\Logging\Processors\ContextScrubber;
+use Daun\StatamicMux\Support\Logging\Processors\ErrorForwarder;
 use Illuminate\Log\LogManager as IlluminateLog;
+use Monolog\Handler\WhatFailureGroupHandler;
 use Psr\Log\LoggerInterface as PsrLogger;
 use Psr\Log\NullLogger;
 
@@ -58,18 +60,17 @@ class LogManager
         }
 
         // 2) Passthrough channel to the app’s default, restricted to >= error
-        config()->set('logging.channels.mux_errors', [
-            ...config(
-                sprintf('logging.channels.%s', config('logging.default', 'stack')),
-                ['driver' => 'stack', 'channels' => ['single']]
-            ),
-            'level' => 'error',
+        config()->set('logging.channels.mux_forward_errors', [
+            'driver' => 'monolog',
+            'handler' => WhatFailureGroupHandler::class,
+            'with' => ['handlers' => []],
+            'tap' => [ErrorForwarder::class],
         ]);
 
         // 3) Final stack exposed by the package
         config()->set('logging.channels.mux_stack', [
             'driver' => 'stack',
-            'channels' => [$this->channel, 'mux_errors'],
+            'channels' => [$this->channel, 'mux_forward_errors'],
             'ignore_exceptions' => false,
             'tap' => [ContextScrubber::class],
         ]);
