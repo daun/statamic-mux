@@ -191,7 +191,7 @@ class ServiceProvider extends AddonServiceProvider
     protected function mergeConfig()
     {
         $filename = 'mux';
-        $origin = __DIR__."/../config/mux.php";
+        $origin = __DIR__.'/../config/mux.php';
 
         if ($this->config && file_exists($origin)) {
             $this->mergeConfigFrom($origin, $filename);

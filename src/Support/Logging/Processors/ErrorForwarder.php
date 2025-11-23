@@ -2,8 +2,6 @@
 
 namespace Daun\StatamicMux\Support\Logging\Processors;
 
-use RedactSensitive\RedactSensitiveProcessor;
-
 use Illuminate\Log\Logger;
 use Illuminate\Support\Facades\Log;
 use Monolog\Handler\FilterHandler;
