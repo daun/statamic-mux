@@ -2,6 +2,7 @@
 
 namespace Daun\StatamicMux\Support\Logging;
 
+use Daun\StatamicMux\Support\Logging\Processors\ContextScrubber;
 use Illuminate\Log\LogManager as IlluminateLog;
 use Psr\Log\LoggerInterface as PsrLogger;
 use Psr\Log\NullLogger;
@@ -72,7 +73,7 @@ class LogManager
             'driver' => 'stack',
             'channels' => [$this->channel, 'mux_errors'],
             'ignore_exceptions' => false,
-            'tap' => [LogScrubber::class],
+            'tap' => [ContextScrubber::class],
         ]);
     }
 }
