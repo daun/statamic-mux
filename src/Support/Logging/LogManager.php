@@ -50,12 +50,10 @@ class LogManager
         // the mux.logging.channel to something else.
         if (! config('logging.channels.mux')) {
             config()->set('logging.channels.mux', [
-                'driver' => 'daily',
+                'driver' => 'single',
                 'path' => storage_path('logs/mux.log'),
                 'level' => config('mux.logging.level', 'warning'),
-                'days' => config('logging.channels.daily.days', 14),
                 'replace_placeholders' => true,
-                'tap' => [LogScrubber::class],
             ]);
         }
 
