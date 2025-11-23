@@ -49,6 +49,7 @@ class ServiceProvider extends AddonServiceProvider
 
     public function register()
     {
+        $this->mergeConfig();
         $this->registerHooks();
         $this->registerLogger();
         $this->registerMuxApi();
@@ -182,6 +183,19 @@ class ServiceProvider extends AddonServiceProvider
         ], "{$filename}-config");
 
         return parent::bootConfig();
+    }
+
+    /**
+     * Merge config early to make it available during container resolution.
+     */
+    protected function mergeConfig()
+    {
+        $filename = 'mux';
+        $origin = __DIR__."/../config/mux.php";
+
+        if ($this->config && file_exists($origin)) {
+            $this->mergeConfigFrom($origin, $filename);
+        }
     }
 
     protected function publishViews(): self
