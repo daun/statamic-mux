@@ -66,7 +66,7 @@ it('redacts sensitive data from the output', function () {
     config()->set('mux.logging.enabled', true);
     config()->set('mux.logging.channel', 'mux');
 
-    $logger = makeLogManager()->resolveChannel();
+    $logger = makeLogManager()->resolveStack();
 
     // $laravelLogger is Illuminate\Log\Logger
     $ref = new \ReflectionClass($logger);
