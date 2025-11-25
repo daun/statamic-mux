@@ -14,7 +14,7 @@ trait GeneratesAssetData
      */
     protected function getAssetSettings(Asset $asset): array
     {
-        $result = $this->hooks('asset-settings', (object) ['asset' => $asset, 'settings' => []]);
+        $result = $this->hooks('asset-settings', ['asset' => $asset, 'settings' => []]);
 
         return $result->settings ?? [];
     }
@@ -42,7 +42,7 @@ trait GeneratesAssetData
             'external_id' => $asset->id(),
         ];
 
-        $result = $this->hooks('asset-meta', (object) ['asset' => $asset, 'meta' => $meta]);
+        $result = $this->hooks('asset-meta', ['asset' => $asset, 'meta' => $meta]);
 
         return $result->meta ?? [];
     }

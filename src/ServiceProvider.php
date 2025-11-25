@@ -10,8 +10,11 @@ use Daun\StatamicMux\Placeholders\PlaceholderService;
 use Daun\StatamicMux\Support\Logging\LoggerInterface;
 use Daun\StatamicMux\Support\Logging\LogManager;
 use GuzzleHttp\Client;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Log\LogManager as IlluminateLog;
+use Psr\Http\Message\RequestInterface;
 use Statamic\Facades\Permission;
 use Statamic\Providers\AddonServiceProvider;
 use Statamic\Statamic;
@@ -89,8 +92,10 @@ class ServiceProvider extends AddonServiceProvider
     protected function registerMuxApi()
     {
         $this->app->bind(MuxClient::class, function (Application $app) {
-            return new Client;
+            return new MuxClient;
         });
+
+        $this->app->alias(MuxClient::class, 'mux.client');
 
         $this->app->bind(MuxApi::class, function (Application $app) {
             return new MuxApi(
@@ -103,8 +108,6 @@ class ServiceProvider extends AddonServiceProvider
                 $app['config']->get('mux.video_quality', null),
             );
         });
-
-        $this->app->alias(MuxClient::class, 'mux.client');
 
         $this->app->alias(MuxApi::class, 'mux.api');
     }
@@ -119,6 +122,7 @@ class ServiceProvider extends AddonServiceProvider
                 $app['mux.placeholders'],
             );
         });
+
         $this->app->alias(MuxService::class, 'mux.service');
     }
 
@@ -131,6 +135,7 @@ class ServiceProvider extends AddonServiceProvider
                 $app['config']->get('mux.signing_key.expiration'),
             );
         });
+
         $this->app->alias(MuxUrls::class, 'mux.urls');
     }
 
