@@ -6,9 +6,9 @@ use Daun\StatamicMux\Concerns\GeneratesAssetData;
 use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Events\AssetUploadedToMux;
 use Daun\StatamicMux\Events\AssetUploadingToMux;
+use Daun\StatamicMux\Facades\Log;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
-use Illuminate\Support\Facades\Log;
 use Statamic\Assets\Asset;
 
 class CreateMuxAsset
@@ -25,19 +25,16 @@ class CreateMuxAsset
      */
     public function handle(Asset $asset, bool $force = false): ?string
     {
-        if (! $asset->isVideo()) {
-            return null;
-        }
-
-        if (MuxAsset::fromAsset($asset)->isProxy()) {
-            return null;
-        }
-
-        if (! $force && $this->service->hasExistingMuxAsset($asset)) {
+        if (! $this->shouldHandle($asset, $force)) {
             return null;
         }
 
         if (AssetUploadingToMux::dispatch($asset) === false) {
+            Log::debug(
+                'Canceled video upload to Mux via event listener',
+                ['asset' => $asset->id(), 'event' => 'AssetUploadingToMux'],
+            );
+
             return null;
         }
 
@@ -48,17 +45,47 @@ class CreateMuxAsset
                 $muxId = $this->uploadAssetToMux($asset);
             }
         } catch (\Throwable $th) {
-            Log::error($th->getMessage());
+            Log::error(
+                "Error uploading video to Mux: {$th->getMessage()}",
+                ['asset' => $asset->id(), 'exception' => $th],
+            );
 
-            throw new \Exception("Failed to upload video to Mux: {$th->getMessage()}");
+            throw new \Exception("Error uploading video to Mux: {$th->getMessage()}", previous: $th);
         }
 
         if ($muxId) {
+            Log::info(
+                'Video uploaded to Mux',
+                ['asset' => $asset->id(), 'mux_id' => $muxId],
+            );
+
             MuxAsset::fromAsset($asset)->clear()->setId($muxId)->save();
             AssetUploadedToMux::dispatch($asset, $muxId);
         }
 
         return $muxId;
+    }
+
+    /**
+     * Whether a Mux asset can be created for this asset.
+     */
+    protected function shouldHandle(Asset $asset, bool $force = false): bool
+    {
+        $skip = match (true) {
+            ! $asset->isVideo() => 'not a video asset',
+            MuxAsset::fromAsset($asset)->isProxy() => 'asset is a proxy',
+            ! $force && $this->service->hasExistingMuxAsset($asset) => 'asset already exists on Mux',
+            default => null,
+        };
+
+        if ($skip) {
+            Log::debug(
+                "Skipping upload of asset to Mux: {$skip}",
+                ['asset' => $asset->id(), 'reason' => $skip],
+            );
+        }
+
+        return ! $skip;
     }
 
     /**
@@ -68,19 +95,26 @@ class CreateMuxAsset
     {
         $filesystem = $asset->container()->disk()->filesystem()->getConfig();
 
+        $public = true;
+
         if (empty($filesystem['url'] ?? null)) {
-            return false;
+            $public = false;
         }
 
         if (($filesystem['visibility'] ?? null) !== 'public') {
-            return false;
+            $public = false;
         }
 
         if (app()->isLocal() && $filesystem['driver'] === 'local') {
-            return false;
+            $public = false;
         }
 
-        return true;
+        Log::debug(
+            'Asset is publicly accessible: '.($public ? 'yes' : 'no'),
+            ['asset' => $asset->id(), 'public' => $public, 'filesystem' => $filesystem],
+        );
+
+        return $public;
     }
 
     /**
@@ -91,15 +125,28 @@ class CreateMuxAsset
         $data = $this->getAssetData($asset) + $this->getAssetSettings($asset);
         $request = $this->api->createUploadRequest($data);
         $muxUpload = $this->api->directUploads()->createDirectUpload($request)->getData();
-        $uploadId = $muxUpload->getId();
+
+        Log::debug(
+            'Uploading asset to Mux via direct upload',
+            ['asset' => $asset->id(), 'upload_id' => $muxUpload->getId(), 'upload_url' => $muxUpload->getUrl()],
+        );
 
         $this->api->client()->put($muxUpload->getUrl(), [
             'headers' => ['Content-Type' => 'application/octet-stream'],
             'body' => $asset->stream(),
         ]);
 
-        $muxUpload = $this->api->directUploads()->getDirectUpload($uploadId)->getData();
+        $muxUpload = $this->api->directUploads()->getDirectUpload($muxUpload->getId())->getData();
         $muxId = $muxUpload?->getAssetId();
+
+        if (! $muxId) {
+            Log::error(
+                'Error retrieving Mux asset id from direct upload',
+                ['asset' => $asset->id(), 'upload_id' => $muxUpload?->getId(), 'response' => $muxUpload],
+            );
+
+            return null;
+        }
 
         return $muxId;
     }
@@ -112,8 +159,23 @@ class CreateMuxAsset
         $input = $this->api->input(['url' => $asset->absoluteUrl()]);
         $data = ['input' => $input] + $this->getAssetData($asset) + $this->getAssetSettings($asset);
         $request = $this->api->createAssetRequest($data);
-        $muxAssetResponse = $this->api->assets()->createAsset($request)->getData();
-        $muxId = $muxAssetResponse?->getId();
+
+        Log::debug(
+            'Uploading asset to Mux via public url',
+            ['asset' => $asset->id(), 'public_url' => $asset->absoluteUrl()],
+        );
+
+        $muxAsset = $this->api->assets()->createAsset($request)->getData();
+        $muxId = $muxAsset?->getId();
+
+        if (! $muxId) {
+            Log::error(
+                'Error retrieving Mux asset id from public url upload',
+                ['asset' => $asset->id(), 'response' => $muxAsset],
+            );
+
+            return null;
+        }
 
         return $muxId;
     }

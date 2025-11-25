@@ -6,7 +6,6 @@ use Closure;
 use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Facades\Mux;
 use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
 use Statamic\Facades\GraphQL;
 use Statamic\GraphQL\Types\JsonArgument;
@@ -119,7 +118,7 @@ class MuxMirrorType extends \Rebing\GraphQL\Support\Type
             'playback_modifiers' => [
                 'type' => GraphQL::type(JsonArgument::NAME),
                 'description' => 'Playback modifiers included in playback urls by default',
-                'resolve' => fn () => Arr::wrap(config('mux.playback_modifiers', [])),
+                'resolve' => fn () => Mux::getDefaultPlaybackModifiers(),
             ],
         ];
     }

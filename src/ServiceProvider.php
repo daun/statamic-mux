@@ -7,8 +7,10 @@ use Daun\StatamicMux\Mux\MuxClient;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Mux\MuxUrls;
 use Daun\StatamicMux\Placeholders\PlaceholderService;
-use GuzzleHttp\Client;
+use Daun\StatamicMux\Support\Logging\LoggerInterface;
+use Daun\StatamicMux\Support\Logging\LogManager;
 use Illuminate\Foundation\Application;
+use Illuminate\Log\LogManager as IlluminateLog;
 use Statamic\Facades\Permission;
 use Statamic\Providers\AddonServiceProvider;
 use Statamic\Statamic;
@@ -16,6 +18,7 @@ use Statamic\Statamic;
 class ServiceProvider extends AddonServiceProvider
 {
     protected $commands = [
+        Commands\DebugCommand::class,
         Commands\MirrorCommand::class,
         Commands\PruneCommand::class,
         Commands\UploadCommand::class,
@@ -44,7 +47,9 @@ class ServiceProvider extends AddonServiceProvider
 
     public function register()
     {
+        $this->mergeConfig();
         $this->registerHooks();
+        $this->registerLogger();
         $this->registerMuxApi();
         $this->registerMuxService();
         $this->registerUrlService();
@@ -63,25 +68,43 @@ class ServiceProvider extends AddonServiceProvider
         $this->app->instance('mux.hooks', collect());
     }
 
+    protected function registerLogger()
+    {
+        $this->app->singleton(LogManager::class, function (Application $app) {
+            return new LogManager(
+                $app->make(IlluminateLog::class),
+                $app['config']->get('mux.logging.channel', 'mux'),
+                (bool) $app['config']->get('mux.logging.enabled', true),
+            );
+        });
+
+        $this->app->singleton(LoggerInterface::class, function (Application $app) {
+            return $app->make(LogManager::class)->resolveStack();
+        });
+
+        $this->app->alias(LoggerInterface::class, 'mux.log');
+    }
+
     protected function registerMuxApi()
     {
         $this->app->bind(MuxClient::class, function (Application $app) {
-            return new Client;
+            return new MuxClient;
         });
+
+        $this->app->alias(MuxClient::class, 'mux.client');
 
         $this->app->bind(MuxApi::class, function (Application $app) {
             return new MuxApi(
                 $app['mux.client'],
                 $app['config']->get('mux.credentials.token_id'),
                 $app['config']->get('mux.credentials.token_secret'),
-                $app['config']->get('app.debug', false),
+                $app['config']->get('app.debug', false) || $app['config']->get('mux.logging.level') === 'debug',
                 $app['config']->get('mux.test_mode', false),
                 $app['config']->get('mux.playback_policy', null),
                 $app['config']->get('mux.video_quality', null),
             );
         });
 
-        $this->app->alias(MuxClient::class, 'mux.client');
         $this->app->alias(MuxApi::class, 'mux.api');
     }
 
@@ -95,6 +118,7 @@ class ServiceProvider extends AddonServiceProvider
                 $app['mux.placeholders'],
             );
         });
+
         $this->app->alias(MuxService::class, 'mux.service');
     }
 
@@ -107,6 +131,7 @@ class ServiceProvider extends AddonServiceProvider
                 $app['config']->get('mux.signing_key.expiration'),
             );
         });
+
         $this->app->alias(MuxUrls::class, 'mux.urls');
     }
 
@@ -157,6 +182,19 @@ class ServiceProvider extends AddonServiceProvider
         ], "{$filename}-config");
 
         return parent::bootConfig();
+    }
+
+    /**
+     * Merge config early to make it available during container resolution.
+     */
+    protected function mergeConfig()
+    {
+        $filename = 'mux';
+        $origin = __DIR__.'/../config/mux.php';
+
+        if ($this->config && file_exists($origin)) {
+            $this->mergeConfigFrom($origin, $filename);
+        }
     }
 
     protected function publishViews(): self

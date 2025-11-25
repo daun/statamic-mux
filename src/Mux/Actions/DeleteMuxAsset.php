@@ -5,9 +5,9 @@ namespace Daun\StatamicMux\Mux\Actions;
 use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Events\AssetDeletedFromMux;
 use Daun\StatamicMux\Events\AssetDeletingFromMux;
+use Daun\StatamicMux\Facades\Log;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Statamic\Assets\Asset;
 
@@ -24,12 +24,17 @@ class DeleteMuxAsset
     public function handle(Asset|string $asset): bool
     {
         if (! $asset) {
+            Log::notice(
+                'Error deleting Mux asset: no asset provided',
+                ['asset' => $asset],
+            );
+
             return false;
         }
 
         // Special case: delete Mux asset by its ID
         if (is_string($asset)) {
-            return $this->deleteOrphanedMuxAsset($asset);
+            return $this->deleteMuxAsset($asset);
         }
 
         // Delete Mux asset tied to local Statamic asset
@@ -41,22 +46,36 @@ class DeleteMuxAsset
     }
 
     /**
-     * Delete a standalone Mux asset (without associated local Statamic asset) by its ID
+     * Delete a Mux asset by its ID
      */
-    protected function deleteOrphanedMuxAsset(string $muxId): bool
+    protected function deleteMuxAsset(string $muxId): bool
     {
         try {
-            $muxAssetResponse = $this->api->assets()->getAsset($muxId)->getData();
-            if ($this->wasAssetCreatedByAddon($muxAssetResponse)) {
-                $this->api->assets()->deleteAsset($muxId);
+            if (! $this->wasAssetCreatedByAddon($muxId)) {
+                Log::notice(
+                    'Cannot delete Mux asset: asset was not created by addon',
+                    ['mux_id' => $muxId],
+                );
 
-                return true;
+                return false;
             }
-        } catch (\Throwable $th) {
-            Log::error($th->getMessage());
-        }
 
-        return false;
+            $this->api->assets()->deleteAsset($muxId);
+
+            Log::info(
+                'Deleted asset from Mux',
+                ['mux_id' => $muxId],
+            );
+
+            return true;
+        } catch (\Throwable $th) {
+            Log::error(
+                "Error deleting asset from Mux: {$th->getMessage()}",
+                ['mux_id' => $muxId, 'exception' => $th],
+            );
+
+            throw new \Exception("Error deleting asset from Mux: {$th->getMessage()}", previous: $th);
+        }
     }
 
     /**
@@ -74,19 +93,24 @@ class DeleteMuxAsset
         }
 
         if (AssetDeletingFromMux::dispatch($asset, $muxId) === false) {
+            Log::debug(
+                'Canceled Mux asset deletion via event listener',
+                ['asset' => $asset->id(), 'mux_id' => $muxId, 'event' => 'AssetDeletingFromMux'],
+            );
+
             return false;
         }
 
-        try {
-            $muxAssetResponse = $this->api->assets()->getAsset($muxId)->getData();
-            if ($this->wasAssetCreatedByAddon($muxAssetResponse)) {
-                $this->api->assets()->deleteAsset($muxId);
-            } else {
-                return false;
-            }
-        } catch (\Throwable $th) {
-            Log::error($th->getMessage());
+        $deleted = $this->deleteMuxAsset($muxId);
+
+        if (! $deleted) {
+            return false;
         }
+
+        Log::info(
+            'Deleted Mux asset connected to local asset',
+            ['asset' => $asset->id(), 'mux_id' => $muxId],
+        );
 
         AssetDeletedFromMux::dispatch($asset, $muxId);
 
@@ -94,13 +118,19 @@ class DeleteMuxAsset
     }
 
     /**
-     * Check if this asset was created by this addon.
+     * Check if an asset was created by this addon.
      */
-    protected function wasAssetCreatedByAddon(mixed $muxAsset): bool
+    protected function wasAssetCreatedByAddon(string $muxId): bool
     {
-        $identifier = $muxAsset['passthrough'] ?? $muxAsset ?? null;
+        $asset = $this->api->assets()->getAsset($muxId)->getData();
+        $identifier = $asset?->getPassthrough() ?? null;
+        $expected = ['statamic::', 'statamic-proxy::'];
 
-        return is_string($identifier)
-            && Str::startsWith($identifier, ['statamic::', 'statamic-proxy::']);
+        Log::debug(
+            'Checking Mux asset ownership by passthrough identifier',
+            ['passthrough' => $identifier, 'expected' => $expected],
+        );
+
+        return is_string($identifier) && Str::startsWith($identifier, $expected);
     }
 }

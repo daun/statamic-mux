@@ -66,7 +66,7 @@ class UploadCommand extends Command
         if ($this->container) {
             $container = AssetContainer::find($this->container);
             if ($container) {
-                $this->containers = collect($container);
+                $this->containers = collect([$container]);
             } else {
                 $this->error("Asset container '{$this->container}' not found");
 
@@ -86,7 +86,7 @@ class UploadCommand extends Command
         );
 
         if ($assets->isEmpty()) {
-            $this->line("No videos found in containers: <name>{$this->containers->implode(', ')}</name>");
+            $this->line("No videos found in containers: <name>{$this->containers->map->handle()->implode(', ')}</name>");
 
             return;
         }

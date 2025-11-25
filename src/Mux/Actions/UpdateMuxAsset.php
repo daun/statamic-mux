@@ -3,9 +3,9 @@
 namespace Daun\StatamicMux\Mux\Actions;
 
 use Daun\StatamicMux\Concerns\GeneratesAssetData;
+use Daun\StatamicMux\Facades\Log;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
-use Illuminate\Support\Facades\Log;
 use MuxPhp\Models\UpdateAssetRequest;
 use Statamic\Assets\Asset;
 
@@ -23,20 +23,49 @@ class UpdateMuxAsset
      */
     public function handle(Asset $asset): bool
     {
-        if (! $asset->isVideo()) {
-            return false;
-        }
-
-        if (! $this->service->hasExistingMuxAsset($asset)) {
+        if (! $this->shouldHandle($asset)) {
             return false;
         }
 
         try {
-            $this->updateMuxData($asset);
-        } catch (\Throwable $th) {
-            Log::error($th->getMessage());
+            $muxId = $this->service->getMuxId($asset);
+            $data = $this->getAssetData($asset);
+            $this->updateMuxData($muxId, $data);
 
-            throw new \Exception("Failed to update asset data on Mux: {$th->getMessage()}");
+            Log::info(
+                'Updated asset data on Mux',
+                ['asset' => $asset->id(), 'data' => $data],
+            );
+        } catch (\Throwable $th) {
+            Log::error(
+                "Failed to update asset data on Mux: {$th->getMessage()}",
+                ['asset' => $asset->id(), 'exception' => $th],
+            );
+
+            throw new \Exception("Failed to update asset data on Mux: {$th->getMessage()}", previous: $th);
+        }
+
+        return true;
+    }
+
+    /**
+     * Whether the Mux asset of this asset can be updated.
+     */
+    protected function shouldHandle(Asset $asset): bool
+    {
+        if (! $asset->isVideo()) {
+            return false;
+        }
+
+        $muxId = $this->service->getMuxId($asset);
+
+        if (! $this->service->hasExistingMuxAsset($asset)) {
+            Log::debug(
+                'Skipping update of asset data on Mux: asset does not exist on Mux',
+                ['asset' => $asset->id(), 'mux_id' => $muxId],
+            );
+
+            return false;
         }
 
         return true;
@@ -45,12 +74,10 @@ class UpdateMuxAsset
     /**
      * Update data on Mux for an existing asset.
      */
-    protected function updateMuxData(Asset $asset): void
+    protected function updateMuxData(string $muxId, array $data): void
     {
-        $muxId = $this->service->getMuxId($asset);
+        $request = new UpdateAssetRequest($data);
 
-        $request = new UpdateAssetRequest($this->getAssetData($asset));
-
-        $this->api->assets()->updateAsset($muxId, $request)->getData();
+        $this->api->assets()->updateAsset($muxId, $request);
     }
 }
