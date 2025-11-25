@@ -21,8 +21,6 @@ final class ErrorForwarder
             return new FilterHandler($handler, Level::Error);
         }, $defaultHandlers);
 
-        ray($filtered)->label('Forwarding error+ to app logger handlers');
-
         // Our logger should already have a WhatFailureGroupHandler as its single handler
         $monolog = $logger->getLogger();
         $handlers = $monolog->getHandlers();
