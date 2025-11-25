@@ -11,13 +11,14 @@
     "docs:preview": "cd docs && npm run preview"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.1",
+    "tailwindcss": "^4.0",
     "vue": "^3.0"
   },
   "devDependencies": {
       "@statamic/cms": "file:./vendor/statamic/cms/resources/dist-package",
       "laravel-vite-plugin": "^2.0",
       "postcss": "^8.0",
-      "tailwindcss": "^4.0",
       "vite": "^7.0"
   }
 }
