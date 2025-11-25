@@ -26,8 +26,8 @@
                 </ui-badge>
             </div>
             <ui-card inset variant="flat" class="w-full overflow-auto" v-if="showDetails && detailsExpanded">
-                <table class="w-full divide-y divide-gray-800/10 text-sm dark:divide-white/10">
-                    <tbody class="[&_td]:p-2! [&_td:first-child]:pl-4! [&_td:last-child]:pr-4! [&_td]:text-left [&_svg]:opacity-60">
+                <table class="w-full text-sm text-gray-600 dark:text-gray-300">
+                    <tbody class="divide-y divide-gray-800/10 dark:divide-white/10 [&_td]:px-1.5! [&_td]:py-2! [&_td:first-child]:pl-4! [&_td:last-child]:pr-4! [&_td]:text-left [&_svg]:opacity-60">
                         <tr key="id">
                             <td>
                                 <ui-icon name="fingerprint" v-tooltip="'Mux ID'"></ui-icon>
@@ -84,7 +84,6 @@ export default {
             return !! this.value.id;
         },
         playbackIds() {
-            console.log(Object.entries(this.value.playback_ids || {}));
             return Object.entries(this.value.playback_ids || {});
         }
     },
