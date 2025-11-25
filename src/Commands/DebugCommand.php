@@ -21,28 +21,28 @@ class DebugCommand extends Command
     public function handle(MuxService $service): void
     {
         if (! $service->configured()) {
-            $this->warn('× Mux is not configured. Please add valid Mux credentials in your .env file.');
+            $this->line('<failure>✗</failure> Mux is not configured. Please add valid Mux credentials in your .env file.');
         } else {
-            $this->info('<success>✓ Mux is configured with credentials.</success>');
+            $this->line('<success>✓</success> Mux is configured with credentials.');
         }
 
         if (Queue::isSync()) {
-            $this->warn('× The queue is set to synchronous mode. It is recommended to use a background queue worker for best performance.');
+            $this->line('<failure>✗</failure> The queue is set to synchronous mode. It is recommended to use a background queue worker for best performance.');
         } else {
-            $this->info('<success>✓ The queue is configured to use a background worker.</success>');
+            $this->line('<success>✓</success> The queue is configured to use a background worker.');
         }
 
         if (! MirrorField::enabled()) {
-            $this->warn('× The mirror feature is globally disabled from the config flag.');
+            $this->line('<failure>✗</failure> The mirror feature is globally disabled from the config flag.');
         } else {
-            $this->info('<success>✓ The mirror feature is globally enabled.</success>');
+            $this->line('<success>✓</success> The mirror feature is globally enabled.');
         }
 
         $containers = MirrorField::containers();
         if ($containers->isEmpty()) {
-            $this->warn('× No asset containers found to mirror. Please add a `mux_mirror` field to at least one of your asset blueprints.');
+            $this->line('<failure>✗</failure> No asset containers found to mirror. Please add a `mux_mirror` field to at least one of your asset blueprints.');
         } else {
-            $this->info("<success>✓ Found {$containers->count()} asset container(s) configured for mirroring: {$containers->map->handle()->implode(', ')}.</success>");
+            $this->line("<success>✓</success> Found {$containers->count()} asset container(s) configured for mirroring: {$containers->map->handle()->implode(', ')}.");
         }
     }
 }

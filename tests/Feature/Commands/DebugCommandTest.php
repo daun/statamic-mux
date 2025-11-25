@@ -12,7 +12,7 @@ it('warns about missing credentials', function () {
     config(['mux.credentials.token_secret' => null]);
 
     $this->artisan(DebugCommand::class)
-        ->expectsOutput('× Mux is not configured. Please add valid Mux credentials in your .env file.')
+        ->expectsOutput('✗ Mux is not configured. Please add valid Mux credentials in your .env file.')
         ->assertSuccessful();
 });
 
@@ -46,7 +46,7 @@ it('respects custom mux queue connection', function () {
     config(['mux.queue.connection' => 'sync']);
 
     $this->artisan(DebugCommand::class)
-        ->expectsOutputToContain('× The queue is set to synchronous mode')
+        ->expectsOutputToContain('✗ The queue is set to synchronous mode')
         ->assertSuccessful();
 });
 
@@ -54,7 +54,7 @@ it('warns when mirror feature is globally disabled', function () {
     config(['mux.mirror.enabled' => false]);
 
     $this->artisan(DebugCommand::class)
-        ->expectsOutputToContain('× The mirror feature is globally disabled from the config flag')
+        ->expectsOutputToContain('✗ The mirror feature is globally disabled from the config flag')
         ->assertSuccessful();
 });
 
@@ -111,7 +111,7 @@ it('shows all checks passing with optimal configuration', function () {
         ->expectsOutputToContain('✓ The queue is configured to use a background worker')
         ->expectsOutputToContain('✓ The mirror feature is globally enabled')
         ->expectsOutputToContain('✓ Found 1 asset container(s) configured for mirroring')
-        ->doesntExpectOutputToContain('×')
+        ->doesntExpectOutputToContain('✗')
         ->assertSuccessful();
 });
 
@@ -124,10 +124,10 @@ it('shows all checks failing with problematic configuration', function () {
     $this->createAssetContainer('test');
 
     $this->artisan(DebugCommand::class)
-        ->expectsOutputToContain('× Mux is not configured')
-        ->expectsOutputToContain('× The queue is set to synchronous mode')
-        ->expectsOutputToContain('× The mirror feature is globally disabled')
-        ->expectsOutputToContain('× No asset containers found to mirror')
+        ->expectsOutputToContain('✗ Mux is not configured')
+        ->expectsOutputToContain('✗ The queue is set to synchronous mode')
+        ->expectsOutputToContain('✗ The mirror feature is globally disabled')
+        ->expectsOutputToContain('✗ No asset containers found to mirror')
         ->doesntExpectOutputToContain('✓')
         ->assertSuccessful();
 });
@@ -153,6 +153,6 @@ it('handles partial configuration correctly', function () {
     config(['mux.credentials.token_secret' => null]);
 
     $this->artisan(DebugCommand::class)
-        ->expectsOutputToContain('× Mux is not configured')
+        ->expectsOutputToContain('✗ Mux is not configured')
         ->assertSuccessful();
 });
