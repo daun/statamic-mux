@@ -1,64 +1,65 @@
 <template>
-    <div>
-        <div v-if="!isAsset || !isVideo">
-            <DescriptionWithIcon icon="eye-slash">
-                {{ __('statamic-mux::messages.mirror_fieldtype.not_mirrored') }}:
-                <template v-if="!isVideo">
-                    {{ __('statamic-mux::messages.mirror_fieldtype.no_video') }}
-                </template>
-                <template v-else>
-                    {{ __('statamic-mux::messages.mirror_fieldtype.no_asset') }}
-                </template>
-            </DescriptionWithIcon>
-        </div>
-        <div v-else-if="!isUploaded">
-            <DescriptionWithIcon icon="unsynced">
-                {{ __('statamic-mux::messages.mirror_fieldtype.not_uploaded') }}
-            </DescriptionWithIcon>
-            <div v-if="showReuploadToggle" class="flex items-center mt-3">
-                <Checkbox v-model="value.reupload" name="reupload" :label="__('statamic-mux::messages.mirror_fieldtype.upload_on_save')" />
+    <div class="grid grid-cols-[minmax(0,1fr)] gap-3 justify-items-start">
+        <template v-if="!isAsset || !isVideo">
+            <ui-badge pill icon="unsynced" v-tooltip="t(!isVideo ? 'unmirrored_no_video' : 'unmirrored_no_asset')">
+                {{ t('unmirrored') }}:
+            </ui-badge>
+        </template>
+        <template v-else-if="!isUploaded">
+            <ui-badge pill icon="unsynced" color="amber">
+                {{ t('not_uploaded') }}
+            </ui-badge>
+            <div v-if="showReuploadToggle" class="flex items-center">
+                <ui-checkbox v-model="value.reupload" name="reupload" :label="t('upload_on_save')" />
             </div>
-        </div>
-        <div v-else>
-            <DescriptionWithIcon icon="synced">
-                <span :title="this.value.id">
-                    {{ __('statamic-mux::messages.mirror_fieldtype.uploaded') }}
-                </span>
-            </DescriptionWithIcon>
-            <div v-if="details.length" class="mux-table-wrapper mt-3">
-                <table class="mux-table text-sm text-gray-500 dark:text-gray-400">
-                    <tbody>
-                        <tr v-for="{ key, label, value, icon } in details" :key="key">
-                            <th>{{ label || key }}</th>
+        </template>
+        <template v-else>
+            <div class="flex flex-wrap gap-2">
+                <ui-badge pill icon="checkmark" color="green" v-tooltip="t('uploaded_tooltip')">
+                    {{ t('uploaded') }}
+                </ui-badge>
+                <ui-badge pill v-if="isProxy" icon="page-ghost" v-tooltip="t('proxy_tooltip')">
+                    {{ t('proxy') }}
+                </ui-badge>
+                <ui-badge pill v-if="showDetails" icon="info-square" as="button" v-tooltip="t('details_tooltip')" @click="detailsExpanded = !detailsExpanded">
+                    {{ t('details') }}
+                </ui-badge>
+            </div>
+            <ui-card inset variant="flat" class="w-full overflow-auto" v-if="showDetails && detailsExpanded">
+                <table class="w-full divide-y divide-gray-800/10 text-sm dark:divide-white/10">
+                    <tbody class="[&_td]:p-2! [&_td:first-child]:pl-4! [&_td:last-child]:pr-4! [&_td]:text-left [&_svg]:opacity-60">
+                        <tr key="id">
                             <td>
-                                <div class="flex align-center">
-                                    <Icon v-if="icon" :name="icon" class="s-4 mr-2" />
-                                    <span>{{ value }}</span>
-                                </div>
+                                <ui-icon name="fingerprint" v-tooltip="'Mux ID'"></ui-icon>
                             </td>
+                            <td>{{ value.id }}</td>
+                        </tr>
+                        <tr v-for="[policy, id] in playbackIds" :key="id">
+                            <td v-if="policy === 'signed'">
+                                <ui-icon name="key" v-tooltip="'Signed Playback ID'"></ui-icon>
+                            </td>
+                            <td v-else>
+                                <ui-icon name="globals" v-tooltip="'Public Playback ID'"></ui-icon>
+                            </td>
+                            <td>{{ value.id }}</td>
                         </tr>
                     </tbody>
                 </table>
-            </div>
-            <div v-if="showReuploadToggle" class="flex items-center mt-3">
-                <Checkbox v-model="value.reupload" name="reupload" :label="__('statamic-mux::messages.mirror_fieldtype.reupload_on_save')" />
-            </div>
-        </div>
+            </ui-card>
+            <ui-checkbox v-if="showReuploadToggle" v-model="value.reupload" name="reupload" :label="t('reupload_on_save')" />
+        </template>
     </div>
 </template>
 
 <script>
 import { FieldtypeMixin as Fieldtype } from '@statamic/cms';
-import { Button, Checkbox, Icon } from '@statamic/cms/ui';
-import DescriptionWithIcon from './DescriptionWithIcon.vue';
 
 export default {
     mixins: [Fieldtype],
-    components: {
-        Button,
-        Checkbox,
-        DescriptionWithIcon,
-        Icon
+    data() {
+        return {
+            detailsExpanded: false
+        };
     },
     computed: {
         showReuploadToggle() {
@@ -80,103 +81,17 @@ export default {
             return this.meta?.is_proxy || false;
         },
         isUploaded() {
-            return this.value.id;
+            return !! this.value.id;
         },
-        details() {
-            if (! this.isUploaded || ! this.showDetails) return [];
-
-            const muxId = this.value.id;
-            const playbackIds = Object.entries(this.value.playback_ids || {})
-                .sort(([a], [b]) => a.localeCompare(b));
-            const playbackId = this.value.playback_id;
-            const playbackPolicy = this.value.playback_policy;
-            if (! playbackIds.length && playbackId && playbackPolicy) {
-                playbackIds.push([playbackPolicy, playbackId]);
-            }
-
-            const hasIcons = playbackIds.length > 0;
-
-            const rows = [];
-
-            rows.push({ key: 'id', label: 'Mux ID', value: muxId, icon: hasIcons ? 'fingerprint' : '' });
-
-            for (const [policy, id] of playbackIds) {
-                const icon = hasIcons ? (policy === 'signed' ? 'security-lock' : 'eye') : null;
-                rows.push({ key: id, label: 'Playback ID', value: id, icon });
-            }
-
-            return rows.filter(({ value }) => value);
+        playbackIds() {
+            console.log(Object.entries(this.value.playback_ids || {}));
+            return Object.entries(this.value.playback_ids || {});
+        }
+    },
+    methods: {
+        t(key, replacements = {}) {
+            return __(`statamic-mux::messages.fieldtype.${key}`, replacements);
         }
     }
 };
 </script>
-
-<style>
-.mux-table-wrapper {
-    overflow: auto;
-    border-radius: .25rem;
-    border-width: 1px;
-}
-
-.mux-table {
-    width: 100%;
-    border-radius: .25rem;
-    text-align: left;
-    font-size: 13px;
-}
-
-.mux-table tr:not(:last-child) th,.mux-table tr:not(:last-child) td {
-    border-bottom-width: 1px
-}
-
-.mux-table th,
-.mux-table td {
-    vertical-align: top;
-}
-
-.mux-table th {
-    border-right-width: 1px;
-    padding: .5rem;
-    white-space: nowrap;
-    font-weight: normal;
-}
-
-.mux-table td {
-    margin: 0;
-    padding: .5rem;
-}
-
-.mux-table tr:first-child th {
-    border-top-left-radius: .25rem
-}
-
-.mux-table tr:first-child td,.mux-table tr:first-child .input-text-minimal {
-    border-top-right-radius: .25rem
-}
-
-.mux-table tr:last-child th {
-    border-bottom-left-radius: .25rem
-}
-
-.mux-table tr:last-child td:last-child,.mux-table tr:last-child .input-minimal {
-    border-bottom-right-radius: .25rem
-}
-
-.mux-table:focus-within {
-    outline: 0;
-    box-shadow: none
-}
-
-.mux-table td:focus-within {
-    --tw-bg-opacity: 1;
-    background-color: rgb(245 248 252 / var(--tw-bg-opacity))
-}
-
-.mux-table th {
-    /* color: rgb(196 204 212 / 1); */
-}
-
-.mux-table tr td {
-    /* background-color: rgb(245 248 252 / 1); */
-}
-</style>
