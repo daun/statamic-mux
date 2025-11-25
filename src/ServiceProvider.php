@@ -72,18 +72,20 @@ class ServiceProvider extends AddonServiceProvider
 
     protected function registerLogger()
     {
-        $this->app->singleton(LoggerInterface::class, function (Application $app) {
-            $logger = new LogManager(
+        $this->app->singleton(LogManager::class, function (Application $app) {
+            return new LogManager(
                 $app->make(IlluminateLog::class),
                 $app['config']->get('mux.logging.channel', 'mux'),
                 (bool) $app['config']->get('mux.logging.enabled', true),
             );
-
-            return $logger->resolveStack();
         });
 
-        $this->app->afterResolving(LoggerInterface::class, function ($logger) {
-            LogStream::register($logger);
+        $this->app->singleton(LoggerInterface::class, function (Application $app) {
+            return $app->make(LogManager::class)->resolveStack();
+        });
+
+        $this->app->afterResolving(LogManager::class, function (LogManager $manager) {
+            LogStream::register('mux', $manager->resolveSdkChannel());
         });
 
         $this->app->alias(LoggerInterface::class, 'mux.log');

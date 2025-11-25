@@ -46,7 +46,7 @@ class LogStream
 
         // Normalize line endings
         $lines = preg_split('/\r\n|\r|\n/', $data);
-        $message = join("\n", $lines);
+        $message = implode("\n", $lines);
 
         $logger->debug($message);
 
