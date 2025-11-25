@@ -20,8 +20,8 @@ class LogManager
     }
 
     /**
-     * Resolve the `stack` logger that combines the package channel, the
-     * error forwarder channel, and the Mux SDK debug channel
+     * Resolve the `stack` logger that combines the package channel
+     * and the error forwarder channel.
      */
     public function resolveStack(): PsrLogger
     {
@@ -47,16 +47,6 @@ class LogManager
     }
 
     /**
-     * Resolve the Mux sdk debug channel.
-     */
-    public function resolveSdkChannel(): PsrLogger
-    {
-        return $this->enabled
-            ? $this->log->channel('mux_sdk')
-            : new NullLogger;
-    }
-
-    /**
      * Register the different logging channels used by the package:
      * 1. The mux package channel (customizable via config)
      * 2. The error forwarder channel
@@ -78,15 +68,7 @@ class LogManager
             ]);
         }
 
-        // 2) Mux SDK debug channel (mostly http requests)
-        config()->set('logging.channels.mux_sdk', [
-            'driver' => 'single',
-            'path' => storage_path('logs/mux-sdk.log'),
-            'level' => config('mux.logging.level', 'warning'),
-            'replace_placeholders' => true,
-        ]);
-
-        // 3) Passthrough channel to the app’s default, restricted to >= error
+        // 2) Passthrough channel to the app’s default, restricted to >= error
         config()->set('logging.channels.mux_errors', [
             'driver' => 'monolog',
             'handler' => WhatFailureGroupHandler::class,
@@ -94,7 +76,7 @@ class LogManager
             'tap' => [ErrorForwarder::class],
         ]);
 
-        // 4) Final stack exposed and used by the package
+        // 3) Final stack exposed and used by the package
         config()->set('logging.channels.mux_stack', [
             'driver' => 'stack',
             'channels' => [$this->channel, 'mux_errors'],

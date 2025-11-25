@@ -9,7 +9,6 @@ use Daun\StatamicMux\Mux\MuxUrls;
 use Daun\StatamicMux\Placeholders\PlaceholderService;
 use Daun\StatamicMux\Support\Logging\LoggerInterface;
 use Daun\StatamicMux\Support\Logging\LogManager;
-use Daun\StatamicMux\Support\Logging\LogStream;
 use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
 use Illuminate\Log\LogManager as IlluminateLog;
@@ -84,10 +83,6 @@ class ServiceProvider extends AddonServiceProvider
             return $app->make(LogManager::class)->resolveStack();
         });
 
-        $this->app->afterResolving(LogManager::class, function (LogManager $manager) {
-            LogStream::register('mux', $manager->resolveSdkChannel());
-        });
-
         $this->app->alias(LoggerInterface::class, 'mux.log');
     }
 
@@ -110,6 +105,7 @@ class ServiceProvider extends AddonServiceProvider
         });
 
         $this->app->alias(MuxClient::class, 'mux.client');
+
         $this->app->alias(MuxApi::class, 'mux.api');
     }
 

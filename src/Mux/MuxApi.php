@@ -51,15 +51,21 @@ class MuxApi
             'test_mode' => $this->testMode,
         ]);
 
+        Log::notice('Mux SDK Version: 1.0');
+
+        Log::warning('Mux warning');
+
+        Log::error('Mux error');
+
+        // @var GuzzleHttp\Client $client
+        // $client->.orem
+
         $this->config = Configuration::getDefaultConfiguration()
             ->setUsername($this->tokenId)
             ->setPassword($this->tokenSecret)
-            ->setUserAgent(self::userAgent);
-
-        // Debug output stream is redirected to the package logger
-        $this->config
+            ->setUserAgent(self::userAgent)
             ->setDebug($this->debug)
-            ->setDebugFile('mux://debug');
+            ->setDebugFile(storage_path('logs/mux-sdk.log'));
     }
 
     public function client(): Client
