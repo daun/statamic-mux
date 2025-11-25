@@ -23,10 +23,10 @@
         "email": "post@philippdaun.net"
     },
     "require": {
-        "php": "^8.2",
+        "php": "^8.3",
         "firebase/php-jwt": "^6.10",
         "guzzlehttp/guzzle": "^7.8",
-        "laravel/framework": "^11.0 || ^12.0",
+        "laravel/framework": "^12.0",
         "leocavalcante/redact-sensitive": "^0.4.1",
         "muxinc/mux-php": "^5.0",
         "srwiez/thumbhash": "^1.2",
@@ -38,7 +38,7 @@
         "laravel/facade-documenter": "dev-main",
         "laravel/pint": "^1.14",
         "mockery/mockery": "^1.6",
-        "orchestra/testbench": "^9.5 || ^10.0",
+        "orchestra/testbench": "^10.0",
         "pestphp/pest": "^3.3",
         "pestphp/pest-plugin-laravel": "^3.0",
         "spatie/pest-plugin-snapshots": "^2.1",
