@@ -32,7 +32,7 @@ class DownloadProxyVersionJob implements ShouldQueue
     public function handle(DownloadProxyVersion $action): void
     {
         // Check if we need to process this at all
-        if (! $action->canHandle($this->asset, $this->proxyId)) {
+        if (! $action->shouldHandle($this->asset, $this->proxyId)) {
             return;
         }
 

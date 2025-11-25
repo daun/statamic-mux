@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0] - 2025-11-22
+
+- Add configurable logger for simpler troubleshooting
+- Add `mux:debug` command for ensuring correct configuration
+- Make Guzzle requests hookable for advanced use cases
+- Remove support for Laravel 9 and PHP 8.1 (breaking change)
+
+## [1.8.0] - 2025-11-15
+
+- Add option to lazyload web component scripts
+
 ## [1.7.0] - 2025-11-15
 
 - Add option to optimize storage by replacing original video with placeholder
@@ -108,8 +119,11 @@
 
 - Beta release
 
+[2.0.0]: https://github.com/daun/statamic-mux/releases/tag/2.0.0
+[1.8.0]: https://github.com/daun/statamic-mux/releases/tag/1.8.0
 [1.7.0]: https://github.com/daun/statamic-mux/releases/tag/1.7.0
 [1.6.0]: https://github.com/daun/statamic-mux/releases/tag/1.6.0
+[1.5.4]: https://github.com/daun/statamic-mux/releases/tag/1.5.4
 [1.5.3]: https://github.com/daun/statamic-mux/releases/tag/1.5.3
 [1.5.2]: https://github.com/daun/statamic-mux/releases/tag/1.5.2
 [1.5.1]: https://github.com/daun/statamic-mux/releases/tag/1.5.1

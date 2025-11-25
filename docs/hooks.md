@@ -56,3 +56,16 @@ Mux::hook('asset-meta', function ($payload, $next) {
     return $next($payload);
 });
 ```
+
+### API Request
+
+Inspect or modify the Guzzle request before it is sent to Mux's API.
+
+```php
+// Change user agent header
+Mux::hook('api-request', function ($payload, $next) {
+    $payload->request = $payload->request->withHeader('User-Agent', 'MyApp/1.0');
+
+    return $next($payload);
+});
+```

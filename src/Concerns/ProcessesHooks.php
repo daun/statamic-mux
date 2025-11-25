@@ -16,9 +16,13 @@ trait ProcessesHooks
         $hooks[$name][] = $hook;
     }
 
-    protected function hooks(string $name, $payload = null)
+    protected function hooks(string $name, ?array $payload = null)
     {
         $closures = collect(app('mux.hooks')[$name] ?? [])->map->bindTo($this, $this);
+
+        if (is_array($payload)) {
+            $payload = (object) $payload;
+        }
 
         if ($closures->isEmpty()) {
             return $payload;
