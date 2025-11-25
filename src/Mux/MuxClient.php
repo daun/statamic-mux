@@ -9,12 +9,14 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use Psr\Http\Message\RequestInterface;
 
-class MuxClient extends Client implements ClientInterface {
+class MuxClient extends Client implements ClientInterface
+{
     use ProcessesHooks;
 
-    public function __construct() {
+    public function __construct()
+    {
         return parent::__construct([
-            'handler' => $this->buildHandlerStack()
+            'handler' => $this->buildHandlerStack(),
         ]);
     }
 

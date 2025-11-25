@@ -73,8 +73,7 @@ class MuxApi
         ];
 
         $this->hook('api-request', function ($payload, $next) use ($context) {
-            Blink::once('mux-api-debug-credentials', fn () =>
-                Log::debug('Initializing Mux API', $context)
+            Blink::once('debug-mux-credentials', fn () => Log::debug('Initializing Mux API', $context)
             );
 
             return $next($payload);
