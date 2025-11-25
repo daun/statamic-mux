@@ -2,6 +2,7 @@
 
 namespace Daun\StatamicMux\Mux;
 
+use Daun\StatamicMux\Concerns\ProcessesHooks;
 use Daun\StatamicMux\Facades\Log;
 use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use GuzzleHttp\Client;
@@ -17,9 +18,12 @@ use MuxPhp\Models\CreateAssetRequest;
 use MuxPhp\Models\CreatePlaybackIDRequest;
 use MuxPhp\Models\CreateUploadRequest;
 use MuxPhp\Models\InputSettings;
+use Statamic\Facades\Blink;
 
 class MuxApi
 {
+    use ProcessesHooks;
+
     protected Configuration $config;
 
     protected AssetsApi $assetsApi;
@@ -45,27 +49,36 @@ class MuxApi
         protected mixed $playbackPolicy = null,
         protected ?string $videoQuality = null,
     ) {
-        Log::debug('Initializing Mux API', [
-            'token_id' => $this->tokenId,
-            'token_secret' => $this->tokenSecret,
-            'test_mode' => $this->testMode,
-        ]);
-
-        Log::notice('Mux SDK Version: 1.0');
-
-        Log::warning('Mux warning');
-
-        Log::error('Mux error');
-
-        // @var GuzzleHttp\Client $client
-        // $client->.orem
-
         $this->config = Configuration::getDefaultConfiguration()
             ->setUsername($this->tokenId)
             ->setPassword($this->tokenSecret)
             ->setUserAgent(self::userAgent)
             ->setDebug($this->debug)
             ->setDebugFile(storage_path('logs/mux-sdk.log'));
+
+        // Log SDK credentials on first request
+        $this->debugCredentials();
+    }
+
+    protected function debugCredentials(): void
+    {
+        if (! $this->debug) {
+            return;
+        }
+
+        $context = [
+            'token_id' => $this->tokenId,
+            'token_secret' => $this->tokenSecret,
+            'test_mode' => $this->testMode,
+        ];
+
+        $this->hook('api-request', function ($payload, $next) use ($context) {
+            Blink::once('mux-api-debug-credentials', fn () =>
+                Log::debug('Initializing Mux API', $context)
+            );
+
+            return $next($payload);
+        });
     }
 
     public function client(): Client
