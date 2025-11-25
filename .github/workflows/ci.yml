@@ -12,16 +12,12 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        php: [8.4, 8.3, 8.2]
-        laravel: [12.*, 11.*]
+        php: [8.4, 8.3]
+        laravel: [12.*]
         statamic: [6.*]
         include:
           - laravel: 12.*
             testbench: 10.*
-            pest: 3.*
-            snapshots: 2.*
-          - laravel: 11.*
-            testbench: 9.*
             pest: 3.*
             snapshots: 2.*
 
