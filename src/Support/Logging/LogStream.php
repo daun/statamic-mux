@@ -6,43 +6,56 @@ use Psr\Log\LoggerInterface;
 
 class LogStream
 {
-    public const PROTOCOL = 'mux';
-
     /** @var resource|null */
     public $context;
 
-    private static ?LoggerInterface $logger = null;
+    private ?string $protocol = null;
 
-    // Called from your service provider after logger is resolvable
-    public static function register(LoggerInterface $logger): void
+    /** @var array<string, LoggerInterface> */
+    private static array $loggers = [];
+
+    // Called from your service provider after logger is resolved
+    public static function register(string $protocol, LoggerInterface $logger): void
     {
-        self::$logger = $logger;
+        self::$loggers[$protocol] = $logger;
 
-        if (in_array(self::PROTOCOL, stream_get_wrappers(), true)) {
-            stream_wrapper_unregister(self::PROTOCOL);
+        if (in_array($protocol, stream_get_wrappers(), true)) {
+            stream_wrapper_unregister($protocol);
         }
 
-        stream_wrapper_register(self::PROTOCOL, self::class, STREAM_IS_URL);
+        stream_wrapper_register($protocol, self::class, STREAM_IS_URL);
     }
 
     public function stream_open(string $path, string $mode, int $options, ?string &$opened_path): bool
     {
-        return true;
+        // Extract protocol from path (e.g., "mux://..." -> "mux")
+        if (preg_match('#^([a-z]+)://#', $path, $matches)) {
+            $this->protocol = $matches[1];
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public function stream_write(string $data): int
     {
-        if (! self::$logger) {
+        $logger = self::$loggers[$this->protocol] ?? null;
+        if (! $logger) {
             return strlen($data);
         }
 
-        // Normalize line endings and split by lines to avoid giant single log records
+        // Normalize line endings
         $lines = preg_split('/\r\n|\r|\n/', $data);
-        foreach ($lines as $line) {
-            if ($line = trim($line)) {
-                self::$logger->debug($line);
-            }
-        }
+        $message = join("\n", $lines);
+
+        $logger->debug($message);
+
+        // Split by lines to avoid giant single log records
+        // foreach ($lines as $line) {
+        //     if ($line = trim($line)) {
+        //         $logger->debug($line);
+        //     }
+        // }
 
         return strlen($data);
     }

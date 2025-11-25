@@ -25,7 +25,7 @@ it('passes mux api debug output through the mux logger', function () {
     $logManager = app(IlluminateLog::class);
     $resolvedLogger = (new LogManager($logManager, 'mux-in-memory', true))->resolveChannel();
 
-    LogStream::register($resolvedLogger);
+    LogStream::register('mux', $resolvedLogger, );
 
     $muxApi = app(MuxApi::class);
     expect($muxApi->config()->getDebug())->toBeTrue();
@@ -35,11 +35,12 @@ it('passes mux api debug output through the mux logger', function () {
     expect($stream)->not->toBeFalse();
 
     fwrite($stream, "debug line one\n debug line two ");
+    fwrite($stream, " debug line three");
     fclose($stream);
 
     $records = $logger->recordsByLevel('debug');
 
     expect($records)->toHaveCount(2);
-    expect($records[0]['message'])->toBe('debug line one');
-    expect($records[1]['message'])->toBe('debug line two');
+    expect($records[0]['message'])->toBe("debug line one\n debug line two ");
+    expect($records[1]['message'])->toBe(' debug line three');
 });
