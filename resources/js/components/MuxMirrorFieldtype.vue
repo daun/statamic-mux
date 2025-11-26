@@ -1,17 +1,15 @@
 <template>
     <div class="grid grid-cols-[minmax(0,1fr)] gap-3 justify-items-start">
         <template v-if="!isAsset || !isVideo">
-            <ui-badge pill icon="unsynced" v-tooltip="t(!isVideo ? 'unmirrored_no_video' : 'unmirrored_no_asset')">
-                {{ t('unmirrored') }}:
+            <ui-badge pill icon="focus" color="white" v-tooltip="t(!isVideo ? 'unmirrored_no_video' : 'unmirrored_no_asset')">
+                {{ t('unmirrored') }}
             </ui-badge>
         </template>
         <template v-else-if="!isUploaded">
-            <ui-badge pill icon="unsynced" color="amber">
+            <ui-badge pill icon="x-square" color="amber">
                 {{ t('not_uploaded') }}
             </ui-badge>
-            <div v-if="showReuploadToggle" class="flex items-center">
-                <ui-checkbox v-model="value.reupload" name="reupload" :label="t('upload_on_save')" />
-            </div>
+            <ui-checkbox v-if="showReuploadToggle" v-model="value.reupload" name="reupload" :label="t('upload_on_save')" />
         </template>
         <template v-else>
             <div class="flex flex-wrap gap-2">
@@ -77,11 +75,11 @@ export default {
         isVideo() {
             return this.meta?.is_video || false;
         },
-        isProxy() {
-            return this.meta?.is_proxy || false;
-        },
         isUploaded() {
             return !! this.value.id;
+        },
+        isProxy() {
+            return this.meta?.is_proxy || false;
         },
         playbackIds() {
             return Object.entries(this.value.playback_ids || {});
@@ -91,6 +89,6 @@ export default {
         t(key, replacements = {}) {
             return __(`statamic-mux::messages.fieldtype.${key}`, replacements);
         }
-    }
+    },
 };
 </script>
