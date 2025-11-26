@@ -6,9 +6,10 @@ use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxClient;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Mux\MuxUrls;
-use Daun\StatamicMux\Placeholders\PlaceholderService;
 use Daun\StatamicMux\Support\Logging\LoggerInterface;
 use Daun\StatamicMux\Support\Logging\LogManager;
+use Daun\StatamicMux\Thumbnails\PlaceholderService;
+use Daun\StatamicMux\Thumbnails\ThumbnailService;
 use Illuminate\Foundation\Application;
 use Illuminate\Log\LogManager as IlluminateLog;
 use Statamic\Facades\Permission;
@@ -53,6 +54,7 @@ class ServiceProvider extends AddonServiceProvider
         $this->registerMuxApi();
         $this->registerMuxService();
         $this->registerUrlService();
+        $this->registerThumbnailService();
         $this->registerPlaceholderService();
     }
 
@@ -61,6 +63,7 @@ class ServiceProvider extends AddonServiceProvider
         $this->bootPermissions();
         $this->autoPublishConfig();
         $this->publishViews();
+        $this->bootThumbnails();
     }
 
     protected function registerHooks()
@@ -133,6 +136,11 @@ class ServiceProvider extends AddonServiceProvider
         });
 
         $this->app->alias(MuxUrls::class, 'mux.urls');
+    }
+
+    protected function registerThumbnailService()
+    {
+        $this->app->alias(ThumbnailService::class, 'mux.thumbnails');
     }
 
     protected function registerPlaceholderService()
@@ -217,6 +225,11 @@ class ServiceProvider extends AddonServiceProvider
         return $this;
     }
 
+    protected function bootThumbnails()
+    {
+        app(ThumbnailService::class)->createHooks();
+    }
+
     public function provides(): array
     {
         return [
@@ -226,6 +239,8 @@ class ServiceProvider extends AddonServiceProvider
             'mux.service',
             MuxUrls::class,
             'mux.urls',
+            ThumbnailService::class,
+            'mux.thumbnails',
             PlaceholderService::class,
             'mux.placeholders',
         ];
