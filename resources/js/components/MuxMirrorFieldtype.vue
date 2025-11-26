@@ -23,9 +23,9 @@
                     {{ t('details') }}
                 </ui-badge>
             </div>
-            <ui-card inset variant="flat" class="w-full overflow-auto" v-if="showDetails && detailsExpanded">
-                <table class="w-full text-sm text-gray-600 dark:text-gray-300">
-                    <tbody class="divide-y divide-gray-800/10 dark:divide-white/10 [&_td]:px-1.5! [&_td]:py-2! [&_td:first-child]:pl-4! [&_td:last-child]:pr-4! [&_td]:text-left [&_svg]:opacity-60">
+            <ui-card inset variant="flat" class="w-full overflow-auto bg-gray-50! dark:bg-dark-800!" v-if="showDetails && detailsExpanded">
+                <table class="w-full text-xs text-gray-600 dark:text-gray-300">
+                    <tbody class="divide-y divide-gray-800/10 dark:divide-white/10 [&_td]:px-1.5! [&_td]:py-2! [&_td:first-child]:pl-3! [&_td:last-child]:pr-3! [&_td]:text-left [&_svg]:opacity-60">
                         <tr key="id">
                             <td>
                                 <ui-icon name="fingerprint" v-tooltip="'Mux ID'"></ui-icon>
