@@ -1,18 +1,8 @@
 <template>
-    <div class="flex flex-wrap gap-2" v-if="isAsset && isVideo">
-        <template v-if="!isUploaded">
-            <ui-badge pill color="amber">
-                {{ t('not_uploaded') }}
-            </ui-badge>
-        </template>
-        <template v-else>
-            <ui-badge pill color="green">
-                {{ t('uploaded') }}
-            </ui-badge>
-            <ui-badge v-if="isProxy" pill icon="page-ghost" v-tooltip="t('proxy')">
-                <span class="sr-only">{{ t('proxy') }}</span>
-            </ui-badge>
-        </template>
+    <div class="flex flex-wrap items-center gap-2" v-if="isAsset && isVideo">
+        <ui-icon v-if="!isUploaded" name="x-square" class="text-gray-400 dark:text-gray-600" v-tooltip="t('not_uploaded')" />
+        <ui-icon v-if="isUploaded" name="checkmark" class="text-green-600" v-tooltip="t('uploaded')" />
+        <ui-icon v-if="isUploaded && isProxy" name="page-ghost" class="size-3.5!" v-tooltip="t('proxy')" />
     </div>
 </template>
 
