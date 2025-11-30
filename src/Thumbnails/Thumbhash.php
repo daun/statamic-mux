@@ -1,6 +1,6 @@
 <?php
 
-namespace Daun\StatamicMux\Placeholders;
+namespace Daun\StatamicMux\Thumbnails;
 
 use Thumbhash\Thumbhash as ThumbhashLib;
 
