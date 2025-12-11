@@ -216,7 +216,7 @@ class CreateMuxAsset
 
         return Assets::query()
             ->whereIn('container', $containers->map->handle())
-            ->whereNot(fn($q) =>  $q
+            ->whereNot(fn ($q) => $q
                 ->where('container', $asset->containerHandle())
                 ->where('path', $asset->path())
             )
