@@ -22,6 +22,9 @@ beforeEach(function () {
         ->makePartial()
         ->shouldAllowMockingProtectedMethods();
 
+    $this->addMirrorFieldToAssetBlueprint();
+    $this->addMirrorFieldToAssetBlueprint(container: 'private');
+
     $this->mp4 = $this->uploadTestFileToTestContainer('test.mp4');
     $this->jpg = $this->uploadTestFileToTestContainer('test.jpg');
 
@@ -197,15 +200,37 @@ it('uploads assets from private containers', function () {
             'data' => [
                 'status' => 'asset_created',
                 'id' => 'zd01Pe2bNpYhxbrwYABgFE01twZdtv4M00kts2i02GhbGjc',
-                'asset_id' => '123456789',
+                'asset_id' => '6s5MBuXGvJaUWdXuXM9vSqQnqz3J9Q2y',
+            ],
+        ]);
+
+    $this->guzzler->expects($this->once())
+        ->get('https://api.mux.com/video/v1/assets/6s5MBuXGvJaUWdXuXM9vSqQnqz3J9Q2y')
+        ->willRespondJson([
+            'data' => [
+                'status' => 'ready',
+                'id' => '6s5MBuXGvJaUWdXuXM9vSqQnqz3J9Q2y',
+                'video_quality' => 'plus',
+                'passthrough' => 'example-passthrough',
+                'playback_ids' => [
+                    [
+                        'policy' => 'public',
+                        'id' => 'vAFLI2eKFFicXX00iHBS2vqt5JjJGg5HV6fQ4Xijgt1I',
+                    ],
+                ],
             ],
         ]);
 
     $result = $this->createMuxAsset->handle($privateMp4);
 
-    expect($result)->toBe('123456789');
-    $this->guzzler->assertHistoryCount(3);
+    expect($result)->toBe('6s5MBuXGvJaUWdXuXM9vSqQnqz3J9Q2y');
+    $this->guzzler->assertHistoryCount(4);
     Event::assertDispatched(AssetUploadedToMux::class);
+
+    expect($privateMp4->get('mux'))->toEqual([
+        'id' => '6s5MBuXGvJaUWdXuXM9vSqQnqz3J9Q2y',
+        'playback_ids' => ['public' => 'vAFLI2eKFFicXX00iHBS2vqt5JjJGg5HV6fQ4Xijgt1I'],
+    ]);
 });
 
 it('uploads assets from inaccessible containers', function () {
