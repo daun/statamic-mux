@@ -24,6 +24,7 @@ beforeEach(function () {
 
     $this->addMirrorFieldToAssetBlueprint();
     $this->addMirrorFieldToAssetBlueprint(container: 'private');
+    $this->addMirrorFieldToAssetBlueprint(container: 'inaccessible');
 
     $this->mp4 = $this->uploadTestFileToTestContainer('test.mp4');
     $this->jpg = $this->uploadTestFileToTestContainer('test.jpg');
@@ -224,7 +225,9 @@ it('uploads assets from private containers', function () {
     $result = $this->createMuxAsset->handle($privateMp4);
 
     expect($result)->toBe('6s5MBuXGvJaUWdXuXM9vSqQnqz3J9Q2y');
+
     $this->guzzler->assertHistoryCount(4);
+
     Event::assertDispatched(AssetUploadedToMux::class);
 
     expect($privateMp4->get('mux'))->toEqual([
@@ -292,15 +295,40 @@ it('uploads assets from inaccessible containers', function () {
             'data' => [
                 'status' => 'asset_created',
                 'id' => 'zd01Pe2bNpYhxbrwYABgFE01twZdtv4M00kts2i02GhbGjc',
-                'asset_id' => '123456789',
+                'asset_id' => 'J9Q2y6s5MBuXGvJaUWdXuXM9vSqQnqz3',
+            ],
+        ]);
+
+
+    $this->guzzler->expects($this->once())
+        ->get('https://api.mux.com/video/v1/assets/J9Q2y6s5MBuXGvJaUWdXuXM9vSqQnqz3')
+        ->willRespondJson([
+            'data' => [
+                'status' => 'ready',
+                'id' => 'J9Q2y6s5MBuXGvJaUWdXuXM9vSqQnqz3',
+                'video_quality' => 'plus',
+                'passthrough' => 'example-passthrough',
+                'playback_ids' => [
+                    [
+                        'policy' => 'public',
+                        'id' => 'S2vqt5JjJGg5HV6fQ4Xijgt1IvAFLI2eKFFicXX00iHB',
+                    ],
+                ],
             ],
         ]);
 
     $result = $this->createMuxAsset->handle($inaccessibleMp4);
 
-    expect($result)->toBe('123456789');
-    $this->guzzler->assertHistoryCount(3);
+    expect($result)->toBe('J9Q2y6s5MBuXGvJaUWdXuXM9vSqQnqz3');
+
+    $this->guzzler->assertHistoryCount(4);
+
     Event::assertDispatched(AssetUploadedToMux::class);
+
+    expect($inaccessibleMp4->get('mux'))->toEqual([
+        'id' => 'J9Q2y6s5MBuXGvJaUWdXuXM9vSqQnqz3',
+        'playback_ids' => ['public' => 'S2vqt5JjJGg5HV6fQ4Xijgt1IvAFLI2eKFFicXX00iHB'],
+    ]);
 });
 
 it('uploads assets from local environment', function () {
