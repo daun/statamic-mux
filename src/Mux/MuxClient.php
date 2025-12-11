@@ -15,7 +15,7 @@ class MuxClient extends Client implements ClientInterface
 
     public function __construct()
     {
-        return parent::__construct([
+        parent::__construct([
             'handler' => $this->buildHandlerStack(),
         ]);
     }

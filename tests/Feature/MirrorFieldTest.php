@@ -35,18 +35,36 @@ test('gets field instance from asset container blueprint', function () {
     $container = $this->getAssetContainer();
     expect(MirrorField::getFromBlueprint($container))->toBeNull();
 
-    $this->addMirrorFieldToAssetBlueprint();
+    $this->addMirrorFieldToAssetBlueprint('mux_handle');
     expect(MirrorField::getFromBlueprint($container))->toBeInstanceOf(Field::class);
     expect(MirrorField::getFromBlueprint($container)->type())->toBe(MuxMirrorFieldtype::handle());
+    expect(MirrorField::getFromBlueprint($container)->handle())->toBe('mux_handle');
 });
 
 test('gets field instance from asset blueprint', function () {
     $asset = $this->uploadTestFileToTestContainer('test.mp4');
     expect(MirrorField::getFromBlueprint($asset))->toBeNull();
 
-    $this->addMirrorFieldToAssetBlueprint();
+    $this->addMirrorFieldToAssetBlueprint('another_handle');
     expect(MirrorField::getFromBlueprint($asset))->toBeInstanceOf(Field::class);
     expect(MirrorField::getFromBlueprint($asset)->type())->toBe(MuxMirrorFieldtype::handle());
+    expect(MirrorField::getFromBlueprint($asset)->handle())->toBe('another_handle');
+});
+
+test('gets field handle from asset container blueprint', function () {
+    $container = $this->getAssetContainer();
+    expect(MirrorField::getHandle($container))->toBeNull();
+
+    $this->addMirrorFieldToAssetBlueprint('some_handle');
+    expect(MirrorField::getHandle($container))->toBe('some_handle');
+});
+
+test('gets field handle from asset blueprint', function () {
+    $asset = $this->uploadTestFileToTestContainer('test.mp4');
+    expect(MirrorField::getHandle($asset))->toBeNull();
+
+    $this->addMirrorFieldToAssetBlueprint('last_handle');
+    expect(MirrorField::getHandle($asset))->toBe('last_handle');
 });
 
 test('checks for existence of field in asset container blueprint', function () {
