@@ -26,12 +26,12 @@ class MuxAsset implements Augmentable
     {
         $this->data = collect($data ?? []);
         $this->asset = $asset;
-        $this->field = $field ?? MirrorField::getFromBlueprint($asset)?->handle();
+        $this->field = $field ?? MirrorField::getHandle($asset);
     }
 
     public static function fromAsset(Asset $asset, ?string $field = null): static
     {
-        $field = $field ?? MirrorField::getFromBlueprint($asset)?->handle();
+        $field = $field ?? MirrorField::getHandle($asset);
         $data = $field ? $asset->get($field) : [];
 
         return new static($data, $asset, $field);
