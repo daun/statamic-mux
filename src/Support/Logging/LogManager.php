@@ -51,8 +51,6 @@ class LogManager
      * 1. The mux package channel (customizable via config)
      * 2. The error forwarder channel
      * 3. The sdk channel for Mux SDK debug logs
-     *
-     * @return PsrLogger
      */
     public function registerChannels(): void
     {
