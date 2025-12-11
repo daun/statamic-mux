@@ -6,13 +6,13 @@ use Daun\StatamicMux\Fieldtypes\MuxMirrorFieldtype;
 
 trait ExtendsAssetBlueprint
 {
-    protected function addMirrorFieldToAssetBlueprint(array $params = [], mixed $container = null)
+    protected function addMirrorFieldToAssetBlueprint(string $handle = 'mux', array $params = [], mixed $container = null)
     {
         $this->setAssetContainerBlueprint([
             'alt' => [
                 'type' => 'text',
             ],
-            'mux' => [
+            $handle => [
                 'type' => MuxMirrorFieldtype::handle(),
                 ...$params,
             ],

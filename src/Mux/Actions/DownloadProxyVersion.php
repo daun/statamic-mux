@@ -9,7 +9,7 @@ use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Mux\MuxUrls;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Http;
-use MuxPhp\Models\Asset as MuxAssetModel;
+use MuxPhp\Models\Asset as MuxApiAssetModel;
 use Statamic\Assets\Asset;
 
 class DownloadProxyVersion
@@ -123,19 +123,19 @@ class DownloadProxyVersion
             $asset->save();
 
             MuxAsset::fromAsset($asset)
-                ->setProxy(true)
-                ->setDuration($duration)
+                ->withProxy(true)
+                ->withDuration($duration)
                 ->save();
 
             return true;
         } catch (\Throwable $th) {
-            MuxAsset::fromAsset($asset)->setProxy(false)->save();
+            MuxAsset::fromAsset($asset)->withProxy(false)->save();
 
             throw $th;
         }
     }
 
-    protected function getPlaybackId(MuxAssetModel $data): ?string
+    protected function getPlaybackId(MuxApiAssetModel $data): ?string
     {
         $playbackIds = $data->getPlaybackIds();
         $playbackId = $playbackIds[0] ?? null;
@@ -143,7 +143,7 @@ class DownloadProxyVersion
         return $playbackId?->getId() ?? null;
     }
 
-    protected function getRenditionName(MuxAssetModel $data): ?string
+    protected function getRenditionName(MuxApiAssetModel $data): ?string
     {
         $renditions = $data->getStaticRenditions()?->getFiles();
         $rendition = $renditions[0] ?? null;
