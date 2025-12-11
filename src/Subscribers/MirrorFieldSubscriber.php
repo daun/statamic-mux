@@ -46,7 +46,7 @@ class MirrorFieldSubscriber implements ShouldQueue
     public function reupload(AssetReuploaded $event): void
     {
         if (MirrorField::shouldMirror($event->asset)) {
-            MuxAsset::fromAsset($event->asset)->setProxy(false)->save();
+            MuxAsset::fromAsset($event->asset)->withProxy(false)->save();
             $this->service->createMuxAsset($event->asset, force: true);
         }
     }

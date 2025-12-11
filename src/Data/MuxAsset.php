@@ -110,24 +110,32 @@ class MuxAsset implements Augmentable
     {
         $playbackId = $this->playbackIds()->addPlaybackId($id, $policy);
         $this->set('playback_ids', $this->playbackIds()->toArray());
+
         return $playbackId;
     }
 
-    public function setId(?string $id): self
+    public function withPlaybackId(string $id, string $policy): self
+    {
+        $this->addPlaybackId($id, $policy);
+
+        return $this;
+    }
+
+    public function withId(?string $id): self
     {
         $this->set('id', $id);
 
         return $this;
     }
 
-    public function setProxy(bool $proxy = true): self
+    public function withProxy(bool $proxy = true): self
     {
         $this->set('is_proxy', $proxy);
 
         return $this;
     }
 
-    public function setDuration(?float $duration): self
+    public function withDuration(?float $duration): self
     {
         $this->set('duration', $duration);
 
