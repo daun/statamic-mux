@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.0.0] - 2026-02-08
+
+- Add support for Statamic 6
+- Show animated video thumbnails in asset listings
+- Show upload status in asset listings
+- Drop support for Laravel 10 & 11 (breaking change)
+- Drop support for PHP 8.2 (breaking change)
+
 ## [2.1.1] - 2026-02-08
 
 - Explicitly test against PHP 8.5
@@ -13,7 +21,7 @@
 - Add configurable logger for simpler troubleshooting
 - Add `mux:debug` command for ensuring correct configuration
 - Make Guzzle requests hookable for advanced use cases
-- Remove support for Laravel 9 and PHP 8.1 (breaking change)
+- Drop support for Laravel 9 and PHP 8.1 (breaking change)
 
 ## [1.8.0] - 2025-11-15
 
@@ -127,6 +135,7 @@
 
 - Beta release
 
+[3.0.0]: https://github.com/daun/statamic-mux/releases/tag/3.0.0
 [2.1.1]: https://github.com/daun/statamic-mux/releases/tag/2.1.1
 [2.1.0]: https://github.com/daun/statamic-mux/releases/tag/2.1.0
 [2.0.0]: https://github.com/daun/statamic-mux/releases/tag/2.0.0
