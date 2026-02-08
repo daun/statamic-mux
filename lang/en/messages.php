@@ -2,12 +2,17 @@
 
 return [
 
-    'mirror_fieldtype' => [
-        'not_mirrored' => 'Not mirrored to Mux',
-        'no_asset' => 'not an asset',
-        'no_video' => 'not a video',
-        'uploaded' => 'Video uploaded to Mux',
-        'not_uploaded' => 'Video not yet uploaded to Mux',
+    'fieldtype' => [
+        'unmirrored' => 'Not mirrored',
+        'unmirrored_no_asset' => 'Only assets are mirrored',
+        'unmirrored_no_video' => 'Only videos are mirrored',
+        'uploaded' => 'Uploaded',
+        'uploaded_tooltip' => 'Video uploaded to Mux',
+        'proxy' => 'Placeholder',
+        'proxy_tooltip' => 'Original video file replaced with short placeholder clip',
+        'details' => 'Details',
+        'details_tooltip' => 'Show Mux asset data',
+        'not_uploaded' => 'Not uploaded',
         'upload_on_save' => 'Upload to Mux on save',
         'reupload_on_save' => 'Reupload to Mux on save',
     ],
