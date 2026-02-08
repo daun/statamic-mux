@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.1.0] - 2025-12-11
+
+- Speed up initial rendering by reusing existing playback id
+
 ## [2.0.0] - 2025-11-22
 
 - Add configurable logger for simpler troubleshooting
@@ -119,6 +123,7 @@
 
 - Beta release
 
+[2.1.0]: https://github.com/daun/statamic-mux/releases/tag/2.1.0
 [2.0.0]: https://github.com/daun/statamic-mux/releases/tag/2.0.0
 [1.8.0]: https://github.com/daun/statamic-mux/releases/tag/1.8.0
 [1.7.0]: https://github.com/daun/statamic-mux/releases/tag/1.7.0

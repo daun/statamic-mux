@@ -7,8 +7,11 @@ use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Events\AssetUploadedToMux;
 use Daun\StatamicMux\Events\AssetUploadingToMux;
 use Daun\StatamicMux\Facades\Log;
+use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
+use MuxPhp\Models\Asset as MuxApiAssetModel;
+use MuxPhp\Models\PlaybackID;
 use Statamic\Assets\Asset;
 
 class CreateMuxAsset
@@ -40,9 +43,9 @@ class CreateMuxAsset
 
         try {
             if ($this->assetIsPubliclyAccessible($asset)) {
-                $muxId = $this->ingestAssetToMux($asset);
+                $muxAsset = $this->ingestAssetToMux($asset);
             } else {
-                $muxId = $this->uploadAssetToMux($asset);
+                $muxAsset = $this->uploadAssetToMux($asset);
             }
         } catch (\Throwable $th) {
             Log::error(
@@ -53,17 +56,27 @@ class CreateMuxAsset
             throw new \Exception("Error uploading video to Mux: {$th->getMessage()}", previous: $th);
         }
 
-        if ($muxId) {
+        if ($muxAsset) {
+            $muxId = $muxAsset->getId();
+            $playbackId = $this->getPlaybackId($muxAsset);
+
             Log::info(
                 'Video uploaded to Mux',
-                ['asset' => $asset->id(), 'mux_id' => $muxId],
+                ['asset' => $asset->id(), 'mux_id' => $muxId, 'playback_id' => $playbackId?->getId(), 'playback_policy' => $playbackId?->getPolicy()],
             );
 
-            MuxAsset::fromAsset($asset)->clear()->setId($muxId)->save();
+            MuxAsset::fromAsset($asset)
+                ->clear()
+                ->withId($muxId)
+                ->withPlaybackId($playbackId->getId(), (string) $playbackId->getPolicy())
+                ->save();
+
             AssetUploadedToMux::dispatch($asset, $muxId);
+
+            return $muxId;
         }
 
-        return $muxId;
+        return null;
     }
 
     /**
@@ -120,7 +133,7 @@ class CreateMuxAsset
     /**
      * Upload a video asset to Mux using a direct upload link.
      */
-    protected function uploadAssetToMux(Asset $asset): ?string
+    protected function uploadAssetToMux(Asset $asset): ?MuxApiAssetModel
     {
         $data = $this->getAssetData($asset) + $this->getAssetSettings($asset);
         $request = $this->api->createUploadRequest($data);
@@ -148,13 +161,13 @@ class CreateMuxAsset
             return null;
         }
 
-        return $muxId;
+        return $this->api->assets()->getAsset($muxId)->getData();
     }
 
     /**
      * Upload a video asset to Mux using ingestion from a public url.
      */
-    protected function ingestAssetToMux(Asset $asset): ?string
+    protected function ingestAssetToMux(Asset $asset): ?MuxApiAssetModel
     {
         $input = $this->api->input(['url' => $asset->absoluteUrl()]);
         $data = ['input' => $input] + $this->getAssetData($asset) + $this->getAssetSettings($asset);
@@ -165,18 +178,16 @@ class CreateMuxAsset
             ['asset' => $asset->id(), 'public_url' => $asset->absoluteUrl()],
         );
 
-        $muxAsset = $this->api->assets()->createAsset($request)->getData();
-        $muxId = $muxAsset?->getId();
+        return $this->api->assets()->createAsset($request)->getData();
+    }
 
-        if (! $muxId) {
-            Log::error(
-                'Error retrieving Mux asset id from public url upload',
-                ['asset' => $asset->id(), 'response' => $muxAsset],
-            );
-
-            return null;
-        }
-
-        return $muxId;
+    /**
+     * Get the playback id from a Mux asset data object.
+     */
+    protected function getPlaybackId(MuxApiAssetModel $data): ?PlaybackID
+    {
+        return collect($data->getPlaybackIds() ?? [])
+            ->sort(fn ($id) => MuxPlaybackPolicy::make($id)?->isPublic() ? -1 : 0)
+            ->first();
     }
 }

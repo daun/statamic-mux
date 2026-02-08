@@ -69,7 +69,7 @@ it('ignores Mux assets not created by the addon', function () {
 
     $this->addMirrorFieldToAssetBlueprint();
     MuxAsset::fromAsset($this->mp4)
-        ->setId('JaUWdXuXM93J9Q2yvSqQnqz6s5MBuXGv')
+        ->withId('JaUWdXuXM93J9Q2yvSqQnqz6s5MBuXGv')
         ->save();
 
     $this->guzzler->expects($this->once())
@@ -78,7 +78,6 @@ it('ignores Mux assets not created by the addon', function () {
             'data' => [
                 'status' => 'ready',
                 'id' => 'JaUWdXuXM93J9Q2yvSqQnqz6s5MBuXGv',
-                'asset_id' => '123456789',
                 'video_quality' => 'plus',
                 'passthrough' => 'example-passthrough',
             ],
@@ -97,7 +96,7 @@ it('deletes associated Mux assets of local assets created by the addon', functio
 
     $this->addMirrorFieldToAssetBlueprint();
     MuxAsset::fromAsset($this->mp4)
-        ->setId('yvSqQnqz6s5MBuXGvJaUWdXuXM93J9Q2')
+        ->withId('yvSqQnqz6s5MBuXGvJaUWdXuXM93J9Q2')
         ->save();
 
     $this->guzzler->expects($this->once())
@@ -106,7 +105,6 @@ it('deletes associated Mux assets of local assets created by the addon', functio
             'data' => [
                 'status' => 'ready',
                 'id' => 'yvSqQnqz6s5MBuXGvJaUWdXuXM93J9Q2',
-                'asset_id' => '123456789',
                 'video_quality' => 'plus',
                 'passthrough' => 'statamic::video.mp4',
             ],
@@ -131,7 +129,6 @@ it('ignores orphaned Mux assets not created by the addon', function () {
             'data' => [
                 'status' => 'ready',
                 'id' => 's5MBuXGvJaUWdXuXM93J9Q2yvSqQnqz6',
-                'asset_id' => '123456789',
                 'video_quality' => 'plus',
                 'passthrough' => 'example-passthrough',
             ],
@@ -150,7 +147,6 @@ it('deletes orphaned Mux assets created by the addon', function () {
             'data' => [
                 'status' => 'ready',
                 'id' => 'yvSqQnqz6s5MBuXGvJaUWdXuXM93J9Q2',
-                'asset_id' => '123456789',
                 'video_quality' => 'plus',
                 'passthrough' => 'statamic::video.mp4',
             ],

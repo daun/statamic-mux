@@ -55,11 +55,16 @@ class MirrorField
         );
     }
 
+    public static function getHandle(Asset|AssetContainer|null $asset): ?string
+    {
+        return static::getFromBlueprint($asset)?->handle();
+    }
+
     public static function containers(): Collection
     {
-        return AssetContainers::all()->filter(
-            fn (AssetContainer $container) => static::existsInBlueprint($container)
-        )->values();
+        return AssetContainers::all()
+            ->filter(fn (AssetContainer $container) => static::existsInBlueprint($container))
+            ->values();
     }
 
     public static function assets(): Collection
@@ -73,8 +78,8 @@ class MirrorField
 
     public static function clear(Asset $asset): void
     {
-        if ($field = static::getFromBlueprint($asset)) {
-            $asset->set($field->handle(), null);
+        if ($handle = static::getHandle($asset)) {
+            $asset->set($handle, null);
         }
     }
 }
