@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        php: [8.4, 8.3, 8.2]
+        php: [8.5, 8.4, 8.3, 8.2]
         laravel: [12.*, 11.*, 10.*]
         statamic: [5.*, 4.*]
         include:
@@ -65,7 +65,7 @@ jobs:
 
       - name: Check code coverage
         uses: codecov/codecov-action@v4
-        if: ${{ matrix.php == '8.4' && matrix.laravel == '12.*' }}
+        if: ${{ matrix.php == '8.5' && matrix.laravel == '12.*' }}
         with:
           file: ./coverage.xml
           token: ${{ secrets.CODECOV_TOKEN }}
