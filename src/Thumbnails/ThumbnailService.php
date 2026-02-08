@@ -65,25 +65,6 @@ class ThumbnailService
         });
     }
 
-    public function removeHooks(): void
-    {
-        if (! $this->enabled()) {
-            return;
-        }
-
-        $service = $this;
-
-        AssetResource::hook('asset', function ($payload, $next) use ($service) {
-            $payload->data->thumbnail ??= $service->forAsset($this->resource);
-            return $next($payload);
-        });
-
-        FolderAssetResource::hook('asset', function ($payload, $next) use ($service) {
-            $payload->data->thumbnail ??= $service->forAsset($this->resource);
-            return $next($payload);
-        });
-    }
-
     protected function getThumbnailUrl(MuxPlaybackId $playbackId): string
     {
         return $this->animated()
