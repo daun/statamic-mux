@@ -72,7 +72,7 @@ class ThumbnailService
     protected function getThumbnailUrl(MuxPlaybackId $playbackId): string
     {
         return $this->animated()
-            ? $this->service->getGifUrl($playbackId, ['width' => $this->width])
-            : $this->service->getThumbnailUrl($playbackId, ['width' => $this->width]);
+            ? $this->service->getGifUrl($playbackId, ['width' => $this->width, 'format' => 'webp'])
+            : $this->service->getThumbnailUrl($playbackId, ['width' => $this->width, 'format' => 'webp']);
     }
 }
