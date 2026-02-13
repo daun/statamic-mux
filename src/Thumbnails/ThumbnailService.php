@@ -13,7 +13,7 @@ class ThumbnailService
     protected int $width = 400;
 
     public function __construct(
-        protected MuxService $service,
+        public MuxService $service,
     ) {}
 
     public function enabled(): bool
@@ -52,15 +52,19 @@ class ThumbnailService
             return;
         }
 
-        $service = $this;
+        $self = $this;
 
-        AssetResource::hook('asset', function ($payload, $next) use ($service) {
-            $payload->data->thumbnail ??= $service->forAsset($this->resource);
+        AssetResource::hook('asset', function ($payload, $next) use ($self) {
+            if ($self->service->getMuxId($this->resource)) {
+                $payload->data->thumbnail = $self->forAsset($this->resource) ?? $payload->data->thumbnail;
+            }
             return $next($payload);
         });
 
-        FolderAssetResource::hook('asset', function ($payload, $next) use ($service) {
-            $payload->data->thumbnail ??= $service->forAsset($this->resource);
+        FolderAssetResource::hook('asset', function ($payload, $next) use ($self) {
+            if ($self->service->getMuxId($this->resource)) {
+                $payload->data->thumbnail = $self->forAsset($this->resource) ?? $payload->data->thumbnail;
+            }
             return $next($payload);
         });
     }
