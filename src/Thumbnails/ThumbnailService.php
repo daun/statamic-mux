@@ -10,10 +10,10 @@ use Statamic\Http\Resources\CP\Assets\FolderAsset as FolderAssetResource;
 
 class ThumbnailService
 {
-    protected int $width = 400;
+    protected int $size = 400;
 
     public function __construct(
-        protected MuxService $service,
+        public MuxService $service,
     ) {}
 
     public function enabled(): bool
@@ -35,14 +35,14 @@ class ThumbnailService
         // If playback id already exists, generate gif url immediately
         // Otherwise, delegate generation to custom route in the background
         return ($playbackId = $this->service->getPlaybackId($asset, requestIfMissing: false))
-            ? $this->getThumbnailUrl($playbackId)
+            ? $this->getThumbnailUrl($playbackId, $asset->orientation())
             : cp_route('mux.thumbnail', base64_encode($asset->id()));
     }
 
     public function generateForAsset(Asset $asset): ?string
     {
         return ($playbackId = $this->service->getPlaybackId($asset))
-            ? $this->getThumbnailUrl($playbackId)
+            ? $this->getThumbnailUrl($playbackId, $asset->orientation())
             : null;
     }
 
@@ -52,23 +52,31 @@ class ThumbnailService
             return;
         }
 
-        $service = $this;
+        $self = $this;
 
-        AssetResource::hook('asset', function ($payload, $next) use ($service) {
-            $payload->data->thumbnail ??= $service->forAsset($this->resource);
+        AssetResource::hook('asset', function ($payload, $next) use ($self) {
+            if ($self->service->getMuxId($this->resource)) {
+                $payload->data->thumbnail = $self->forAsset($this->resource) ?? $payload->data->thumbnail;
+            }
             return $next($payload);
         });
 
-        FolderAssetResource::hook('asset', function ($payload, $next) use ($service) {
-            $payload->data->thumbnail ??= $service->forAsset($this->resource);
+        FolderAssetResource::hook('asset', function ($payload, $next) use ($self) {
+            if ($self->service->getMuxId($this->resource)) {
+                $payload->data->thumbnail = $self->forAsset($this->resource) ?? $payload->data->thumbnail;
+            }
             return $next($payload);
         });
     }
 
-    protected function getThumbnailUrl(MuxPlaybackId $playbackId): string
+    protected function getThumbnailUrl(MuxPlaybackId $playbackId, string $orientation = 'landscape'): string
     {
+        $params = $orientation === 'landscape'
+            ? ['width' => $this->size, 'format' => 'webp']
+            : ['height' => $this->size, 'format' => 'webp'];
+
         return $this->animated()
-            ? $this->service->getGifUrl($playbackId, ['width' => $this->width])
-            : $this->service->getThumbnailUrl($playbackId, ['width' => $this->width]);
+            ? $this->service->getGifUrl($playbackId, $params)
+            : $this->service->getThumbnailUrl($playbackId, $params);
     }
 }

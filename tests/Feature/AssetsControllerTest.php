@@ -44,13 +44,13 @@ test('redirects to thumbnail url for asset with playback id', function () {
     expect($response->getTargetUrl())->toContain('playback-456');
 });
 
-test('redirects to animated gif thumbnail by default', function () {
+test('redirects to animated thumbnail by default', function () {
     $asset = $this->mp4WithPlaybackId;
     $id = base64_encode($asset->id());
 
     $response = $this->app->make(AssetsController::class)->thumbnail($id);
 
-    expect($response->getTargetUrl())->toEndWith('.gif?width=400');
+    expect($response->getTargetUrl())->toEndWith('animated.webp?width=400');
 });
 
 test('redirects to static thumbnail when animated is disabled', function () {
@@ -61,7 +61,7 @@ test('redirects to static thumbnail when animated is disabled', function () {
 
     $response = $this->app->make(AssetsController::class)->thumbnail($id);
 
-    expect($response->getTargetUrl())->toEndWith('.jpg?width=400');
+    expect($response->getTargetUrl())->toEndWith('thumbnail.webp?width=400');
 });
 
 test('returns 404 for non-existent asset', function () {
@@ -101,7 +101,7 @@ test('calls thumbnail service with correct asset', function () {
     $service->shouldReceive('generateForAsset')
         ->once()
         ->withArgs(fn ($asset) => $asset->id() === $this->mp4WithPlaybackId->id())
-        ->andReturn('https://image.mux.com/playback-456/thumbnail.gif');
+        ->andReturn('https://image.mux.com/playback-456/thumbnail.webp');
     $this->app->instance(ThumbnailService::class, $service);
 
     $asset = $this->mp4WithPlaybackId;
@@ -109,7 +109,7 @@ test('calls thumbnail service with correct asset', function () {
 
     $response = $this->app->make(AssetsController::class)->thumbnail($id);
 
-    expect($response->getTargetUrl())->toBe('https://image.mux.com/playback-456/thumbnail.gif');
+    expect($response->getTargetUrl())->toBe('https://image.mux.com/playback-456/thumbnail.webp');
 });
 
 test('thumbnail route is registered', function () {
