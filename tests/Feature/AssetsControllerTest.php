@@ -109,7 +109,7 @@ test('calls thumbnail service with correct asset', function () {
 
     $response = $this->app->make(AssetsController::class)->thumbnail($id);
 
-    expect($response->getTargetUrl())->toBe('webp');
+    expect($response->getTargetUrl())->toBe('https://image.mux.com/playback-456/thumbnail.webp');
 });
 
 test('thumbnail route is registered', function () {
