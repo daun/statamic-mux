@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.1.0] - 2026-02-13
+
+- Make video thumbnails faster and more reliable
+
 ## [3.0.0] - 2026-02-08
 
 - Add support for Statamic 6
@@ -135,6 +139,7 @@
 
 - Beta release
 
+[3.1.0]: https://github.com/daun/statamic-mux/releases/tag/3.1.0
 [3.0.0]: https://github.com/daun/statamic-mux/releases/tag/3.0.0
 [2.1.1]: https://github.com/daun/statamic-mux/releases/tag/2.1.1
 [2.1.0]: https://github.com/daun/statamic-mux/releases/tag/2.1.0
