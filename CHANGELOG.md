@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.1.1] - 2026-02-27
+
+- Update firebase/php-jwt to fix security advisory (@steveparks)
+
 ## [3.1.0] - 2026-02-13
 
 - Make video thumbnails faster and more reliable
