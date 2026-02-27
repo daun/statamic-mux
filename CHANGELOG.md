@@ -143,6 +143,7 @@
 
 - Beta release
 
+[3.1.1]: https://github.com/daun/statamic-mux/releases/tag/3.1.1
 [3.1.0]: https://github.com/daun/statamic-mux/releases/tag/3.1.0
 [3.0.0]: https://github.com/daun/statamic-mux/releases/tag/3.0.0
 [2.1.1]: https://github.com/daun/statamic-mux/releases/tag/2.1.1
