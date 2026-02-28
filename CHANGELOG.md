@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.1.2] - 2026-02-28
+
+- Display correct playback id in fieldtype component
+
 ## [3.1.1] - 2026-02-27
 
 - Update firebase/php-jwt to fix security advisory (@steveparks)
@@ -143,6 +147,7 @@
 
 - Beta release
 
+[3.1.2]: https://github.com/daun/statamic-mux/releases/tag/3.1.2
 [3.1.1]: https://github.com/daun/statamic-mux/releases/tag/3.1.1
 [3.1.0]: https://github.com/daun/statamic-mux/releases/tag/3.1.0
 [3.0.0]: https://github.com/daun/statamic-mux/releases/tag/3.0.0
