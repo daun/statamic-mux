@@ -5,6 +5,7 @@ use Daun\StatamicMux\Thumbnails\ThumbnailService;
 use Illuminate\Support\Facades\Auth;
 use Statamic\Facades\Stache;
 use Statamic\Facades\User;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 beforeEach(function () {
     config([
@@ -68,7 +69,7 @@ test('returns 404 for non-existent asset', function () {
     $id = base64_encode('test_container_assets::nonexistent.mp4');
 
     $this->app->make(AssetsController::class)->thumbnail($id);
-})->throws(Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class);
+})->throws(NotFoundHttpException::class);
 
 test('returns 404 for invalid base64 id', function () {
     $this->app->make(AssetsController::class)->thumbnail('!!!invalid!!!');
@@ -79,7 +80,7 @@ test('returns 404 for asset without mux data', function () {
     $id = base64_encode($asset->id());
 
     $this->app->make(AssetsController::class)->thumbnail($id);
-})->throws(Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class);
+})->throws(NotFoundHttpException::class);
 
 test('returns 404 when thumbnail service returns null', function () {
     $service = Mockery::mock(ThumbnailService::class);
@@ -90,7 +91,7 @@ test('returns 404 when thumbnail service returns null', function () {
     $id = base64_encode($asset->id());
 
     $this->app->make(AssetsController::class)->thumbnail($id);
-})->throws(Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class);
+})->throws(NotFoundHttpException::class);
 
 test('returns 404 for empty id', function () {
     $this->app->make(AssetsController::class)->thumbnail(base64_encode(''));

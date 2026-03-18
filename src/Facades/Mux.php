@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static array getDefaultPlaybackModifiers()
  * @method static void hook(string $name, \Closure $hook)
  *
- * @see \Daun\StatamicMux\Mux\MuxService
+ * @see MuxService
  */
 class Mux extends Facade
 {
