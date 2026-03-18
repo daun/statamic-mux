@@ -59,21 +59,21 @@ class MuxMirrorFieldtypeFilter extends FieldtypeFilter
 
         if ($field === 'status') {
             match ($values['status'] ?? null) {
-                 'uploaded' => $query->where('is_video', true)->whereNotNull("{$handle}->id"),
-                 'not_uploaded' => $query->where('is_video', true)->whereNull("{$handle}->id"),
-                 'ignored' => $query->where('is_video', false),
+                'uploaded' => $query->where('is_video', true)->whereNotNull("{$handle}->id"),
+                'not_uploaded' => $query->where('is_video', true)->whereNull("{$handle}->id"),
+                'ignored' => $query->where('is_video', false),
             };
         }
 
         if ($field === 'policy') {
             match ($values['policy'] ?? null) {
-                 'public' => $query->whereNotNull("{$handle}->playback_ids->public"),
-                 'signed' => $query->whereNotNull("{$handle}->playback_ids->signed"),
+                'public' => $query->whereNotNull("{$handle}->playback_ids->public"),
+                'signed' => $query->whereNotNull("{$handle}->playback_ids->signed"),
             };
         }
 
         if ($field === 'id' && ($values['id'] ?? null)) {
-            $query->where(fn($q) => $q
+            $query->where(fn ($q) => $q
                 ->where("{$handle}->id", 'like', "%{$values['id']}%")
                 ->orWhere("{$handle}->playback_ids", 'like', "%{$values['id']}%")
             );
