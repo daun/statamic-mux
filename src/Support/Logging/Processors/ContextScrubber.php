@@ -2,6 +2,7 @@
 
 namespace Daun\StatamicMux\Support\Logging\Processors;
 
+use Monolog\Logger;
 use RedactSensitive\RedactSensitiveProcessor;
 
 final class ContextScrubber
@@ -14,7 +15,7 @@ final class ContextScrubber
     ];
 
     /**
-     * @param  \Monolog\Logger  $logger
+     * @param  Logger  $logger
      */
     public function __invoke($logger): void
     {

@@ -98,11 +98,11 @@ Mock fixtures are stored in `tests/__fixtures__/` for consistent testing.
 
 ### Dependencies and Libraries
 
-- **PHP 8.2+**: Base language requirement
-- **Laravel 10+**: Framework foundation
-- **Statamic 4+**: CMS platform
+- **PHP 8.3+**: Base language requirement
+- **Laravel 12+**: Framework foundation
+- **Statamic 6+**: CMS platform
 - **Mux PHP SDK**: Official API client for Mux services
-- **Vue 2**: Frontend components
+- **Vue 3**: Backend fieldtype components
 - **Vite**: Asset building
 - **PHPStan**: Static analysis
 - **Laravel Pint**: Code formatting following Laravel style

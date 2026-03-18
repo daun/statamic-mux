@@ -9,6 +9,7 @@ use MuxPhp\Api\DirectUploadsApi;
 use MuxPhp\Api\LiveStreamsApi;
 use MuxPhp\Api\PlaybackIDApi;
 use MuxPhp\Api\URLSigningKeysApi;
+use MuxPhp\Models\Asset;
 
 beforeEach(function () {
     $this->app->bind(MuxClient::class, fn () => $this->guzzler->getClient());
@@ -107,6 +108,6 @@ test('sends API request to create asset', function () {
 
     $this->guzzler->assertHistoryCount(1);
 
-    expect($muxAsset)->toBeInstanceOf(\MuxPhp\Models\Asset::class);
+    expect($muxAsset)->toBeInstanceOf(Asset::class);
     expect($muxAsset->getId())->toBe('SqQnqz6s5MBuXGvJaUWdXuXM93J9Q2yv');
 });

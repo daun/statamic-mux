@@ -39,7 +39,7 @@
                             <td v-else>
                                 <ui-icon name="globals" v-tooltip="'Public Playback ID'"></ui-icon>
                             </td>
-                            <td>{{ value.id }}</td>
+                            <td>{{ id }}</td>
                         </tr>
                     </tbody>
                 </table>
