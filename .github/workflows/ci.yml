@@ -20,7 +20,6 @@ jobs:
             testbench: 10.*
             pest: 3.*
             snapshots: 2.*
-        include:
           - laravel: 13.*
             testbench: 11.*
             pest: 3.*
