@@ -13,7 +13,7 @@ class AssetsController extends CpController
         protected ThumbnailService $service,
     ) {}
 
-    protected function thumbnail(string $id): RedirectResponse
+    public function thumbnail(string $id): RedirectResponse
     {
         if ($asset = Assets::findById(base64_decode($id))) {
             if ($thumbnail = $this->service->generateForAsset($asset)) {

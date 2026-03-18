@@ -39,8 +39,6 @@ using the official `<mux-video>` web component as a drop-in replacement for the 
 Read the docs on [Installation](https://statamic-mux.daun.ltd/installation) and
 [Connecting Mux](https://statamic-mux.daun.ltd/connecting-mux).
 
-The current version requires Statamic 6. For Statamic 5, please use version 1.x of this addon.
-
 ## Responsive Video
 
 Just like image pipelines efficiently deliver optimized images for faster load times on a variety of devices

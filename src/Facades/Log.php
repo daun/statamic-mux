@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static void debug(\Stringable|string $message, mixed[] $context = [])
  * @method static void log(mixed $level, \Stringable|string $message, mixed[] $context = [])
  *
- * @see \Daun\StatamicMux\Support\Logging\LoggerInterface
+ * @see LoggerInterface
  */
 class Log extends Facade
 {

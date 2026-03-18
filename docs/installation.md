@@ -8,9 +8,11 @@ composer require daun/statamic-mux
 
 ## Backend Requirements
 
-- PHP 8.2+
-- Laravel 10+
-- Statamic 4+
+- PHP 8.3+
+- Laravel 12+
+- Statamic 6+
+
+For Statamic 5 and Laravel 10/11 support, please use version 2.x of this addon.
 
 ## Frontend Scripts
 

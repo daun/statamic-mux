@@ -1,5 +1,29 @@
 # Changelog
 
+## [3.1.2] - 2026-02-28
+
+- Display correct playback id in fieldtype component
+
+## [3.1.1] - 2026-02-27
+
+- Update firebase/php-jwt to fix security advisory (@steveparks)
+
+## [3.1.0] - 2026-02-13
+
+- Make video thumbnails faster and more reliable
+
+## [3.0.0] - 2026-02-08
+
+- Add support for Statamic 6
+- Show animated video thumbnails in asset listings
+- Show upload status in asset listings
+- Drop support for Laravel 10 & 11 (breaking change)
+- Drop support for PHP 8.2 (breaking change)
+
+## [2.1.1] - 2026-02-08
+
+- Explicitly test against PHP 8.5
+
 ## [2.1.0] - 2025-12-11
 
 - Speed up initial rendering by reusing existing playback id
@@ -9,7 +33,7 @@
 - Add configurable logger for simpler troubleshooting
 - Add `mux:debug` command for ensuring correct configuration
 - Make Guzzle requests hookable for advanced use cases
-- Remove support for Laravel 9 and PHP 8.1 (breaking change)
+- Drop support for Laravel 9 and PHP 8.1 (breaking change)
 
 ## [1.8.0] - 2025-11-15
 
@@ -123,6 +147,11 @@
 
 - Beta release
 
+[3.1.2]: https://github.com/daun/statamic-mux/releases/tag/3.1.2
+[3.1.1]: https://github.com/daun/statamic-mux/releases/tag/3.1.1
+[3.1.0]: https://github.com/daun/statamic-mux/releases/tag/3.1.0
+[3.0.0]: https://github.com/daun/statamic-mux/releases/tag/3.0.0
+[2.1.1]: https://github.com/daun/statamic-mux/releases/tag/2.1.1
 [2.1.0]: https://github.com/daun/statamic-mux/releases/tag/2.1.0
 [2.0.0]: https://github.com/daun/statamic-mux/releases/tag/2.0.0
 [1.8.0]: https://github.com/daun/statamic-mux/releases/tag/1.8.0
