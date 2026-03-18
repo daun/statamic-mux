@@ -58,21 +58,21 @@ class MuxMirrorFieldtypeFilter extends FieldtypeFilter
         $field = $values['field'];
 
         if ($field === 'status') {
-            match ($values['status']) {
-                 'uploaded' => $query->whereNotNull("{$handle}->id"),
-                 'not_uploaded' => $query->whereNull("{$handle}->id"),
-                 'ignored' => $query->where('is_video', '=', false),
+            match ($values['status'] ?? null) {
+                 'uploaded' => $query->where('is_video', true)->whereNotNull("{$handle}->id"),
+                 'not_uploaded' => $query->where('is_video', true)->whereNull("{$handle}->id"),
+                 'ignored' => $query->where('is_video', false),
             };
         }
 
         if ($field === 'policy') {
-            match ($values['policy']) {
-                 'public' => $query->whereJsonContains("{$handle}->playback_ids", ['policy' => 'public']),
-                 'signed' => $query->whereJsonContains("{$handle}->playback_ids", ['policy' => 'signed']),
+            match ($values['policy'] ?? null) {
+                 'public' => $query->whereNotNull("{$handle}->playback_ids->public"),
+                 'signed' => $query->whereNotNull("{$handle}->playback_ids->signed"),
             };
         }
 
-        if ($field === 'id') {
+        if ($field === 'id' && ($values['id'] ?? null)) {
             $query->where(fn($q) => $q
                 ->where("{$handle}->id", 'like', "%{$values['id']}%")
                 ->orWhere("{$handle}->playback_ids", 'like', "%{$values['id']}%")
@@ -82,13 +82,19 @@ class MuxMirrorFieldtypeFilter extends FieldtypeFilter
 
     public function badge($values)
     {
-        $field = $this->fieldtype->field()->display();
-        $operator = $values['operator'];
-        $translatedOperator = Arr::get($this->fieldItems(), "operator.options.{$operator}");
-        $value = $values['value'];
-        $translatedValue = Arr::get($this->fieldItems(), "value.options.{$value}");
+        $base = 'Mux';
+        $field = match ($values['field'] ?? null) {
+            'status' => __('Status'),
+            'policy' => __('Policy'),
+            'id' => __('ID'),
+        };
+        $value = match ($values['field'] ?? null) {
+            'status' => Arr::get($this->fieldItems(), "status.options.{$values['status']}"),
+            'policy' => Arr::get($this->fieldItems(), "policy.options.{$values['policy']}"),
+            'id' => $values['id'] ?? null,
+        };
 
-        return $field.' '.strtolower($translatedOperator).' '.$translatedValue;
+        return $base.' '.$field.' '.__('Is').' '.$value;
     }
 
     public function isComplete($values): bool
