@@ -1,5 +1,10 @@
 # Changelog
 
+## [3.2.0] - 2026-03-18
+
+- Add support for Laravel 13
+- Add asset browser filter for Mux videos
+
 ## [3.1.2] - 2026-02-28
 
 - Display correct playback id in fieldtype component
@@ -147,6 +152,7 @@
 
 - Beta release
 
+[3.2.0]: https://github.com/daun/statamic-mux/releases/tag/3.2.0
 [3.1.2]: https://github.com/daun/statamic-mux/releases/tag/3.1.2
 [3.1.1]: https://github.com/daun/statamic-mux/releases/tag/3.1.1
 [3.1.0]: https://github.com/daun/statamic-mux/releases/tag/3.1.0
