@@ -13,13 +13,13 @@ jobs:
       fail-fast: true
       matrix:
         php: [8.5, 8.4, 8.3]
-        laravel: [12.*]
+        laravel: [12.*, 13.*]
         statamic: [6.*]
         include:
           - laravel: 12.*
             testbench: 10.*
-            pest: 3.*
-            snapshots: 2.*
+          - laravel: 13.*
+            testbench: 11.*
 
     name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }} / Statamic ${{ matrix.statamic }}
 
@@ -41,7 +41,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          composer require "statamic/cms:${{ matrix.statamic }}" "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" "pestphp/pest:${{ matrix.pest }}" "pestphp/pest-plugin-laravel:${{ matrix.pest }}" "spatie/pest-plugin-snapshots:${{ matrix.snapshots }}" --no-interaction --no-update
+          composer require "statamic/cms:${{ matrix.statamic }}" "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
           composer update --prefer-dist --no-interaction --no-progress
 
       - name: Check code style
