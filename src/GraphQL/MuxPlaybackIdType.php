@@ -3,9 +3,10 @@
 namespace Daun\StatamicMux\GraphQL;
 
 use Daun\StatamicMux\Data\MuxPlaybackId;
+use Rebing\GraphQL\Support\Type;
 use Statamic\Facades\GraphQL;
 
-class MuxPlaybackIdType extends \Rebing\GraphQL\Support\Type
+class MuxPlaybackIdType extends Type
 {
     const NAME = 'MuxPlaybackId';
 

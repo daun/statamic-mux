@@ -14,6 +14,8 @@ use MuxPhp\Api\PlaybackIDApi;
 use MuxPhp\Api\URLSigningKeysApi;
 use MuxPhp\ApiException;
 use MuxPhp\Configuration;
+use MuxPhp\Models\Asset;
+use MuxPhp\Models\AssetStaticRenditions;
 use MuxPhp\Models\CreateAssetRequest;
 use MuxPhp\Models\CreatePlaybackIDRequest;
 use MuxPhp\Models\CreateUploadRequest;
@@ -68,13 +70,12 @@ class MuxApi
 
         $context = [
             'token_id' => $this->tokenId,
-            'token_secret' => $this->tokenSecret,
+            'token_secret' => $this->tokenSecret ? '(set)' : '(not set)',
             'test_mode' => $this->testMode,
         ];
 
         $this->hook('api-request', function ($payload, $next) use ($context) {
-            Blink::once('debug-mux-credentials', fn () => Log::debug('Initializing Mux API', $context)
-            );
+            Blink::once('debug-mux-credentials', fn () => Log::debug('Initializing Mux API', $context));
 
             return $next($payload);
         });
@@ -234,7 +235,7 @@ class MuxApi
         try {
             $response = $this->assets()->getAsset($muxId)->getData();
             $status = $response?->getStatus();
-            $expected = \MuxPhp\Models\Asset::STATUS_READY;
+            $expected = Asset::STATUS_READY;
 
             Log::debug(
                 'Checking Mux asset status: '.($status === $expected ? 'ready' : 'not ready'),
@@ -265,7 +266,7 @@ class MuxApi
             $files = $response?->getStaticRenditions()?->getFiles() ?? [];
 
             $ready = array_reduce($files, function ($carry, $file) {
-                return $carry && $file->getStatus() === \MuxPhp\Models\AssetStaticRenditions::STATUS_READY;
+                return $carry && $file->getStatus() === AssetStaticRenditions::STATUS_READY;
             }, count($files) > 0);
 
             Log::debug(

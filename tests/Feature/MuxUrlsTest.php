@@ -31,13 +31,13 @@ test('converts expiration to timestamp', function () {
 });
 
 test('token throws when missing key id', function () {
-    expect(fn () => $this->urls->token('playback-id', MuxAudience::Gif))->not->toThrow(\Exception::class);
+    expect(fn () => $this->urls->token('playback-id', MuxAudience::Gif))->not->toThrow(Exception::class);
 
     config(['mux.signing_key.key_id' => null]);
     config(['mux.signing_key.private_key' => null]);
     $urls = $this->app->make(MuxUrls::class);
 
-    expect(fn () => $urls->token('playback-id', MuxAudience::Gif))->toThrow(\Exception::class);
+    expect(fn () => $urls->token('playback-id', MuxAudience::Gif))->toThrow(Exception::class);
 });
 
 test('token returns string', function () {
@@ -59,6 +59,23 @@ test('signs urls and removes params', function () {
         ->toStartWith("/url?token={$token}")
         ->not->toContain('playback-id')
         ->not->toContain('width');
+});
+
+test('token ignores reserved claim names in user params', function () {
+    $tokenWithoutClaims = $this->urls->token('playback-id', MuxAudience::Thumbnail, [
+        'width' => 10,
+    ]);
+
+    $tokenWithClaims = $this->urls->token('playback-id', MuxAudience::Thumbnail, [
+        'width' => 10,
+        'sub' => 'other-playback-id',
+        'aud' => 'other-audience',
+        'exp' => 1234567890,
+        'kid' => 'other-key-id',
+    ]);
+
+    expect($tokenWithoutClaims)
+        ->toEqual($tokenWithClaims);
 });
 
 test('generates playback url', function () {

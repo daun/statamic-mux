@@ -5,6 +5,8 @@ use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxClient;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Support\MirrorField;
+use Illuminate\Support\Collection;
+use MuxPhp\Models\Asset;
 use Statamic\Facades\Stache;
 
 beforeEach(function () {
@@ -174,11 +176,11 @@ test('sends API request to list assets', function () {
 
     $this->guzzler->assertHistoryCount(1);
 
-    expect($muxAssets)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($muxAssets)->toBeInstanceOf(Collection::class);
     expect($muxAssets)->toHaveLength(2);
-    expect($muxAssets[0])->toBeInstanceOf(\MuxPhp\Models\Asset::class);
+    expect($muxAssets[0])->toBeInstanceOf(Asset::class);
     expect($muxAssets[0]->getId())->toBe('8jd7M77xQgf2NzuocJRPYdSdEfY5dLlcRwFARtgQqU4');
-    expect($muxAssets[1])->toBeInstanceOf(\MuxPhp\Models\Asset::class);
+    expect($muxAssets[1])->toBeInstanceOf(Asset::class);
     expect($muxAssets[1]->getId())->toBe('lJ4bGGsp7ZlPf02nMg015W02iHQLN9XnuuLRBsPS00xqd68');
 });
 
@@ -297,8 +299,8 @@ test('paginates API request to list all assets', function () {
 
     $this->guzzler->assertHistoryCount(3);
 
-    expect($muxAssets)->toBeInstanceOf(\Illuminate\Support\Collection::class);
+    expect($muxAssets)->toBeInstanceOf(Collection::class);
     expect($muxAssets)->toHaveLength(2);
-    expect($muxAssets[0])->toBeInstanceOf(\MuxPhp\Models\Asset::class);
+    expect($muxAssets[0])->toBeInstanceOf(Asset::class);
     expect($muxAssets[0]->getId())->toBe('8jd7M77xQgf2NzuocJRPYdSdEfY5dLlcRwFARtgQqU4');
 });

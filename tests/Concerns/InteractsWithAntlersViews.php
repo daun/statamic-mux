@@ -2,6 +2,7 @@
 
 namespace Tests\Concerns;
 
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Facades\View as ViewFacade;
 use Illuminate\Testing\TestView;
 
@@ -10,7 +11,7 @@ trait InteractsWithAntlersViews
     /**
      * Render the contents of the given Antlers template string.
      *
-     * @param  \Illuminate\Contracts\Support\Arrayable|array  $data
+     * @param  Arrayable|array  $data
      */
     protected function antlers(string $template, $data = []): TestView
     {

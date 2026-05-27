@@ -7,6 +7,7 @@ use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
 use Illuminate\Foundation\Application;
+use MuxPhp\Models\StaticRendition;
 use Statamic\Assets\Asset;
 
 class CreateProxyVersion
@@ -112,7 +113,7 @@ class CreateProxyVersion
                 'end_time' => $start + $length,
             ]),
             'static_renditions' => [
-                ['resolution' => \MuxPhp\Models\StaticRendition::RESOLUTION_HIGHEST],
+                ['resolution' => StaticRendition::RESOLUTION_HIGHEST],
             ],
             'passthrough' => $this->getPassthroughData($muxId),
         ];

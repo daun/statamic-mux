@@ -79,7 +79,7 @@ it('removes orphaned videos from Mux', function () {
         ->assertSuccessful();
 
     Queue::assertPushed(DeleteMuxAssetJob::class, function ($job) {
-        $class = new \ReflectionClass($job);
+        $class = new ReflectionClass($job);
         $asset = $class->getProperty('asset')->getValue($job);
 
         return $asset === 'orphan-mux-id';

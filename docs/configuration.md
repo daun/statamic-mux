@@ -79,6 +79,32 @@ return [
 ];
 ```
 
+## Control Panel Thumbnails
+
+Configure the behavior of video thumbnails in the control panel. By default, the addon will render
+animated GIF previews of the first five seconds. This is great for editors to identify and work with
+videos, but uses more bandwidth than static images. You can disable this behavior entirely or switch
+to static images to save on bandwidth.
+
+```php
+return [
+    /*
+    |--------------------------------------------------------------------------
+    | Control Panel Thumbnails
+    |--------------------------------------------------------------------------
+    */
+
+    'cp_thumbnails' => [
+
+        'enabled' => true, // [!code focus]
+
+        'animated' => true, // [!code focus]
+
+    ],
+
+];
+```
+
 ## Test Mode
 
 Mux offers a test mode for evaluating their service without incurring charges for storage or streaming.

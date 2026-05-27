@@ -69,7 +69,7 @@ it('redacts sensitive data from the output', function () {
     $logger = makeLogManager()->resolveStack();
 
     // $laravelLogger is Illuminate\Log\Logger
-    $ref = new \ReflectionClass($logger);
+    $ref = new ReflectionClass($logger);
     $prop = $ref->getProperty('logger');
     $monolog = $prop->getValue($logger);
 

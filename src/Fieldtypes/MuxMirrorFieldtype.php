@@ -6,6 +6,7 @@ use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\GraphQL\MuxMirrorType;
 use Daun\StatamicMux\GraphQL\MuxPlaybackIdType;
 use Daun\StatamicMux\Jobs\CreateMuxAssetJob;
+use Daun\StatamicMux\Query\Scopes\Filters\Fields\MuxMirrorFieldtypeFilter;
 use Daun\StatamicMux\Support\Queue;
 use Statamic\Assets\Asset;
 use Statamic\Facades\GraphQL;
@@ -100,5 +101,10 @@ class MuxMirrorFieldtype extends Fieldtype
     {
         GraphQL::addType(MuxMirrorType::class);
         GraphQL::addType(MuxPlaybackIdType::class);
+    }
+
+    public function filter()
+    {
+        return new MuxMirrorFieldtypeFilter($this);
     }
 }

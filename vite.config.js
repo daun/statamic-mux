@@ -1,9 +1,12 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
-import vue from '@vitejs/plugin-vue2';
+import statamic from '@statamic/cms/vite-plugin';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
     plugins: [
+        statamic(),
+        tailwindcss(),
         laravel({
             input: [
                 'resources/css/addon.css',
@@ -12,6 +15,5 @@ export default defineConfig({
             publicDirectory: 'resources/dist',
             refresh: true,
         }),
-        vue(),
     ],
 });

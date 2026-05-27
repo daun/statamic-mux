@@ -7,10 +7,11 @@ use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Facades\Mux;
 use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use Illuminate\Support\Facades\Validator;
+use Rebing\GraphQL\Support\Type;
 use Statamic\Facades\GraphQL;
 use Statamic\GraphQL\Types\JsonArgument;
 
-class MuxMirrorType extends \Rebing\GraphQL\Support\Type
+class MuxMirrorType extends Type
 {
     const NAME = 'MuxMirror';
 

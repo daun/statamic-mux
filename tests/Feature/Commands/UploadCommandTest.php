@@ -94,7 +94,7 @@ it('uploads new videos', function () {
         ->assertSuccessful();
 
     Queue::assertPushed(CreateMuxAssetJob::class, function ($job) use ($video) {
-        $class = new \ReflectionClass($job);
+        $class = new ReflectionClass($job);
         $asset = $class->getProperty('asset')->getValue($job);
         $force = $class->getProperty('force')->getValue($job);
 
@@ -170,7 +170,7 @@ it('reuploads existing videos with force flag', function () {
         ->assertSuccessful();
 
     Queue::assertPushed(CreateMuxAssetJob::class, function ($job) use ($video) {
-        $class = new \ReflectionClass($job);
+        $class = new ReflectionClass($job);
         $asset = $class->getProperty('asset')->getValue($job);
         $force = $class->getProperty('force')->getValue($job);
 
@@ -387,7 +387,7 @@ it('handles mixed scenarios with uploads, reuploads, and skips', function () {
 
     // Verify 1 job with force=false (new video)
     Queue::assertPushed(CreateMuxAssetJob::class, function ($job) use ($newVideo) {
-        $class = new \ReflectionClass($job);
+        $class = new ReflectionClass($job);
         $asset = $class->getProperty('asset')->getValue($job);
         $force = $class->getProperty('force')->getValue($job);
 
@@ -396,7 +396,7 @@ it('handles mixed scenarios with uploads, reuploads, and skips', function () {
 
     // Verify 2 jobs with force=true (existing videos)
     Queue::assertPushed(CreateMuxAssetJob::class, function ($job) use ($existingVideo, $reuploadVideo) {
-        $class = new \ReflectionClass($job);
+        $class = new ReflectionClass($job);
         $asset = $class->getProperty('asset')->getValue($job);
         $force = $class->getProperty('force')->getValue($job);
 
