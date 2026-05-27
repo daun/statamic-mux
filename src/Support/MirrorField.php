@@ -89,7 +89,7 @@ class MirrorField
 
             return Assets::query()
                 ->where('container', $container->handle())
-                ->whereJsonContains("{$handle}.id", $muxId)
+                ->whereJsonOverlaps("{$handle}->id", $muxId)
                 ->get();
         });
 

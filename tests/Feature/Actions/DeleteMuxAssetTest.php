@@ -140,6 +140,63 @@ it('ignores orphaned Mux assets not created by the addon', function () {
     $this->guzzler->assertHistoryCount(1);
 });
 
+it('skips deletion when other local assets reference the same Mux id', function () {
+    Event::fake([AssetDeletingFromMux::class, AssetDeletedFromMux::class]);
+
+    $this->addMirrorFieldToAssetBlueprint();
+
+    $duplicate = $this->uploadTestFileToTestContainer('test.mp4', 'duplicate.mp4');
+
+    MuxAsset::fromAsset($this->mp4)
+        ->withId('JaUWdXuXM93J9Q2yvSqQnqz6s5MBuXGv')
+        ->save();
+    MuxAsset::fromAsset($duplicate)
+        ->withId('JaUWdXuXM93J9Q2yvSqQnqz6s5MBuXGv')
+        ->save();
+    Stache::clear();
+
+    $result = $this->deleteMuxAsset->handle($this->mp4);
+
+    expect($result)->toBeFalse();
+    $this->guzzler->assertHistoryCount(0);
+    Event::assertNotDispatched(AssetDeletingFromMux::class);
+    Event::assertNotDispatched(AssetDeletedFromMux::class);
+});
+
+it('bypasses the duplicate check when called by Mux id directly', function () {
+    $this->addMirrorFieldToAssetBlueprint();
+
+    $duplicate = $this->uploadTestFileToTestContainer('test.mp4', 'duplicate.mp4');
+
+    MuxAsset::fromAsset($this->mp4)
+        ->withId('yvSqQnqz6s5MBuXGvJaUWdXuXM93J9Q2')
+        ->save();
+    MuxAsset::fromAsset($duplicate)
+        ->withId('yvSqQnqz6s5MBuXGvJaUWdXuXM93J9Q2')
+        ->save();
+    Stache::clear();
+
+    $this->guzzler->expects($this->once())
+        ->get('https://api.mux.com/video/v1/assets/yvSqQnqz6s5MBuXGvJaUWdXuXM93J9Q2')
+        ->willRespondJson([
+            'data' => [
+                'status' => 'ready',
+                'id' => 'yvSqQnqz6s5MBuXGvJaUWdXuXM93J9Q2',
+                'video_quality' => 'plus',
+                'passthrough' => 'statamic::video.mp4',
+            ],
+        ]);
+
+    $this->guzzler->expects($this->once())
+        ->delete('https://api.mux.com/video/v1/assets/yvSqQnqz6s5MBuXGvJaUWdXuXM93J9Q2')
+        ->willRespond(Http::response(status: 204));
+
+    $result = $this->deleteMuxAsset->handle('yvSqQnqz6s5MBuXGvJaUWdXuXM93J9Q2');
+
+    expect($result)->toBeTrue();
+    $this->guzzler->assertHistoryCount(2);
+});
+
 it('deletes orphaned Mux assets created by the addon', function () {
     $this->guzzler->expects($this->once())
         ->get('https://api.mux.com/video/v1/assets/yvSqQnqz6s5MBuXGvJaUWdXuXM93J9Q2')
