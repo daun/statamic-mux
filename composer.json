@@ -64,8 +64,10 @@
             "pestphp/pest-plugin": true,
             "pixelfear/composer-dist-plugin": true
         },
-        "audit": {
-            "block-insecure": false
+        "policy": {
+            "advisories": {
+                "block": true
+            }
         },
         "optimize-autoloader": true,
         "preferred-install": "dist",
