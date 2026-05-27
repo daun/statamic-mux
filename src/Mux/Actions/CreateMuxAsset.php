@@ -200,5 +200,4 @@ class CreateMuxAsset
             ->sort(fn ($id) => MuxPlaybackPolicy::make($id)?->isPublic() ? -1 : 0)
             ->first();
     }
-
 }
