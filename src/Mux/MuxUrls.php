@@ -8,6 +8,7 @@ use Daun\StatamicMux\Facades\Log;
 use Daun\StatamicMux\Mux\Enums\MuxAudience;
 use Daun\StatamicMux\Support\URL;
 use Firebase\JWT\JWT;
+use Illuminate\Support\Arr;
 
 class MuxUrls
 {
@@ -85,12 +86,15 @@ class MuxUrls
 
         $timestamp = $this->timestamp($expiration);
 
-        $claims = array_merge([
+        // Remove reserved JWT claim names
+        $params = Arr::except($params ?? [], ['sub', 'aud' ,'exp', 'kid', 'iat', 'nbf', 'iss', 'jti']);
+
+        $claims = array_merge($params, [
             'sub' => $playbackId,
             'aud' => $audience,
             'exp' => $timestamp,
             'kid' => $this->keyId,
-        ], $params ?? []);
+        ]);
 
         try {
             return JWT::encode($claims, base64_decode($this->privateKey), 'RS256');
