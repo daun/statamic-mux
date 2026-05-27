@@ -1,5 +1,6 @@
 <?php
 
+use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Events\AssetUploadedToMux;
 use Daun\StatamicMux\Events\AssetUploadingToMux;
 use Daun\StatamicMux\Facades\Mux;
@@ -478,6 +479,61 @@ it('allows modifying asset settings via hook', function () {
     $result = $this->createMuxAsset->handle($this->mp4);
 
     expect($result)->toBe('JaUWdXuXM93J9Q2yvSqQnqz6s5MBuXGv');
+});
+
+it('deletes the previous Mux asset after re-upload when no duplicates exist', function () {
+    Event::fake([AssetUploadedToMux::class]);
+
+    MuxAsset::fromAsset($this->mp4)->withId('OLD-MUX-ID')->save();
+    Stache::clear();
+
+    $this->service->shouldReceive('deleteMuxAsset')->with('OLD-MUX-ID')->once()->andReturn(true);
+
+    $this->guzzler->expects($this->once())
+        ->post('https://api.mux.com/video/v1/assets')
+        ->willRespondJson([
+            'data' => [
+                'status' => 'preparing',
+                'playback_ids' => [
+                    ['policy' => 'public', 'id' => 'NEW-PLAYBACK-ID'],
+                ],
+                'id' => 'NEW-MUX-ID',
+                'created_at' => '1607452572',
+            ],
+        ]);
+
+    $result = $this->createMuxAsset->handle($this->mp4, force: true);
+
+    expect($result)->toBe('NEW-MUX-ID');
+    $this->service->shouldHaveReceived('deleteMuxAsset')->with('OLD-MUX-ID')->once();
+});
+
+it('keeps the previous Mux asset after re-upload when other local assets reference it', function () {
+    Event::fake([AssetUploadedToMux::class]);
+
+    $duplicate = $this->uploadTestFileToTestContainer('test.mp4', 'duplicate.mp4');
+
+    MuxAsset::fromAsset($this->mp4)->withId('OLD-MUX-ID')->save();
+    MuxAsset::fromAsset($duplicate)->withId('OLD-MUX-ID')->save();
+    Stache::clear();
+
+    $this->guzzler->expects($this->once())
+        ->post('https://api.mux.com/video/v1/assets')
+        ->willRespondJson([
+            'data' => [
+                'status' => 'preparing',
+                'playback_ids' => [
+                    ['policy' => 'public', 'id' => 'NEW-PLAYBACK-ID'],
+                ],
+                'id' => 'NEW-MUX-ID',
+                'created_at' => '1607452572',
+            ],
+        ]);
+
+    $result = $this->createMuxAsset->handle($this->mp4, force: true);
+
+    expect($result)->toBe('NEW-MUX-ID');
+    $this->service->shouldNotHaveReceived('deleteMuxAsset');
 });
 
 it('allows modifying asset metadata via hook', function () {
