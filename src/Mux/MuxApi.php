@@ -70,7 +70,7 @@ class MuxApi
 
         $context = [
             'token_id' => $this->tokenId,
-            'token_secret' => $this->tokenSecret,
+            'token_secret' => $this->tokenSecret ? '(set)' : '(not set)',
             'test_mode' => $this->testMode,
         ];
 

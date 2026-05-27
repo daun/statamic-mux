@@ -61,6 +61,23 @@ test('signs urls and removes params', function () {
         ->not->toContain('width');
 });
 
+test('token ignores reserved claim names in user params', function () {
+    $tokenWithoutClaims = $this->urls->token('playback-id', MuxAudience::Thumbnail, [
+        'width' => 10,
+    ]);
+
+    $tokenWithClaims = $this->urls->token('playback-id', MuxAudience::Thumbnail, [
+        'width' => 10,
+        'sub' => 'other-playback-id',
+        'aud' => 'other-audience',
+        'exp' => 1234567890,
+        'kid' => 'other-key-id',
+    ]);
+
+    expect($tokenWithoutClaims)
+        ->toEqual($tokenWithClaims);
+});
+
 test('generates playback url', function () {
     expect(Str::containsAll($this->urls->playback('playback-id'), ['stream.mux.com', 'm3u8', 'playback-id']))->toBeTrue();
 });
