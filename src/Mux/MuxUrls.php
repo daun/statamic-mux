@@ -99,7 +99,6 @@ class MuxUrls
                 'payload' => $claims,
                 'playback_id' => $playbackId,
                 'key_id' => $this->keyId,
-                'private_key' => $this->privateKey,
             ]);
 
             return null;
