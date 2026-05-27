@@ -77,7 +77,7 @@ class CreateMuxAsset
                 ->withPlaybackId($playbackId->getId(), (string) $playbackId->getPolicy())
                 ->save();
 
-            if (! $otherAssets->count()) {
+            if ($previousMuxId && $otherAssets->isEmpty()) {
                 $this->service->deleteMuxAsset($previousMuxId);
             }
 

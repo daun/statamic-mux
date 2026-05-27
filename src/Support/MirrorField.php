@@ -81,28 +81,23 @@ class MirrorField
      */
     public static function assetsByMuxId(string $muxId, ?Asset $except = null): Collection
     {
-        $containers = static::containers();
-        $fields = $containers->map(fn ($container) => static::getHandle($container));
-        if (! count($fields)) {
-            return collect();
-        }
+        $results = static::containers()->flatMap(function (AssetContainer $container) use ($muxId) {
+            $handle = static::getHandle($container);
+            if (! $handle) {
+                return collect();
+            }
 
-        $query = Assets::query()
-            ->whereIn('container', $containers->map->handle())
-            ->where(fn ($q) => $fields->each(
-                fn ($handle, $i) => $i === 0
-                    ? $q->whereJsonContains("{$handle}.id", $muxId)
-                    : $q->orWhereJsonContains("{$handle}.id", $muxId)
-            ));
+            return Assets::query()
+                ->where('container', $container->handle())
+                ->whereJsonContains("{$handle}.id", $muxId)
+                ->get();
+        });
 
         if ($except) {
-            $query->whereNot(fn ($q) => $q
-                ->where('container', $except->containerHandle())
-                ->where('path', $except->path())
-            );
+            $results = $results->reject(fn (Asset $asset) => $asset->id() === $except->id());
         }
 
-        return $query->get();
+        return $results->values();
     }
 
     public static function clear(Asset $asset): void
