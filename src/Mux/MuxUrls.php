@@ -87,7 +87,7 @@ class MuxUrls
         $timestamp = $this->timestamp($expiration);
 
         // Remove reserved JWT claim names
-        $params = Arr::except($params ?? [], ['sub', 'aud' ,'exp', 'kid', 'iat', 'nbf', 'iss', 'jti']);
+        $params = Arr::except($params ?? [], ['sub', 'aud', 'exp', 'kid', 'iat', 'nbf', 'iss', 'jti']);
 
         $claims = array_merge($params, [
             'sub' => $playbackId,
