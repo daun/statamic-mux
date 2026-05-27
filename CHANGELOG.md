@@ -3,7 +3,7 @@
 ## [3.2.1] - 2026-05-27
 
 - Ignore reserved claim names in token user params
-- Exclude redacted private key from error logs
+- Exclude secrets from error logs which were previously merely redacted
 
 ## [3.2.0] - 2026-03-18
 
