@@ -11,11 +11,9 @@ use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Support\MirrorField;
-use Illuminate\Support\Collection;
 use MuxPhp\Models\Asset as MuxApiAssetModel;
 use MuxPhp\Models\PlaybackID;
 use Statamic\Assets\Asset;
-use Statamic\Facades\Asset as Assets;
 
 class CreateMuxAsset
 {
@@ -45,7 +43,9 @@ class CreateMuxAsset
         }
 
         $previousMuxId = $this->service->getMuxId($asset);
-        $otherAssets = $this->getAssetsWithIdenticalMuxId($asset);
+        $otherAssets = $previousMuxId
+            ? MirrorField::assetsByMuxId($previousMuxId, except: $asset)
+            : collect();
 
         try {
             if ($this->assetIsPubliclyAccessible($asset)) {
@@ -201,30 +201,4 @@ class CreateMuxAsset
             ->first();
     }
 
-    /**
-     * Find all other assets using the same Mux id.
-     */
-    protected function getAssetsWithIdenticalMuxId(Asset $asset): Collection
-    {
-        $muxId = $this->service->getMuxId($asset);
-
-        $containers = MirrorField::containers();
-        $fields = $containers->map(fn ($container) => MirrorField::getHandle($container));
-        if (! count($fields)) {
-            return collect();
-        }
-
-        return Assets::query()
-            ->whereIn('container', $containers->map->handle())
-            ->whereNot(fn ($q) => $q
-                ->where('container', $asset->containerHandle())
-                ->where('path', $asset->path())
-            )
-            ->where(fn ($q) => $fields->each(
-                fn ($handle, $i) => $i === 0
-                    ? $q->whereJsonContains("{$handle}.id", $muxId)
-                    : $q->orWhereJsonContains("{$handle}.id", $muxId)
-            ))
-            ->get();
-    }
 }

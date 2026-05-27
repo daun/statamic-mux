@@ -76,6 +76,35 @@ class MirrorField
         )->values();
     }
 
+    /**
+     * Find all local assets referencing the given Mux id, optionally excluding one.
+     */
+    public static function assetsByMuxId(string $muxId, ?Asset $except = null): Collection
+    {
+        $containers = static::containers();
+        $fields = $containers->map(fn ($container) => static::getHandle($container));
+        if (! count($fields)) {
+            return collect();
+        }
+
+        $query = Assets::query()
+            ->whereIn('container', $containers->map->handle())
+            ->where(fn ($q) => $fields->each(
+                fn ($handle, $i) => $i === 0
+                    ? $q->whereJsonContains("{$handle}.id", $muxId)
+                    : $q->orWhereJsonContains("{$handle}.id", $muxId)
+            ));
+
+        if ($except) {
+            $query->whereNot(fn ($q) => $q
+                ->where('container', $except->containerHandle())
+                ->where('path', $except->path())
+            );
+        }
+
+        return $query->get();
+    }
+
     public static function clear(Asset $asset): void
     {
         if ($handle = static::getHandle($asset)) {
