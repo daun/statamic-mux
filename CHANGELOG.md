@@ -1,5 +1,10 @@
 # Changelog
 
+## [3.2.1] - 2026-05-27
+
+- Ignore reserved claim names in token user params
+- Exclude redacted private key from error logs
+
 ## [3.2.0] - 2026-03-18
 
 - Add support for Laravel 13
@@ -152,6 +157,7 @@
 
 - Beta release
 
+[3.2.1]: https://github.com/daun/statamic-mux/releases/tag/3.2.1
 [3.2.0]: https://github.com/daun/statamic-mux/releases/tag/3.2.0
 [3.1.2]: https://github.com/daun/statamic-mux/releases/tag/3.1.2
 [3.1.1]: https://github.com/daun/statamic-mux/releases/tag/3.1.1
