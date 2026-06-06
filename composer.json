@@ -64,14 +64,16 @@
             "pestphp/pest-plugin": true,
             "pixelfear/composer-dist-plugin": true
         },
-        "audit": {
-            "block-insecure": false
+        "policy": {
+            "advisories": {
+                "block": true
+            }
         },
         "optimize-autoloader": true,
         "preferred-install": "dist",
         "sort-packages": true
     },
-    "minimum-stability": "alpha",
+    "minimum-stability": "stable",
     "extra": {
         "laravel": {
             "providers": [

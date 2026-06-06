@@ -1,5 +1,6 @@
 <?php
 
+use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Fieldtypes\MuxMirrorFieldtype;
 use Daun\StatamicMux\Support\MirrorField;
 use Statamic\Facades\Stache;
@@ -100,4 +101,41 @@ test('returns enabled assets with mirror field', function () {
 
     $this->addMirrorFieldToAssetBlueprint(container: 'with');
     expect(MirrorField::assets()->map->basename()->all())->toEqual(['test.mp4', 'test.webm']);
+});
+
+test('returns empty when no containers have a mirror field', function () {
+    expect(MirrorField::assetsByMuxId('any-mux-id')->all())->toEqual([]);
+});
+
+test('finds assets by Mux id across containers', function () {
+    $this->addMirrorFieldToAssetBlueprint();
+    $this->addMirrorFieldToAssetBlueprint(container: 'private');
+
+    $first = $this->uploadTestFileToTestContainer('test.mp4', 'first.mp4');
+    $second = $this->uploadTestFileToTestContainer('test.mp4', 'second.mp4', container: 'private');
+    $other = $this->uploadTestFileToTestContainer('test.mp4', 'other.mp4');
+
+    MuxAsset::fromAsset($first)->withId('shared-mux-id')->save();
+    MuxAsset::fromAsset($second)->withId('shared-mux-id')->save();
+    MuxAsset::fromAsset($other)->withId('unrelated-mux-id')->save();
+    Stache::clear();
+
+    $results = MirrorField::assetsByMuxId('shared-mux-id');
+
+    expect($results->map->id()->all())->toEqualCanonicalizing([$first->id(), $second->id()]);
+});
+
+test('excludes the given asset when finding by Mux id', function () {
+    $this->addMirrorFieldToAssetBlueprint();
+
+    $first = $this->uploadTestFileToTestContainer('test.mp4', 'first.mp4');
+    $second = $this->uploadTestFileToTestContainer('test.mp4', 'second.mp4');
+
+    MuxAsset::fromAsset($first)->withId('shared-mux-id')->save();
+    MuxAsset::fromAsset($second)->withId('shared-mux-id')->save();
+    Stache::clear();
+
+    $results = MirrorField::assetsByMuxId('shared-mux-id', except: $first);
+
+    expect($results->map->id()->all())->toEqual([$second->id()]);
 });

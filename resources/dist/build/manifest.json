@@ -1,15 +1,15 @@
 {
   "resources/css/addon.css": {
-    "file": "assets/addon-BaEUZaVA.css",
-    "src": "resources/css/addon.css",
-    "isEntry": true,
+    "file": "assets/addon-BJKUTCE-.css",
     "name": "addon",
     "names": [
       "addon.css"
-    ]
+    ],
+    "src": "resources/css/addon.css",
+    "isEntry": true
   },
   "resources/js/addon.js": {
-    "file": "assets/addon-BxcMy1lY.js",
+    "file": "assets/addon-CVs7AOqQ.js",
     "name": "addon",
     "src": "resources/js/addon.js",
     "isEntry": true

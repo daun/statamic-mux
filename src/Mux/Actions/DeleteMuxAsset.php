@@ -8,6 +8,7 @@ use Daun\StatamicMux\Events\AssetDeletingFromMux;
 use Daun\StatamicMux\Facades\Log;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
+use Daun\StatamicMux\Support\MirrorField;
 use Illuminate\Support\Str;
 use Statamic\Assets\Asset;
 
@@ -89,6 +90,16 @@ class DeleteMuxAsset
 
         $muxId = $this->service->getMuxId($asset);
         if (! $muxId) {
+            return false;
+        }
+
+        $otherAssets = MirrorField::assetsByMuxId($muxId, except: $asset);
+        if ($otherAssets->isNotEmpty()) {
+            Log::info(
+                'Skipping Mux asset deletion: still referenced by other local assets',
+                ['asset' => $asset->id(), 'mux_id' => $muxId, 'other_assets' => $otherAssets->map->id()->all()],
+            );
+
             return false;
         }
 
