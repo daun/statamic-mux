@@ -1,0 +1,213 @@
+<?php
+
+use Daun\StatamicMux\Http\Controllers\Cp\Api\MuxVideosController as MuxVideosApiController;
+use Daun\StatamicMux\Http\Controllers\Cp\MuxVideosController;
+use Daun\StatamicMux\Mux\MuxService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use MuxPhp\Models\Asset;
+use MuxPhp\Models\PlaybackID;
+use Statamic\Facades\Stache;
+use Statamic\Facades\User;
+
+beforeEach(function () {
+    config([
+        'app.key' => 'base64:'.base64_encode(random_bytes(32)),
+        'mux.mirror.enabled' => false,
+    ]);
+
+    $this->app->instance('statamic.hooks', collect());
+
+    $this->superUser = User::make()->email('super@test.com')->makeSuper()->password('secret');
+    $this->superUser->save();
+
+    $this->addMirrorFieldToAssetBlueprint();
+
+    $this->mp4 = $this->uploadTestFileToTestContainer('test.mp4');
+    $this->mp4->set('mux', ['id' => 'mux-asset-001', 'playback_ids' => ['public' => 'playback-001']]);
+    $this->mp4->save();
+
+    Stache::clear();
+
+    // Mock the MuxService to avoid real API calls
+    $remoteAsset = Mockery::mock(Asset::class);
+    $remoteAsset->shouldReceive('getId')->andReturn('mux-asset-001');
+    $remoteAsset->shouldReceive('getStatus')->andReturn('ready');
+    $remoteAsset->shouldReceive('getDuration')->andReturn(120.0);
+    $remoteAsset->shouldReceive('getResolutionTier')->andReturn('1080p');
+    $remoteAsset->shouldReceive('getMaxResolutionTier')->andReturn('1080p');
+    $remoteAsset->shouldReceive('getTest')->andReturn(false);
+    $remoteAsset->shouldReceive('getCreatedAt')->andReturn('1717200000');
+    $remoteAsset->shouldReceive('getAspectRatio')->andReturn('16:9');
+    $meta = Mockery::mock();
+    $meta->shouldReceive('getTitle')->andReturn('Test Video');
+    $remoteAsset->shouldReceive('getMeta')->andReturn($meta);
+    $playbackId = Mockery::mock(PlaybackID::class);
+    $playbackId->shouldReceive('getId')->andReturn('playback-mux-asset-001');
+    $playbackId->shouldReceive('getPolicy')->andReturn('public');
+    $remoteAsset->shouldReceive('getPlaybackIds')->andReturn([$playbackId]);
+
+    $muxService = Mockery::mock(MuxService::class);
+    $muxService->shouldReceive('listMuxAssets')->with(0)->andReturn(collect([$remoteAsset]));
+    $this->app->instance(MuxService::class, $muxService);
+    $this->app->instance('mux.service', $muxService);
+
+    Auth::guard()->login($this->superUser);
+});
+
+test('page controller returns view', function () {
+    $controller = $this->app->make(MuxVideosController::class);
+    $response = $controller->index();
+
+    expect($response->getName())->toBe('statamic-mux::cp.videos.index');
+    expect($response->getData())->toHaveKeys(['title', 'localEndpoint', 'remoteEndpoint', 'refreshEndpoint']);
+});
+
+test('page controller passes correct endpoints', function () {
+    $controller = $this->app->make(MuxVideosController::class);
+    $response = $controller->index();
+    $data = $response->getData();
+
+    expect($data['localEndpoint'])->toContain('/mux/api/videos/local');
+    expect($data['remoteEndpoint'])->toContain('/mux/api/videos/remote');
+    expect($data['refreshEndpoint'])->toContain('/mux/api/videos/refresh');
+});
+
+test('local api returns json with data and meta', function () {
+    $controller = $this->app->make(MuxVideosApiController::class);
+    $request = Request::create('/mux/api/videos/local', 'GET');
+    $response = $controller->local($request);
+
+    expect($response)->toBeInstanceOf(JsonResponse::class);
+
+    $json = $response->getData(true);
+    expect($json)->toHaveKeys(['data', 'meta']);
+    expect($json['meta'])->toHaveKeys(['current_page', 'per_page', 'total', 'last_page', 'columns']);
+});
+
+test('local api data has expected fields', function () {
+    $controller = $this->app->make(MuxVideosApiController::class);
+    $request = Request::create('/mux/api/videos/local', 'GET');
+    $response = $controller->local($request);
+    $json = $response->getData(true);
+
+    expect($json['data'])->not->toBeEmpty();
+    $row = collect($json['data'])->firstWhere('mux_id', 'mux-asset-001');
+    expect($row)->not->toBeNull();
+    expect($row)->toHaveKeys(['id', 'title', 'mux_id', 'has_mux_data', 'status', 'duration', 'playback_policy']);
+});
+
+test('remote api returns json with data and meta', function () {
+    $controller = $this->app->make(MuxVideosApiController::class);
+    $request = Request::create('/mux/api/videos/remote', 'GET');
+    $response = $controller->remote($request);
+
+    expect($response)->toBeInstanceOf(JsonResponse::class);
+
+    $json = $response->getData(true);
+    expect($json)->toHaveKeys(['data', 'meta']);
+    expect($json['meta'])->toHaveKeys(['current_page', 'per_page', 'total', 'last_page', 'columns']);
+});
+
+test('remote api data has expected fields', function () {
+    $controller = $this->app->make(MuxVideosApiController::class);
+    $request = Request::create('/mux/api/videos/remote', 'GET');
+    $response = $controller->remote($request);
+    $json = $response->getData(true);
+
+    expect($json['data'])->not->toBeEmpty();
+    $row = $json['data'][0];
+    expect($row)->toHaveKeys(['id', 'title', 'mux_id', 'state', 'status', 'duration', 'playback_policy']);
+});
+
+test('refresh endpoint returns success', function () {
+    $controller = $this->app->make(MuxVideosApiController::class);
+    $response = $controller->refresh();
+
+    expect($response)->toBeInstanceOf(JsonResponse::class);
+
+    $json = $response->getData(true);
+    expect($json)->toHaveKeys(['message', 'count']);
+    expect($json['count'])->toBe(1);
+});
+
+test('local api supports search parameter', function () {
+    $controller = $this->app->make(MuxVideosApiController::class);
+    $request = Request::create('/mux/api/videos/local', 'GET', ['search' => 'test']);
+    $response = $controller->local($request);
+
+    expect($response->getStatusCode())->toBe(200);
+});
+
+test('local api supports pagination', function () {
+    $controller = $this->app->make(MuxVideosApiController::class);
+    $request = Request::create('/mux/api/videos/local', 'GET', ['page' => 1, 'perPage' => 10]);
+    $response = $controller->local($request);
+    $json = $response->getData(true);
+
+    expect($json['meta']['current_page'])->toBe(1);
+    expect($json['meta']['per_page'])->toBe(10);
+});
+
+test('local api supports sorting', function () {
+    $controller = $this->app->make(MuxVideosApiController::class);
+    $request = Request::create('/mux/api/videos/local', 'GET', ['sort' => 'title', 'order' => 'desc']);
+    $response = $controller->local($request);
+
+    expect($response->getStatusCode())->toBe(200);
+});
+
+test('remote api columns include state', function () {
+    $controller = $this->app->make(MuxVideosApiController::class);
+    $request = Request::create('/mux/api/videos/remote', 'GET');
+    $response = $controller->remote($request);
+    $json = $response->getData(true);
+    $columns = collect($json['meta']['columns']);
+
+    expect($columns->pluck('field')->toArray())->toContain('state');
+});
+
+test('local api columns include is_stale', function () {
+    $controller = $this->app->make(MuxVideosApiController::class);
+    $request = Request::create('/mux/api/videos/local', 'GET');
+    $response = $controller->local($request);
+    $json = $response->getData(true);
+    $columns = collect($json['meta']['columns']);
+
+    expect($columns->pluck('field')->toArray())->toContain('is_stale');
+});
+
+test('local api includes filter definitions', function () {
+    $controller = $this->app->make(MuxVideosApiController::class);
+    $request = Request::create('/mux/api/videos/local', 'GET');
+    $response = $controller->local($request);
+    $json = $response->getData(true);
+
+    expect($json['meta']['filters'])->not->toBeEmpty();
+    $handles = collect($json['meta']['filters'])->pluck('handle')->toArray();
+    expect($handles)->toContain('status');
+    expect($handles)->toContain('local_state');
+    expect($handles)->toContain('playback_policy');
+});
+
+test('remote api includes filter definitions', function () {
+    $controller = $this->app->make(MuxVideosApiController::class);
+    $request = Request::create('/mux/api/videos/remote', 'GET');
+    $response = $controller->remote($request);
+    $json = $response->getData(true);
+
+    expect($json['meta']['filters'])->not->toBeEmpty();
+    $handles = collect($json['meta']['filters'])->pluck('handle')->toArray();
+    expect($handles)->toContain('status');
+    expect($handles)->toContain('state');
+    expect($handles)->toContain('resolution_tier');
+    expect($handles)->toContain('is_test');
+});
+
+test('routes are registered', function () {
+    expect(cp_route('mux.index'))->toContain('/mux');
+    expect(cp_route('mux.api.videos.local'))->toContain('/mux/api/videos/local');
+    expect(cp_route('mux.api.videos.remote'))->toContain('/mux/api/videos/remote');
+    expect(cp_route('mux.api.videos.refresh'))->toContain('/mux/api/videos/refresh');
+});

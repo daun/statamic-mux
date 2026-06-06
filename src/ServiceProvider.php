@@ -6,12 +6,14 @@ use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxClient;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Mux\MuxUrls;
+use Daun\StatamicMux\Mux\MuxVideoListingService;
 use Daun\StatamicMux\Support\Logging\LoggerInterface;
 use Daun\StatamicMux\Support\Logging\LogManager;
 use Daun\StatamicMux\Thumbnails\PlaceholderService;
 use Daun\StatamicMux\Thumbnails\ThumbnailService;
 use Illuminate\Foundation\Application;
 use Illuminate\Log\LogManager as IlluminateLog;
+use Statamic\Facades\CP\Nav;
 use Statamic\Facades\Permission;
 use Statamic\Providers\AddonServiceProvider;
 use Statamic\Statamic;
@@ -61,6 +63,7 @@ class ServiceProvider extends AddonServiceProvider
     public function bootAddon()
     {
         $this->bootPermissions();
+        $this->bootNav();
         $this->autoPublishConfig();
         $this->publishViews();
         $this->bootThumbnails();
@@ -123,6 +126,14 @@ class ServiceProvider extends AddonServiceProvider
         });
 
         $this->app->alias(MuxService::class, 'mux.service');
+
+        $this->app->bind(MuxVideoListingService::class, function (Application $app) {
+            return new MuxVideoListingService(
+                $app['mux.service'],
+            );
+        });
+
+        $this->app->alias(MuxVideoListingService::class, 'mux.listing');
     }
 
     protected function registerUrlService()
@@ -149,6 +160,18 @@ class ServiceProvider extends AddonServiceProvider
             return new PlaceholderService;
         });
         $this->app->alias(PlaceholderService::class, 'mux.placeholders');
+    }
+
+    protected function bootNav(): self
+    {
+        Nav::extend(function (\Statamic\CP\Navigation\Nav $nav) {
+            $nav->tools('Mux')
+                ->route('mux.index')
+                ->icon('fieldtype-video')
+                ->can('view mux');
+        });
+
+        return $this;
     }
 
     protected function bootPermissions()
@@ -237,6 +260,8 @@ class ServiceProvider extends AddonServiceProvider
             'mux.api',
             MuxService::class,
             'mux.service',
+            MuxVideoListingService::class,
+            'mux.listing',
             MuxUrls::class,
             'mux.urls',
             ThumbnailService::class,
