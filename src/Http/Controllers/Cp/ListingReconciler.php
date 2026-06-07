@@ -81,7 +81,7 @@ class ListingReconciler
      */
     protected function fetchAllRemoteAssets(): Collection
     {
-        return $this->api->listAssets(0);
+        return $this->api->listAllAssets();
     }
 
     /**

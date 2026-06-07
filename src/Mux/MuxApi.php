@@ -258,19 +258,64 @@ class MuxApi
      */
     public function listAssets(int $limit = 100, int $page = 1): Collection
     {
-        if ($limit >= 1) {
-            return collect($this->assets()->listAssets($limit, $page)->getData());
-        }
+        return collect($this->assets()->listAssets($limit, $page)->getData());
+    }
 
+    /**
+     * @return Collection<Asset>
+     */
+    public function listAllAssets(int $concurrency = 5): Collection
+    {
         $assets = collect();
-        $new = null;
         $page = 1;
+        $perPage = 100;
+        $concurrency = max(1, $concurrency);
+        $exhausted = false;
 
-        do {
-            $new = $this->assets()->listAssets(100, $page)->getData();
-            $assets->push(...$new);
-            $page++;
-        } while (count($new ?? []));
+        while (! $exhausted) {
+            $responses = [];
+            $pages = range($page, $page + $concurrency - 1);
+            $requests = function () use ($pages, $perPage) {
+                foreach ($pages as $page) {
+                    yield $page => $this->assets()->listAssetsAsync($perPage, $page);
+                }
+            };
+
+            (new EachPromise($requests(), [
+                'concurrency' => $concurrency,
+                'fulfilled' => function ($response, int $page) use (&$responses): void {
+                    $responses[$page] = $response;
+                },
+                'rejected' => function ($reason, int $page): void {
+                    if ($reason instanceof \Throwable) {
+                        Log::error(
+                            "Failed to list Mux assets: {$reason->getMessage()}",
+                            ['page' => $page, 'exception' => $reason],
+                        );
+
+                        throw $reason;
+                    }
+
+                    throw new \RuntimeException("Failed to list Mux assets on page {$page}");
+                },
+            ]))->promise()->wait();
+
+            ksort($responses);
+
+            foreach ($responses as $response) {
+                $data = $response?->getData() ?? [];
+                $count = count($data);
+
+                if ($count === 0) {
+                    $exhausted = true;
+                    break;
+                }
+
+                $assets->push(...$data);
+            }
+
+            $page += $concurrency;
+        }
 
         return $assets;
     }

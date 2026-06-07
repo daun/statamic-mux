@@ -57,7 +57,7 @@ beforeEach(function () {
             ->mapWithKeys(fn (string $id) => [$id => $this->remoteAssetsById->get($id)])
             ->filter();
     });
-    $muxApi->shouldReceive('listAssets')->with(0)->andReturn($this->remoteAssets);
+    $muxApi->shouldReceive('listAllAssets')->andReturn($this->remoteAssets);
 
     $this->app->instance(MuxApi::class, $muxApi);
     $this->app->instance('mux.api', $muxApi);

@@ -82,7 +82,7 @@ beforeEach(function () {
             ->filter(fn (string $id) => $id === 'mux-asset-001')
             ->mapWithKeys(fn (string $id) => [$id => $remoteAsset]);
     });
-    $muxApi->shouldReceive('listAssets')->with(0)->andReturn(collect([$remoteAsset]));
+    $muxApi->shouldReceive('listAllAssets')->andReturn(collect([$remoteAsset]));
     $muxApi->shouldReceive('dashboardUrl')->andReturn('https://dashboard.mux.com/environments/env-001/');
 
     $muxService = Mockery::mock(MuxService::class);

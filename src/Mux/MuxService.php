@@ -131,6 +131,10 @@ class MuxService
      */
     public function listMuxAssets(int $limit = 100, int $page = 1)
     {
+        if ($limit === 0) {
+            return $this->api->listAllAssets();
+        }
+
         return $this->api->listAssets($limit, $page);
     }
 

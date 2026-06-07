@@ -142,6 +142,36 @@ test('sends API request to create asset', function () {
     expect($muxAsset->getId())->toBe('SqQnqz6s5MBuXGvJaUWdXuXM93J9Q2yv');
 });
 
+test('lists all assets in concurrent page batches', function () {
+    $makeAssets = fn (int $page, int $count) => collect(range(1, $count))
+        ->when($count === 0, fn ($items) => collect())
+        ->map(fn (int $index) => [
+            'id' => "mux-page-{$page}-asset-{$index}",
+            'status' => 'ready',
+        ])
+        ->all();
+
+    foreach ([1 => 100, 2 => 100, 3 => 100, 4 => 100, 5 => 100, 6 => 1, 7 => 0, 8 => 0, 9 => 0, 10 => 0] as $page => $count) {
+        $this->guzzler->expects($this->once())
+            ->get('https://api.mux.com/video/v1/assets')
+            ->withQuery([
+                'limit' => 100,
+                'page' => $page,
+            ])
+            ->willRespondJson([
+                'data' => $makeAssets($page, $count),
+            ]);
+    }
+
+    $assets = $this->api->listAllAssets();
+
+    $this->guzzler->assertHistoryCount(10);
+
+    expect($assets)->toHaveCount(501);
+    expect($assets->first()->getId())->toBe('mux-page-1-asset-1');
+    expect($assets->last()->getId())->toBe('mux-page-6-asset-1');
+});
+
 test('gets multiple assets concurrently', function () {
     $this->guzzler->expects($this->once())
         ->get('https://api.mux.com/video/v1/assets/mux-asset-001')
