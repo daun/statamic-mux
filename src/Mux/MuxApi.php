@@ -6,7 +6,9 @@ use Daun\StatamicMux\Concerns\ProcessesHooks;
 use Daun\StatamicMux\Facades\Log;
 use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use MuxPhp\Api\AssetsApi;
 use MuxPhp\Api\DeliveryUsageApi;
 use MuxPhp\Api\DirectUploadsApi;
@@ -137,6 +139,53 @@ class MuxApi
         $this->deliveryUsageApi ??= new DeliveryUsageApi($this->client, $this->config);
 
         return $this->deliveryUsageApi;
+    }
+
+    public function whoami(): ?array
+    {
+        if (! $this->configured()) {
+            return null;
+        }
+
+        $cacheKey = 'statamic-mux.whoami.'.sha1((string) $this->tokenId);
+        $cached = Cache::get($cacheKey);
+
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        try {
+            $response = $this->client->get('https://api.mux.com/system/v1/whoami', [
+                'auth' => [$this->tokenId, $this->tokenSecret],
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'User-Agent' => self::userAgent,
+                ],
+            ]);
+
+            $payload = json_decode((string) $response->getBody(), true);
+            $data = $payload['data'] ?? null;
+
+            if (is_array($data)) {
+                Cache::put($cacheKey, $data, now()->addMonths(12));
+
+                return $data;
+            }
+        } catch (GuzzleException $e) {
+            Log::error("Failed to load Mux environment details: {$e->getMessage()}", ['exception' => $e]);
+        }
+
+        return null;
+    }
+
+    public function dashboardUrl(): ?string
+    {
+        $info = $this->whoami();
+        $environmentId = $info['environment_id'] ?? null;
+
+        return $environmentId
+            ? "https://dashboard.mux.com/environments/{$environmentId}"
+            : null;
     }
 
     public function input(array $input): InputSettings

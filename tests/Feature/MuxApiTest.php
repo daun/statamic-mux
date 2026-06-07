@@ -3,6 +3,7 @@
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxClient;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Cache;
 use MuxPhp\Api\AssetsApi;
 use MuxPhp\Api\DeliveryUsageApi;
 use MuxPhp\Api\DirectUploadsApi;
@@ -68,6 +69,34 @@ test('returns a configured PlaybackIDApi instance', function () {
 test('returns a configured DeliveryUsageApi instance', function () {
     expect($this->api->deliveryUsage())->toBeInstanceOf(DeliveryUsageApi::class);
     expect($this->api->deliveryUsage()->getConfig())->toBe($this->api->config());
+});
+
+test('builds dashboard url from the whoami endpoint', function () {
+    Cache::forget('statamic-mux.whoami.'.sha1('token-id'));
+
+    $api = new MuxApi($this->guzzler->getClient(), 'token-id', 'token-secret');
+
+    $this->guzzler->expects($this->once())
+        ->get('https://api.mux.com/system/v1/whoami')
+        ->willRespondJson([
+            'data' => [
+                'environment_id' => 'env-001',
+                'environment_name' => 'Production',
+                'organization_id' => 'org-001',
+            ],
+        ]);
+
+    expect($api->dashboardUrl())->toBe('https://dashboard.mux.com/environments/env-001/');
+
+    $this->guzzler->assertHistoryCount(1);
+});
+
+test('does not build dashboard url without api credentials', function () {
+    $api = new MuxApi($this->guzzler->getClient(), '', '');
+
+    expect($api->dashboardUrl())->toBeNull();
+
+    $this->guzzler->assertHistoryCount(0);
 });
 
 test('sends API request to create asset', function () {

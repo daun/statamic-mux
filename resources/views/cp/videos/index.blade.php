@@ -8,5 +8,6 @@
         remote-endpoint="{{ $remoteEndpoint }}"
         refresh-endpoint="{{ $refreshEndpoint }}"
         command-endpoint="{{ $commandEndpoint }}"
+        dashboard-url="{{ $dashboardUrl }}"
     />
 @endsection

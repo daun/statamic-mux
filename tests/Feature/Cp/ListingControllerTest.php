@@ -77,6 +77,7 @@ beforeEach(function () {
         return $remoteAsset;
     });
     $muxApi->shouldReceive('listAssets')->with(0)->andReturn(collect([$remoteAsset]));
+    $muxApi->shouldReceive('dashboardUrl')->andReturn('https://dashboard.mux.com/environments/env-001/');
 
     $muxService = Mockery::mock(MuxService::class);
     $muxService->shouldReceive('listMuxAssets')->with(0)->andReturn(collect([$remoteAsset]));

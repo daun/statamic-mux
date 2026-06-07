@@ -2,6 +2,7 @@
     <div>
         <Header icon="fieldtype-video" :title="__('Mux Videos')">
             <div class="flex items-center gap-2">
+
                 <div v-if="can('manage mux')" class="flex items-center gap-2 sm:gap-3">
                     <!-- Actions (...) menu -->
                     <Dropdown align="start">
@@ -53,6 +54,14 @@
                             </DropdownMenu>
                         </Dropdown>
                     </ButtonGroup>
+                    <Button
+                        v-if="dashboardUrl"
+                        :href="dashboardUrl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        icon-append="external-link"
+                        :text="__('Mux dashboard')"
+                    />
                 </div>
             </div>
         </Header>
@@ -192,6 +201,7 @@ export default {
         remoteEndpoint: { type: String, required: true },
         refreshEndpoint: { type: String, required: true },
         commandEndpoint: { type: String, required: true },
+        dashboardUrl: { type: String, default: null },
     },
 
     data() {

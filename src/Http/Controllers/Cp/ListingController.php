@@ -2,6 +2,7 @@
 
 namespace Daun\StatamicMux\Http\Controllers\Cp;
 
+use Daun\StatamicMux\Mux\MuxApi;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -11,6 +12,7 @@ class ListingController extends Controller
 {
     public function __construct(
         protected ListingReconciler $listing,
+        protected MuxApi $mux,
     ) {}
 
     public function index()
@@ -24,6 +26,7 @@ class ListingController extends Controller
             'remoteEndpoint' => cp_route('mux.listing.remote'),
             'refreshEndpoint' => cp_route('mux.listing.refresh'),
             'commandEndpoint' => cp_route('mux.command'),
+            'dashboardUrl' => $this->mux->dashboardUrl(),
         ]);
     }
 
