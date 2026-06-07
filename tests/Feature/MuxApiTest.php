@@ -4,6 +4,7 @@ use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxClient;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use MuxPhp\Api\AssetsApi;
 use MuxPhp\Api\DeliveryUsageApi;
 use MuxPhp\Api\DirectUploadsApi;
@@ -139,4 +140,54 @@ test('sends API request to create asset', function () {
 
     expect($muxAsset)->toBeInstanceOf(Asset::class);
     expect($muxAsset->getId())->toBe('SqQnqz6s5MBuXGvJaUWdXuXM93J9Q2yv');
+});
+
+test('gets multiple assets concurrently', function () {
+    $this->guzzler->expects($this->once())
+        ->get('https://api.mux.com/video/v1/assets/mux-asset-001')
+        ->willRespondJson([
+            'data' => [
+                'id' => 'mux-asset-001',
+                'status' => 'ready',
+            ],
+        ]);
+
+    $this->guzzler->expects($this->once())
+        ->get('https://api.mux.com/video/v1/assets/mux-asset-002')
+        ->willRespondJson([
+            'data' => [
+                'id' => 'mux-asset-002',
+                'status' => 'ready',
+            ],
+        ]);
+
+    $assets = $this->api->getAssets(['mux-asset-001', 'mux-asset-002']);
+
+    $this->guzzler->assertHistoryCount(2);
+
+    expect($assets)->toHaveKeys(['mux-asset-001', 'mux-asset-002']);
+    expect($assets->get('mux-asset-001'))->toBeInstanceOf(Asset::class);
+    expect($assets->get('mux-asset-002'))->toBeInstanceOf(Asset::class);
+});
+
+test('ignores missing assets when getting multiple assets', function () {
+    $this->guzzler->expects($this->once())
+        ->get('https://api.mux.com/video/v1/assets/mux-asset-001')
+        ->willRespondJson([
+            'data' => [
+                'id' => 'mux-asset-001',
+                'status' => 'ready',
+            ],
+        ]);
+
+    $this->guzzler->expects($this->once())
+        ->get('https://api.mux.com/video/v1/assets/mux-missing')
+        ->willRespond(Http::response(['error' => ['messages' => ['Not found']]], 404));
+
+    $assets = $this->api->getAssets(['mux-asset-001', 'mux-missing']);
+
+    $this->guzzler->assertHistoryCount(2);
+
+    expect($assets)->toHaveKey('mux-asset-001');
+    expect($assets)->not->toHaveKey('mux-missing');
 });

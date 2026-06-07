@@ -8,6 +8,7 @@ use Daun\StatamicMux\Mux\MuxService;
 use Illuminate\Foundation\Console\QueuedCommand;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Queue;
 use MuxPhp\Api\AssetsApi;
@@ -75,6 +76,11 @@ beforeEach(function () {
         }
 
         return $remoteAsset;
+    });
+    $muxApi->shouldReceive('getAssets')->andReturnUsing(function (Collection|array $ids) use ($remoteAsset) {
+        return collect($ids)
+            ->filter(fn (string $id) => $id === 'mux-asset-001')
+            ->mapWithKeys(fn (string $id) => [$id => $remoteAsset]);
     });
     $muxApi->shouldReceive('listAssets')->with(0)->andReturn(collect([$remoteAsset]));
     $muxApi->shouldReceive('dashboardUrl')->andReturn('https://dashboard.mux.com/environments/env-001/');

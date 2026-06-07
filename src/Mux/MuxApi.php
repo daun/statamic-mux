@@ -7,6 +7,7 @@ use Daun\StatamicMux\Facades\Log;
 use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Promise\EachPromise;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use MuxPhp\Api\AssetsApi;
@@ -295,6 +296,60 @@ class MuxApi
 
             throw $th;
         }
+    }
+
+    /**
+     * @param  Collection<int, string>|array<int, string>  $muxIds
+     * @return Collection<string, Asset>
+     */
+    public function getAssets(Collection|array $muxIds, int $concurrency = 5): Collection
+    {
+        $muxIds = collect($muxIds)->filter()->unique()->values();
+
+        if ($muxIds->isEmpty()) {
+            return collect();
+        }
+
+        $assets = collect();
+        $requests = function () use ($muxIds) {
+            foreach ($muxIds as $muxId) {
+                yield $muxId => $this->assets()->getAssetAsync($muxId);
+            }
+        };
+
+        $config = [
+            'fulfilled' => function ($response, string $muxId) use ($assets): void {
+                $asset = $response?->getData();
+
+                if ($asset) {
+                    $assets[$asset->getId() ?? $muxId] = $asset;
+                }
+            },
+            'rejected' => function ($reason, string $muxId): void {
+                if ($reason instanceof ApiException && $reason->getCode() === 404) {
+                    return;
+                }
+
+                if ($reason instanceof \Throwable) {
+                    Log::error(
+                        "Failed to load Mux asset: {$reason->getMessage()}",
+                        ['mux_id' => $muxId, 'exception' => $reason],
+                    );
+
+                    throw $reason;
+                }
+
+                throw new \RuntimeException("Failed to load Mux asset: {$muxId}");
+            },
+        ];
+
+        if ($concurrency > 0) {
+            $config['concurrency'] = $concurrency;
+        }
+
+        (new EachPromise($requests(), $config))->promise()->wait();
+
+        return $assets;
     }
 
     public function assetExists(string $muxId): bool

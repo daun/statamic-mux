@@ -2,6 +2,7 @@
 
 use Daun\StatamicMux\Http\Controllers\Cp\ListingReconciler;
 use Daun\StatamicMux\Mux\MuxApi;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use MuxPhp\Api\AssetsApi;
 use MuxPhp\ApiException;
@@ -50,6 +51,11 @@ beforeEach(function () {
     $muxApi->shouldReceive('assets')->andReturn($assetsApi);
     $muxApi->shouldReceive('getAsset')->andReturnUsing(function (string $id) {
         return $this->remoteAssetsById->get($id);
+    });
+    $muxApi->shouldReceive('getAssets')->andReturnUsing(function (Collection|array $ids) {
+        return collect($ids)
+            ->mapWithKeys(fn (string $id) => [$id => $this->remoteAssetsById->get($id)])
+            ->filter();
     });
     $muxApi->shouldReceive('listAssets')->with(0)->andReturn($this->remoteAssets);
 

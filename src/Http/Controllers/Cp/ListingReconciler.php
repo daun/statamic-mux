@@ -8,7 +8,6 @@ use Daun\StatamicMux\Support\MirrorField;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use MuxPhp\ApiException;
 use Statamic\Assets\Asset;
 
 class ListingReconciler
@@ -106,19 +105,7 @@ class ListingReconciler
             $uncached = $muxIds->diff($index->keys());
         }
 
-        // Fetch remaining IDs individually
-        foreach ($uncached as $muxId) {
-            try {
-                $asset = $this->api->getAsset($muxId);
-                if ($asset) {
-                    $index[$muxId] = $asset;
-                }
-            } catch (ApiException $e) {
-                if ($e->getCode() !== 404) {
-                    throw $e;
-                }
-            }
-        }
+        $index = $index->merge($this->api->getAssets($uncached));
 
         return $index;
     }
