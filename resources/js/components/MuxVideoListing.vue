@@ -81,6 +81,7 @@
                     sort-direction="asc"
                     :allow-bulk-actions="false"
                     :allow-presets="false"
+                    :allow-customizing-columns="false"
                 >
                     <template #cell-thumbnail_url="{ row, value }">
                         <div class="w-16 h-10 rounded overflow-hidden bg-gray-200 dark:bg-dark-700 flex items-center justify-center">
@@ -146,6 +147,7 @@
                     sort-direction="desc"
                     :allow-bulk-actions="false"
                     :allow-presets="false"
+                    :allow-customizing-columns="false"
                 >
                     <template #cell-thumbnail_url="{ row, value }">
                         <div class="w-16 h-10 rounded overflow-hidden bg-gray-200 dark:bg-dark-700 flex items-center justify-center">
@@ -238,24 +240,24 @@ export default {
             refreshing: false,
             runningCommand: null,
             localColumns: [
-                { field: 'thumbnail_url', label: __('Thumbnail'), sortable: false, visible: true },
-                { field: 'title', label: __('Title'), sortable: true, visible: true },
-                { field: 'status', label: __('Status'), sortable: true, visible: true },
-                { field: 'is_stale', label: __('State'), sortable: true, visible: true },
-                { field: 'duration', label: __('Duration'), sortable: true, visible: true },
-                { field: 'playback_policy', label: __('Policy'), sortable: true, visible: true },
-                { field: 'created_at', label: __('Mux Created'), sortable: true, visible: true },
-                { field: '_actions', label: '', sortable: false, visible: true, width: '1%' },
+                { field: 'thumbnail_url', label: __('Thumbnail'), sortable: false },
+                { field: 'title', label: __('Title'), sortable: true },
+                { field: 'status', label: __('Status'), sortable: true },
+                { field: 'is_stale', label: __('State'), sortable: true },
+                { field: 'duration', label: __('Duration'), sortable: true },
+                { field: 'playback_policy', label: __('Policy'), sortable: true },
+                { field: 'created_at', label: __('Mux Created'), sortable: true },
+                { field: '_actions', label: '', sortable: false, width: '1%' },
             ],
             remoteColumns: [
-                { field: 'thumbnail_url', label: __('Thumbnail'), sortable: false, visible: true },
-                { field: 'title', label: __('Title'), sortable: true, visible: true },
-                { field: 'state', label: __('State'), sortable: true, visible: true },
-                { field: 'status', label: __('Status'), sortable: true, visible: true },
-                { field: 'duration', label: __('Duration'), sortable: true, visible: true },
-                { field: 'playback_policy', label: __('Policy'), sortable: true, visible: true },
-                { field: 'created_at', label: __('Created'), sortable: true, visible: true },
-                { field: '_actions', label: '', sortable: false, visible: true, width: '1%' },
+                { field: 'thumbnail_url', label: __('Thumbnail'), sortable: false },
+                { field: 'title', label: __('Title'), sortable: true },
+                { field: 'state', label: __('State'), sortable: true },
+                { field: 'status', label: __('Status'), sortable: true },
+                { field: 'duration', label: __('Duration'), sortable: true },
+                { field: 'playback_policy', label: __('Policy'), sortable: true },
+                { field: 'created_at', label: __('Created'), sortable: true },
+                { field: '_actions', label: '', sortable: false, width: '1%' },
             ],
         };
     },
