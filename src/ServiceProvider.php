@@ -171,9 +171,12 @@ class ServiceProvider extends AddonServiceProvider
     {
         Nav::extend(function (\Statamic\CP\Navigation\Nav $nav) {
             $nav->tools('Mux')
-                ->route('mux.index')
                 ->icon('fieldtype-video')
-                ->can('view mux');
+                ->can('view mux')
+                ->children([
+                    $nav->item(__('Mirrored Assets'))->route('mux.index')->can('view mux'),
+                    $nav->item(__('Mux Library'))->route('mux.library')->can('view mux'),
+                ]);
         });
 
         return $this;

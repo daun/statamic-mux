@@ -5,10 +5,10 @@ namespace Daun\StatamicMux\Http\Controllers\Cp;
 use Daun\StatamicMux\Mux\MuxApi;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use Statamic\Facades\User;
+use Statamic\Http\Controllers\CP\CpController;
 
-class ListingController extends Controller
+class ListingController extends CpController
 {
     public function __construct(
         protected ListingReconciler $listing,
@@ -17,11 +17,27 @@ class ListingController extends Controller
 
     public function index()
     {
+        return $this->mirrored();
+    }
+
+    public function mirrored()
+    {
+        return $this->listingView('mirrored', __('Mirrored Assets'));
+    }
+
+    public function library()
+    {
+        return $this->listingView('library', __('Mux Library'));
+    }
+
+    protected function listingView(string $listingPage, string $title)
+    {
         $user = User::current();
         abort_unless($user && $user->can('view mux'), 403); // @phpstan-ignore method.notFound
 
-        return view('statamic-mux::cp.videos.index', [
-            'title' => __('Mux Videos'),
+        return view('statamic-mux::cp.listing', [
+            'title' => $title,
+            'listingPage' => $listingPage,
             'localEndpoint' => cp_route('mux.listing.local'),
             'remoteEndpoint' => cp_route('mux.listing.remote'),
             'refreshEndpoint' => cp_route('mux.listing.refresh'),
@@ -75,7 +91,7 @@ class ListingController extends Controller
         $assets = $this->listing->refreshRemoteAssets();
 
         return response()->json([
-            'message' => __('Remote assets refreshed'),
+            'message' => __('Mux Library refreshed'),
             'count' => $assets->count(),
         ]);
     }

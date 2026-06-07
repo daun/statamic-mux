@@ -15,6 +15,7 @@ use MuxPhp\Api\AssetsApi;
 use MuxPhp\ApiException;
 use MuxPhp\Models\Asset;
 use MuxPhp\Models\PlaybackID;
+use Statamic\Facades\CP\Nav;
 use Statamic\Facades\Role;
 use Statamic\Facades\Stache;
 use Statamic\Facades\User;
@@ -96,12 +97,24 @@ beforeEach(function () {
     Auth::guard()->login($this->superUser);
 });
 
-test('page controller returns view', function () {
+test('page controller returns mirrored assets view by default', function () {
     $controller = $this->app->make(ListingController::class);
     $response = $controller->index();
 
-    expect($response->getName())->toBe('statamic-mux::cp.videos.index');
-    expect($response->getData())->toHaveKeys(['title', 'localEndpoint', 'remoteEndpoint', 'refreshEndpoint', 'commandEndpoint']);
+    expect($response->getName())->toBe('statamic-mux::cp.listing');
+    expect($response->getData())->toHaveKeys(['title', 'listingPage', 'localEndpoint', 'remoteEndpoint', 'refreshEndpoint', 'commandEndpoint']);
+    expect($response->getData())->not->toHaveKey('page');
+    expect($response->getData()['title'])->toBe('Mirrored Assets');
+    expect($response->getData()['listingPage'])->toBe('mirrored');
+});
+
+test('page controller returns mux library view', function () {
+    $controller = $this->app->make(ListingController::class);
+    $response = $controller->library();
+
+    expect($response->getName())->toBe('statamic-mux::cp.listing');
+    expect($response->getData()['title'])->toBe('Mux Library');
+    expect($response->getData()['listingPage'])->toBe('library');
 });
 
 test('page controller passes correct endpoints', function () {
@@ -326,8 +339,21 @@ test('remote api includes filter definitions', function () {
 
 test('routes are registered', function () {
     expect(cp_route('mux.index'))->toContain('/mux');
+    expect(cp_route('mux.mirrored'))->toContain('/mux/mirrored');
+    expect(cp_route('mux.library'))->toContain('/mux/library');
     expect(cp_route('mux.listing.local'))->toContain('/mux/listing/local');
     expect(cp_route('mux.listing.remote'))->toContain('/mux/listing/remote');
     expect(cp_route('mux.listing.refresh'))->toContain('/mux/listing/refresh');
     expect(cp_route('mux.command'))->toContain('/mux/command');
+});
+
+test('control panel nav builds mux children', function () {
+    $tools = Nav::build()->firstWhere('display', 'Tools');
+    $mux = $tools['items']->firstWhere(fn ($item) => $item->display() === 'Mux');
+    $children = $mux->resolveChildren()->children();
+
+    expect($mux->url())->toBe(cp_route('mux.index'));
+    expect($children)->toHaveCount(2);
+    expect($children->map->display()->all())->toBe(['Mirrored Assets', 'Mux Library']);
+    expect($children->map->url()->all())->toBe([cp_route('mux.index'), cp_route('mux.library')]);
 });
