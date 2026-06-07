@@ -127,25 +127,11 @@ class MuxService
     }
 
     /**
-     * List existing Mux assets
+     * List existing remote Mux assets
      */
     public function listMuxAssets(int $limit = 100, int $page = 1)
     {
-        if ($limit <= 0) {
-            $assets = collect();
-            $new = null;
-            $page = 1;
-
-            do {
-                $new = $this->api->assets()->listAssets(100, $page)->getData();
-                $assets->push(...$new);
-                $page++;
-            } while (count($new ?? []));
-
-            return $assets;
-        }
-
-        return collect($this->api->assets()->listAssets($limit, $page)->getData());
+        return $this->api->listAssets($limit, $page);
     }
 
     public function getMuxId(Asset $asset): ?string

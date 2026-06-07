@@ -6,7 +6,6 @@ use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxClient;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Mux\MuxUrls;
-use Daun\StatamicMux\Mux\MuxVideoListingService;
 use Daun\StatamicMux\Support\Logging\LoggerInterface;
 use Daun\StatamicMux\Support\Logging\LogManager;
 use Daun\StatamicMux\Thumbnails\PlaceholderService;
@@ -126,14 +125,6 @@ class ServiceProvider extends AddonServiceProvider
         });
 
         $this->app->alias(MuxService::class, 'mux.service');
-
-        $this->app->bind(MuxVideoListingService::class, function (Application $app) {
-            return new MuxVideoListingService(
-                $app['mux.service'],
-            );
-        });
-
-        $this->app->alias(MuxVideoListingService::class, 'mux.listing');
     }
 
     protected function registerUrlService()
@@ -260,8 +251,6 @@ class ServiceProvider extends AddonServiceProvider
             'mux.api',
             MuxService::class,
             'mux.service',
-            MuxVideoListingService::class,
-            'mux.listing',
             MuxUrls::class,
             'mux.urls',
             ThumbnailService::class,

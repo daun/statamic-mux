@@ -6,6 +6,7 @@ use Daun\StatamicMux\Concerns\ProcessesHooks;
 use Daun\StatamicMux\Facades\Log;
 use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use GuzzleHttp\Client;
+use Illuminate\Support\Collection;
 use MuxPhp\Api\AssetsApi;
 use MuxPhp\Api\DeliveryUsageApi;
 use MuxPhp\Api\DirectUploadsApi;
@@ -196,6 +197,51 @@ class MuxApi
             Log::error(
                 "Failed to create Mux playback ID request: {$th->getMessage()}",
                 ['data' => $data, 'exception' => $th],
+            );
+
+            throw $th;
+        }
+    }
+
+    /**
+     * @return Collection<Asset>
+     */
+    public function listAssets(int $limit = 100, int $page = 1): Collection
+    {
+        if ($limit >= 1) {
+            return collect($this->assets()->listAssets($limit, $page)->getData());
+        }
+
+        $assets = collect();
+        $new = null;
+        $page = 1;
+
+        do {
+            $new = $this->assets()->listAssets(100, $page)->getData();
+            $assets->push(...$new);
+            $page++;
+        } while (count($new ?? []));
+
+        return $assets;
+    }
+
+    public function getAsset(string $muxId): ?Asset
+    {
+        try {
+            $response = $this->assets()->getAsset($muxId)->getData();
+            Log::debug('Loading Mux asset', ['mux_id' => $response?->getId()]);
+
+            return $response;
+        } catch (ApiException $e) {
+            if ($e->getCode() === 404) {
+                return null;
+            } else {
+                throw $e;
+            }
+        } catch (\Throwable $th) {
+            Log::error(
+                "Failed to load Mux asset: {$th->getMessage()}",
+                ['mux_id' => $muxId, 'exception' => $th],
             );
 
             throw $th;

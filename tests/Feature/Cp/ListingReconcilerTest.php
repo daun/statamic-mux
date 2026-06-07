@@ -1,8 +1,10 @@
 <?php
 
-use Daun\StatamicMux\Mux\MuxService;
-use Daun\StatamicMux\Mux\MuxVideoListingService;
+use Daun\StatamicMux\Http\Controllers\Cp\ListingReconciler;
+use Daun\StatamicMux\Mux\MuxApi;
 use Illuminate\Support\Facades\Cache;
+use MuxPhp\Api\AssetsApi;
+use MuxPhp\ApiException;
 use MuxPhp\Models\Asset;
 use MuxPhp\Models\PlaybackID;
 use Statamic\Facades\Stache;
@@ -30,12 +32,31 @@ beforeEach(function () {
         makeRemoteAsset('mux-asset-orphan', 'ready', 30.0, 'Orphaned Video'),
     ]);
 
-    $muxService = Mockery::mock(MuxService::class);
-    $muxService->shouldReceive('listMuxAssets')->with(0)->andReturn($this->remoteAssets);
-    $this->app->instance(MuxService::class, $muxService);
-    $this->app->instance('mux.service', $muxService);
+    $this->remoteAssetsById = $this->remoteAssets->keyBy(fn ($a) => $a->getId());
 
-    $this->service = new MuxVideoListingService($muxService);
+    $assetsApi = Mockery::mock(AssetsApi::class);
+    $assetsApi->shouldReceive('getAsset')->andReturnUsing(function (string $id) {
+        $asset = $this->remoteAssetsById->get($id);
+        if (! $asset) {
+            throw new ApiException('Not found', 404);
+        }
+        $response = Mockery::mock();
+        $response->shouldReceive('getData')->andReturn($asset);
+
+        return $response;
+    });
+
+    $muxApi = Mockery::mock(MuxApi::class);
+    $muxApi->shouldReceive('assets')->andReturn($assetsApi);
+    $muxApi->shouldReceive('getAsset')->andReturnUsing(function (string $id) {
+        return $this->remoteAssetsById->get($id);
+    });
+    $muxApi->shouldReceive('listAssets')->with(0)->andReturn($this->remoteAssets);
+
+    $this->app->instance(MuxApi::class, $muxApi);
+    $this->app->instance('mux.api', $muxApi);
+
+    $this->reconciler = new ListingReconciler($muxApi);
 });
 
 function makeRemoteAsset(string $id, string $status = 'ready', float $duration = 60.0, ?string $title = null): Asset
@@ -71,7 +92,7 @@ function makeRemoteAsset(string $id, string $status = 'ready', float $duration =
 test('builds local rows with remote state enrichment', function () {
     Cache::forget('mux.remote_assets');
 
-    $result = $this->service->getLocalVideos();
+    $result = $this->reconciler->getLocalVideos();
 
     expect($result['data'])->toBeArray();
     expect($result['meta']['total'])->toBe(3);
@@ -100,7 +121,7 @@ test('detects stale local assets', function () {
     Stache::clear();
     Cache::forget('mux.remote_assets');
 
-    $result = $this->service->getLocalVideos();
+    $result = $this->reconciler->getLocalVideos();
     $rows = collect($result['data']);
 
     $stale = $rows->firstWhere('mux_id', 'mux-asset-gone');
@@ -112,7 +133,7 @@ test('detects stale local assets', function () {
 test('builds remote rows with correct state badges', function () {
     Cache::forget('mux.remote_assets');
 
-    $result = $this->service->getRemoteVideos();
+    $result = $this->reconciler->getRemoteVideos();
 
     expect($result['data'])->toBeArray();
     expect($result['meta']['total'])->toBe(3);
@@ -136,7 +157,7 @@ test('detects duplicated remote references', function () {
     Stache::clear();
     Cache::forget('mux.remote_assets');
 
-    $result = $this->service->getRemoteVideos();
+    $result = $this->reconciler->getRemoteVideos();
     $rows = collect($result['data']);
 
     $duplicated = $rows->firstWhere('mux_id', 'mux-asset-001');
@@ -147,7 +168,7 @@ test('detects duplicated remote references', function () {
 test('remote title falls back to mux id', function () {
     Cache::forget('mux.remote_assets');
 
-    $result = $this->service->getRemoteVideos();
+    $result = $this->reconciler->getRemoteVideos();
     $rows = collect($result['data']);
 
     // Asset with title
@@ -162,7 +183,7 @@ test('remote title falls back to mux id', function () {
 test('caches remote assets for 10 minutes', function () {
     Cache::forget('mux.remote_assets');
 
-    $this->service->getCachedRemoteAssets();
+    $this->reconciler->getCachedRemoteAssets();
     expect(Cache::has('mux.remote_assets'))->toBeTrue();
 
     $cached = Cache::get('mux.remote_assets');
@@ -172,7 +193,7 @@ test('caches remote assets for 10 minutes', function () {
 test('refresh bypasses and replaces cache', function () {
     Cache::put('mux.remote_assets', collect(['stale-data']), 600);
 
-    $result = $this->service->refreshRemoteAssets();
+    $result = $this->reconciler->refreshRemoteAssets();
     expect($result)->toHaveCount(3);
     expect(Cache::get('mux.remote_assets'))->toHaveCount(3);
 });
@@ -180,7 +201,7 @@ test('refresh bypasses and replaces cache', function () {
 test('search filters by title', function () {
     Cache::forget('mux.remote_assets');
 
-    $result = $this->service->getRemoteVideos(['search' => 'orphaned']);
+    $result = $this->reconciler->getRemoteVideos(['search' => 'orphaned']);
     expect($result['meta']['total'])->toBe(1);
     expect($result['data'][0]['title'])->toBe('Orphaned Video');
 });
@@ -188,7 +209,7 @@ test('search filters by title', function () {
 test('search filters by mux id', function () {
     Cache::forget('mux.remote_assets');
 
-    $result = $this->service->getRemoteVideos(['search' => 'mux-asset-001']);
+    $result = $this->reconciler->getRemoteVideos(['search' => 'mux-asset-001']);
     expect($result['meta']['total'])->toBe(1);
     expect($result['data'][0]['mux_id'])->toBe('mux-asset-001');
 });
@@ -196,13 +217,13 @@ test('search filters by mux id', function () {
 test('pagination works correctly', function () {
     Cache::forget('mux.remote_assets');
 
-    $result = $this->service->getRemoteVideos(['perPage' => 2, 'page' => 1]);
+    $result = $this->reconciler->getRemoteVideos(['perPage' => 2, 'page' => 1]);
     expect($result['data'])->toHaveCount(2);
     expect($result['meta']['total'])->toBe(3);
     expect($result['meta']['last_page'])->toBe(2);
     expect($result['meta']['current_page'])->toBe(1);
 
-    $result = $this->service->getRemoteVideos(['perPage' => 2, 'page' => 2]);
+    $result = $this->reconciler->getRemoteVideos(['perPage' => 2, 'page' => 2]);
     expect($result['data'])->toHaveCount(1);
     expect($result['meta']['current_page'])->toBe(2);
 });
@@ -210,7 +231,7 @@ test('pagination works correctly', function () {
 test('sort by duration descending', function () {
     Cache::forget('mux.remote_assets');
 
-    $result = $this->service->getRemoteVideos(['sort' => 'duration', 'order' => 'desc']);
+    $result = $this->reconciler->getRemoteVideos(['sort' => 'duration', 'order' => 'desc']);
     $durations = collect($result['data'])->pluck('duration')->all();
     expect($durations)->toBe([120.5, 60.0, 30.0]);
 });
@@ -218,7 +239,7 @@ test('sort by duration descending', function () {
 test('filters remote by state', function () {
     Cache::forget('mux.remote_assets');
 
-    $result = $this->service->getRemoteVideos([
+    $result = $this->reconciler->getRemoteVideos([
         'filters' => [['field' => 'state', 'value' => 'orphaned']],
     ]);
     expect($result['meta']['total'])->toBe(1);
@@ -228,7 +249,7 @@ test('filters remote by state', function () {
 test('filters remote by status', function () {
     Cache::forget('mux.remote_assets');
 
-    $result = $this->service->getRemoteVideos([
+    $result = $this->reconciler->getRemoteVideos([
         'filters' => [['field' => 'status', 'value' => 'ready']],
     ]);
     expect($result['meta']['total'])->toBe(3);
@@ -238,31 +259,29 @@ test('filters remote by duration range', function () {
     Cache::forget('mux.remote_assets');
 
     // short = <= 60 seconds, matches both 30.0 and 60.0
-    $result = $this->service->getRemoteVideos([
+    $result = $this->reconciler->getRemoteVideos([
         'filters' => [['field' => 'duration_range', 'value' => 'short']],
     ]);
     expect($result['meta']['total'])->toBe(2);
 
     // long = > 600 seconds, matches 120.5 (which is medium, actually)
-    $result = $this->service->getRemoteVideos([
+    $result = $this->reconciler->getRemoteVideos([
         'filters' => [['field' => 'duration_range', 'value' => 'long']],
     ]);
     expect($result['meta']['total'])->toBe(0);
 
     // medium = 60-600 seconds, matches 120.5
-    $result = $this->service->getRemoteVideos([
+    $result = $this->reconciler->getRemoteVideos([
         'filters' => [['field' => 'duration_range', 'value' => 'medium']],
     ]);
     expect($result['meta']['total'])->toBe(1);
     expect($result['data'][0]['duration'])->toBe(120.5);
 });
 
-test('filters local by state', function () {
+test('local rows exclude mux_asset from response', function () {
     Cache::forget('mux.remote_assets');
 
-    $result = $this->service->getLocalVideos([
-        'filters' => [['field' => 'local_state', 'value' => 'waiting']],
-    ]);
+    $result = $this->reconciler->getLocalVideos();
     $rows = collect($result['data']);
-    $rows->each(fn ($row) => expect($row['has_mux_data'])->toBeFalse());
+    $rows->each(fn ($row) => expect($row)->not->toHaveKey('mux_asset'));
 });

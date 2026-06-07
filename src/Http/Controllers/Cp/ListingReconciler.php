@@ -1,37 +1,43 @@
 <?php
 
-namespace Daun\StatamicMux\Mux;
+namespace Daun\StatamicMux\Http\Controllers\Cp;
 
 use Daun\StatamicMux\Data\MuxAsset;
+use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Support\MirrorField;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use MuxPhp\ApiException;
 use Statamic\Assets\Asset;
 
-class MuxVideoListingService
+class ListingReconciler
 {
     protected const CACHE_KEY = 'mux.remote_assets';
 
     protected const CACHE_TTL = 600; // 10 minutes
 
     public function __construct(
-        protected MuxService $muxService,
+        protected MuxApi $api,
     ) {}
 
     /**
      * Get local video assets with Mux data, enriched with remote state.
+     *
+     * Builds rows from local data first, paginates, then batch-fetches
+     * only the Mux IDs on the current page for enrichment.
      */
     public function getLocalVideos(array $params = []): array
     {
-        $remoteIndex = $this->getRemoteAssetsIndex();
-        $items = $this->buildLocalRows($remoteIndex);
+        $items = $this->buildLocalRows();
 
         $items = $this->applySearch($items, $params['search'] ?? null);
-        $items = $this->applyLocalFilters($items, $params['filters'] ?? []);
         $items = $this->applySort($items, $params['sort'] ?? 'title', $params['order'] ?? 'asc');
+        $result = $this->paginate($items, $params['page'] ?? 1, $params['perPage'] ?? 25);
 
-        return $this->paginate($items, $params['page'] ?? 1, $params['perPage'] ?? 25);
+        $result['data'] = $this->enrichLocalRowsWithRemoteData($result['data']);
+
+        return $result;
     }
 
     /**
@@ -76,7 +82,70 @@ class MuxVideoListingService
      */
     protected function fetchAllRemoteAssets(): Collection
     {
-        return $this->muxService->listMuxAssets(0);
+        return $this->api->listAssets(0);
+    }
+
+    /**
+     * Fetch individual Mux assets by their IDs. Returns collection keyed by Mux ID.
+     * Only makes API calls for IDs not found in the remote cache.
+     */
+    protected function fetchMuxAssetsByIds(Collection $muxIds): Collection
+    {
+        if ($muxIds->isEmpty()) {
+            return collect();
+        }
+
+        // Check the remote cache first to avoid unnecessary API calls
+        $cached = Cache::get(self::CACHE_KEY);
+        $index = collect();
+        $uncached = $muxIds;
+
+        if ($cached) {
+            $cachedIndex = $cached->keyBy(fn ($asset) => $asset->getId());
+            $index = $cachedIndex->only($muxIds->all());
+            $uncached = $muxIds->diff($index->keys());
+        }
+
+        // Fetch remaining IDs individually
+        foreach ($uncached as $muxId) {
+            try {
+                $asset = $this->api->getAsset($muxId);
+                if ($asset) {
+                    $index[$muxId] = $asset;
+                }
+            } catch (ApiException $e) {
+                if ($e->getCode() !== 404) {
+                    throw $e;
+                }
+            }
+        }
+
+        return $index;
+    }
+
+    /**
+     * Enrich paginated local rows with remote Mux data.
+     */
+    protected function enrichLocalRowsWithRemoteData(array $rows): array
+    {
+        $muxIds = collect($rows)->pluck('mux_id')->filter()->unique()->values();
+        $remoteIndex = $this->fetchMuxAssetsByIds($muxIds);
+
+        return collect($rows)->map(function (array $row) use ($remoteIndex) {
+            $muxId = $row['mux_id'];
+            $remote = $muxId ? $remoteIndex->get($muxId) : null;
+            $existsRemotely = $remote !== null;
+
+            $row['exists_remotely'] = $existsRemotely;
+            $row['is_stale'] = $row['has_mux_data'] && ! $existsRemotely;
+            $row['status'] = $this->getLocalMuxStatus($row['mux_asset'], $remote);
+            $row['duration'] = $this->getLocalDuration($row['mux_asset'], $remote);
+            $row['created_at'] = $this->getLocalMuxCreatedAt($remote);
+
+            unset($row['mux_asset']);
+
+            return $row;
+        })->all();
     }
 
     /**
@@ -102,30 +171,31 @@ class MuxVideoListingService
     }
 
     /**
-     * Build rows for the local tab.
+     * Build rows for the local tab from local data only.
+     * Remote-dependent fields (exists_remotely, is_stale, status, duration, created_at)
+     * are set to defaults and enriched later via enrichLocalRowsWithRemoteData().
      */
-    protected function buildLocalRows(Collection $remoteIndex): Collection
+    protected function buildLocalRows(): Collection
     {
-        return MirrorField::assets()->map(function (Asset $asset) use ($remoteIndex) {
+        return MirrorField::assets()->map(function (Asset $asset) {
             $muxAsset = MuxAsset::fromAsset($asset);
-            $muxId = $muxAsset->id();
-            $existsRemotely = $muxId && $remoteIndex->has($muxId);
 
             return [
                 'id' => $asset->id(),
                 'title' => $asset->get('title') ?: basename($asset->path()),
                 'path' => $asset->path(),
                 'container' => $asset->containerHandle(),
-                'mux_id' => $muxId,
+                'mux_id' => $muxAsset->id(),
                 'has_mux_data' => $muxAsset->exists(),
-                'exists_remotely' => $existsRemotely,
-                'is_stale' => $muxAsset->exists() && ! $existsRemotely,
-                'status' => $this->getLocalMuxStatus($muxAsset, $existsRemotely ? $remoteIndex->get($muxId) : null),
-                'duration' => $this->getLocalDuration($muxAsset, $existsRemotely ? $remoteIndex->get($muxId) : null),
+                'exists_remotely' => null,
+                'is_stale' => false,
+                'status' => $muxAsset->exists() ? null : 'waiting',
+                'duration' => $muxAsset->duration(),
                 'playback_policy' => $this->getLocalPlaybackPolicy($muxAsset),
-                'created_at' => $this->getLocalMuxCreatedAt($existsRemotely ? $remoteIndex->get($muxId) : null),
+                'created_at' => null,
                 'thumbnail_url' => $this->getLocalThumbnailUrl($asset),
                 'is_proxy' => $muxAsset->isProxy(),
+                'mux_asset' => $muxAsset, // carried through for enrichment, stripped before response
             ];
         });
     }
@@ -252,52 +322,29 @@ class MuxVideoListingService
     }
 
     /**
-     * Apply filters for local tab.
-     */
-    protected function applyLocalFilters(Collection $items, array $filters): Collection
-    {
-        return $this->applyFilters($items, $filters, ['status', 'playback_policy', 'local_state']);
-    }
-
-    /**
      * Apply filters for remote tab.
      */
     protected function applyRemoteFilters(Collection $items, array $filters): Collection
-    {
-        return $this->applyFilters($items, $filters, ['status', 'state', 'playback_policy', 'resolution_tier', 'is_test', 'duration_range']);
-    }
-
-    protected function applyFilters(Collection $items, array $filters, array $allowed): Collection
     {
         foreach ($filters as $filter) {
             $field = $filter['field'] ?? null;
             $value = $filter['value'] ?? null;
 
-            if (! $field || $value === null || ! in_array($field, $allowed)) {
+            if (! $field || $value === null) {
                 continue;
             }
 
             $items = match ($field) {
-                'local_state' => $this->filterLocalState($items, $value),
                 'duration_range' => $this->filterDurationRange($items, $value),
                 'is_test' => $items->where('is_test', filter_var($value, FILTER_VALIDATE_BOOLEAN)),
-                default => is_array($value)
+                'status', 'state', 'playback_policy', 'resolution_tier' => is_array($value)
                     ? $items->whereIn($field, $value)
                     : $items->where($field, $value),
+                default => $items,
             };
         }
 
         return $items;
-    }
-
-    protected function filterLocalState(Collection $items, string $value): Collection
-    {
-        return match ($value) {
-            'mirrored' => $items->where('has_mux_data', true)->where('exists_remotely', true),
-            'stale' => $items->where('is_stale', true),
-            'waiting' => $items->where('has_mux_data', false),
-            default => $items,
-        };
     }
 
     protected function filterDurationRange(Collection $items, string $value): Collection

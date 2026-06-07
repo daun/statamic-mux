@@ -1,18 +1,30 @@
 <?php
 
-namespace Daun\StatamicMux\Http\Controllers\Cp\Api;
+namespace Daun\StatamicMux\Http\Controllers\Cp;
 
-use Daun\StatamicMux\Mux\MuxVideoListingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Statamic\Facades\User;
 
-class MuxVideosController extends Controller
+class ListingController extends Controller
 {
     public function __construct(
-        protected MuxVideoListingService $listing,
+        protected ListingReconciler $listing,
     ) {}
+
+    public function index()
+    {
+        $user = User::current();
+        abort_unless($user && $user->can('view mux'), 403); // @phpstan-ignore method.notFound
+
+        return view('statamic-mux::cp.videos.index', [
+            'title' => __('Mux Videos'),
+            'localEndpoint' => cp_route('mux.api.videos.local'),
+            'remoteEndpoint' => cp_route('mux.api.videos.remote'),
+            'refreshEndpoint' => cp_route('mux.api.videos.refresh'),
+        ]);
+    }
 
     public function local(Request $request): JsonResponse
     {
@@ -28,7 +40,6 @@ class MuxVideosController extends Controller
             'meta' => [
                 ...$result['meta'],
                 'columns' => $this->localColumns(),
-                'filters' => $this->localFilters(),
             ],
         ]);
     }
@@ -100,63 +111,26 @@ class MuxVideosController extends Controller
     protected function localColumns(): array
     {
         return [
-            ['field' => 'thumbnail_url', 'label' => __('Thumbnail'), 'sortable' => false],
-            ['field' => 'title', 'label' => __('Title'), 'sortable' => true],
-            ['field' => 'status', 'label' => __('Status'), 'sortable' => true],
-            ['field' => 'is_stale', 'label' => __('State'), 'sortable' => true],
-            ['field' => 'duration', 'label' => __('Duration'), 'sortable' => true],
-            ['field' => 'playback_policy', 'label' => __('Policy'), 'sortable' => true],
-            ['field' => 'created_at', 'label' => __('Mux Created'), 'sortable' => true],
+            ['field' => 'thumbnail_url', 'label' => __('Thumbnail'), 'sortable' => false, 'visible' => true],
+            ['field' => 'title', 'label' => __('Title'), 'sortable' => true, 'visible' => true],
+            ['field' => 'status', 'label' => __('Status'), 'sortable' => true, 'visible' => true],
+            ['field' => 'is_stale', 'label' => __('State'), 'sortable' => true, 'visible' => true],
+            ['field' => 'duration', 'label' => __('Duration'), 'sortable' => true, 'visible' => true],
+            ['field' => 'playback_policy', 'label' => __('Policy'), 'sortable' => true, 'visible' => true],
+            ['field' => 'created_at', 'label' => __('Mux Created'), 'sortable' => true, 'visible' => true],
         ];
     }
 
     protected function remoteColumns(): array
     {
         return [
-            ['field' => 'thumbnail_url', 'label' => __('Thumbnail'), 'sortable' => false],
-            ['field' => 'title', 'label' => __('Title'), 'sortable' => true],
-            ['field' => 'state', 'label' => __('State'), 'sortable' => true],
-            ['field' => 'status', 'label' => __('Status'), 'sortable' => true],
-            ['field' => 'duration', 'label' => __('Duration'), 'sortable' => true],
-            ['field' => 'playback_policy', 'label' => __('Policy'), 'sortable' => true],
-            ['field' => 'created_at', 'label' => __('Created'), 'sortable' => true],
-        ];
-    }
-
-    protected function localFilters(): array
-    {
-        return [
-            [
-                'handle' => 'status',
-                'label' => __('Status'),
-                'type' => 'select',
-                'options' => [
-                    'ready' => __('Ready'),
-                    'preparing' => __('Preparing'),
-                    'waiting' => __('Waiting'),
-                    'stale' => __('Stale'),
-                    'errored' => __('Errored'),
-                ],
-            ],
-            [
-                'handle' => 'local_state',
-                'label' => __('State'),
-                'type' => 'select',
-                'options' => [
-                    'mirrored' => __('Mirrored'),
-                    'stale' => __('Stale'),
-                    'waiting' => __('Waiting'),
-                ],
-            ],
-            [
-                'handle' => 'playback_policy',
-                'label' => __('Playback Policy'),
-                'type' => 'select',
-                'options' => [
-                    'public' => __('Public'),
-                    'signed' => __('Signed'),
-                ],
-            ],
+            ['field' => 'thumbnail_url', 'label' => __('Thumbnail'), 'sortable' => false, 'visible' => true],
+            ['field' => 'title', 'label' => __('Title'), 'sortable' => true, 'visible' => true],
+            ['field' => 'state', 'label' => __('State'), 'sortable' => true, 'visible' => true],
+            ['field' => 'status', 'label' => __('Status'), 'sortable' => true, 'visible' => true],
+            ['field' => 'duration', 'label' => __('Duration'), 'sortable' => true, 'visible' => true],
+            ['field' => 'playback_policy', 'label' => __('Policy'), 'sortable' => true, 'visible' => true],
+            ['field' => 'created_at', 'label' => __('Created'), 'sortable' => true, 'visible' => true],
         ];
     }
 

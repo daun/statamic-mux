@@ -7,7 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Statamic\Facades\Asset as Assets;
 use Statamic\Http\Controllers\CP\CpController;
 
-class AssetsController extends CpController
+class ThumbnailController extends CpController
 {
     public function __construct(
         protected ThumbnailService $service,

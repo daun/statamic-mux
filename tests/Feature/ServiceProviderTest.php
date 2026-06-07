@@ -3,7 +3,6 @@
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Mux\MuxUrls;
-use Daun\StatamicMux\Mux\MuxVideoListingService;
 use Daun\StatamicMux\ServiceProvider;
 use Daun\StatamicMux\Thumbnails\PlaceholderService;
 use Daun\StatamicMux\Thumbnails\ThumbnailService;
@@ -36,9 +35,4 @@ test('binds placeholder service', function () {
 test('binds url service', function () {
     expect($this->app[MuxUrls::class])->toBeInstanceOf(MuxUrls::class);
     expect($this->app['mux.urls'])->toBeInstanceOf(MuxUrls::class);
-});
-
-test('binds listing service', function () {
-    expect($this->app[MuxVideoListingService::class])->toBeInstanceOf(MuxVideoListingService::class);
-    expect($this->app['mux.listing'])->toBeInstanceOf(MuxVideoListingService::class);
 });
