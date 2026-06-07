@@ -58,6 +58,7 @@ beforeEach(function () {
             ->filter();
     });
     $muxApi->shouldReceive('listAllAssets')->andReturn($this->remoteAssets);
+    $muxApi->shouldReceive('dashboardUrl')->andReturn('https://dashboard.mux.com/environments/env-001/');
 
     $this->app->instance(MuxApi::class, $muxApi);
     $this->app->instance('mux.api', $muxApi);

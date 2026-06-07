@@ -136,8 +136,8 @@
                                     <DropdownItem v-if="primaryPlaybackId(row)" icon="taxonomies" :text="__('Copy playback ID')" @click="copyPlaybackId(row)" />
                                     <DropdownItem v-if="primaryPlaybackId(row)" icon="web" :text="__('Copy playback URL')" @click="copyPlaybackUrl(row)" />
                                     <DropdownItem v-if="primaryPlaybackId(row)" icon="programming-code-block" :text="__('Copy embed code')" @click="copyEmbedCode(row)" />
-                                    <DropdownSeparator v-if="dashboardAssetUrl(row)" />
-                                    <DropdownItem v-if="dashboardAssetUrl(row)" icon="external-link-original" :text="__('Open in Mux dashboard')" :href="dashboardAssetUrl(row)" target="_blank" />
+                                    <DropdownSeparator v-if="row.dashboard_url" />
+                                    <DropdownItem v-if="row.dashboard_url" icon="external-link-original" :text="__('Open in Mux dashboard')" :href="row.dashboard_url" target="_blank" rel="noopener noreferrer" />
                                 </DropdownMenu>
                             </Dropdown>
                         </div>
@@ -166,15 +166,15 @@
                     <template #cell-title="{ row, value }">
                         <div>
                             <a
-                                v-if="dashboardAssetUrl(row)"
-                                :href="dashboardAssetUrl(row)"
+                                v-if="row.dashboard_url"
+                                :href="row.dashboard_url"
                                 target="_blank"
                                 class="group inline-flex items-center gap-1 text-sm font-medium"
                             >
                                 <span>{{ value }}</span>
                                 <Icon
                                     name="external-link"
-                                    class="size-3 opacity-0 transition-opacity group-hover:opacity-100 group-focus:opacity-100 group-focus-visible:opacity-100"
+                                    class="size-2 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 group-focus:opacity-100 group-focus-visible:opacity-100"
                                     aria-hidden="true"
                                 />
                             </a>
@@ -214,8 +214,8 @@
                                     <DropdownItem v-if="primaryPlaybackId(row)" icon="taxonomies" :text="__('Copy playback ID')" @click="copyPlaybackId(row)" />
                                     <DropdownItem v-if="primaryPlaybackId(row)" icon="web" :text="__('Copy playback URL')" @click="copyPlaybackUrl(row)" />
                                     <DropdownItem v-if="primaryPlaybackId(row)" icon="programming-code-block" :text="__('Copy embed code')" @click="copyEmbedCode(row)" />
-                                    <DropdownSeparator v-if="dashboardAssetUrl(row)" />
-                                    <DropdownItem v-if="dashboardAssetUrl(row)" icon="external-link-original" :text="__('Open in Mux dashboard')" :href="dashboardAssetUrl(row)" target="_blank" />
+                                    <DropdownSeparator v-if="row.dashboard_url" />
+                                    <DropdownItem v-if="row.dashboard_url" icon="external-link-original" :text="__('Open in Mux dashboard')" :href="row.dashboard_url" target="_blank" rel="noopener noreferrer" />
                                 </DropdownMenu>
                             </Dropdown>
                         </div>
@@ -346,15 +346,6 @@ export default {
 
             return url
                 ? `<iframe src="${url}" style="width: 100%; border: none; aspect-ratio: 16/9;" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen ></iframe>`
-                : null;
-        },
-
-        dashboardAssetUrl(row) {
-            const baseUrl = this.dashboardUrl?.replace(/\/+$/, '');
-            const muxId = encodeURIComponent(row?.mux_id ?? '');
-
-            return baseUrl && muxId
-                ? `${baseUrl}/video/assets/${muxId}/monitor`
                 : null;
         },
 

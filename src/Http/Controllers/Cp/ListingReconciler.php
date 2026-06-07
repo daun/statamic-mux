@@ -171,9 +171,11 @@ class ListingReconciler
     protected function buildLocalRows(): Collection
     {
         $user = User::current();
+        $dashboardUrl = $this->api->dashboardUrl();
 
-        return MirrorField::assets()->map(function (Asset $asset) use ($user) {
+        return MirrorField::assets()->map(function (Asset $asset) use ($user, $dashboardUrl) {
             $muxAsset = MuxAsset::fromAsset($asset);
+            $muxId = $muxAsset->id();
             $canEdit = $user?->can('edit', $asset) ?? false; // @phpstan-ignore method.notFound
 
             $playbackIds = $this->getLocalPlaybackIds($muxAsset);
@@ -185,7 +187,8 @@ class ListingReconciler
                 'container' => $asset->containerHandle(),
                 'edit_url' => $canEdit ? $asset->editUrl() : null,
                 'can_edit' => $canEdit,
-                'mux_id' => $muxAsset->id(),
+                'mux_id' => $muxId,
+                'dashboard_url' => $this->dashboardAssetUrl($muxId, $dashboardUrl),
                 'has_mux_data' => $muxAsset->exists(),
                 'exists_remotely' => null,
                 'status' => $muxAsset->exists() ? null : 'waiting',
@@ -207,7 +210,9 @@ class ListingReconciler
      */
     protected function buildRemoteRows(Collection $localIndex): Collection
     {
-        return $this->getCachedRemoteAssets()->map(function ($muxAsset) use ($localIndex) {
+        $dashboardUrl = $this->api->dashboardUrl();
+
+        return $this->getCachedRemoteAssets()->map(function ($muxAsset) use ($localIndex, $dashboardUrl) {
             $muxId = $muxAsset->getId();
             $localMatches = $localIndex->get($muxId, collect());
             $localCount = $localMatches->count();
@@ -225,6 +230,7 @@ class ListingReconciler
                 'id' => $muxId,
                 'title' => $muxAsset->getMeta()?->getTitle() ?: $muxId,
                 'mux_id' => $muxId,
+                'dashboard_url' => $this->dashboardAssetUrl($muxId, $dashboardUrl),
                 'state' => $state,
                 'local_matches' => $localCount,
                 'status' => $muxAsset->getStatus(),
@@ -240,6 +246,17 @@ class ListingReconciler
                 'aspect_ratio' => $muxAsset->getAspectRatio(),
             ];
         });
+    }
+
+    protected function dashboardAssetUrl(?string $muxId, ?string $dashboardUrl): ?string
+    {
+        if (! $muxId || ! $dashboardUrl) {
+            return null;
+        }
+
+        $baseUrl = rtrim($dashboardUrl, '/');
+
+        return "{$baseUrl}/video/assets/".rawurlencode($muxId).'/monitor';
     }
 
     protected function getLocalMuxStatus(MuxAsset $muxAsset, $remoteAsset = null): ?string
