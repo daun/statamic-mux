@@ -39,10 +39,10 @@ class CommandController extends Controller
         $definition = self::COMMANDS[$command];
 
         if (MuxQueue::isSync()) {
-            $status = 'dispatched';
+            $status = 'called';
             Artisan::call($definition['command']);
         } else {
-            $status = 'called';
+            $status = 'dispatched';
             Artisan::queue($definition['command'])
                 ->onConnection(MuxQueue::connection())
                 ->onQueue(MuxQueue::queue());
