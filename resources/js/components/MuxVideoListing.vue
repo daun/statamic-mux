@@ -1,12 +1,51 @@
 <template>
     <div>
         <Header icon="fieldtype-video" :title="__('Mux Videos')">
-            <Button
-                :icon="refreshing ? 'loading' : 'sync'"
-                :text="refreshing ? __('Refreshing…') : __('Refresh')"
-                :loading="refreshing"
-                @click="refresh"
-            />
+            <div class="flex items-center gap-2">
+                <div v-if="can('manage mux')" class="flex items-center gap-2 sm:gap-3">
+                    <!-- Actions (...) menu -->
+                    <Dropdown align="start">
+                        <template #trigger>
+                            <Button icon="dots" variant="ghost" size="xs" :aria-label="__('Open dropdown menu')" @mousedown.prevent />
+                        </template>
+                        <DropdownMenu>
+                            <DropdownItem icon="sync" :text="__('Clear cache and reload')" @click="refresh" />
+                        </DropdownMenu>
+                    </Dropdown>
+
+                    <!-- Sync button -->
+                    <ButtonGroup>
+                        <Button
+                            icon="sync"
+                            :text="__('Mirror')"
+                            :loading="runningCommand === 'mirror'"
+                            :disabled="runningCommand !== null"
+                            @click="runCommand('mirror')"
+                        />
+                        <Dropdown align="end">
+                            <template #trigger>
+                                <Button
+                                    icon="chevron-down"
+                                    :disabled="runningCommand !== null"
+                                    class="ml-px"
+                                />
+                            </template>
+                            <DropdownMenu>
+                                <DropdownLabel :text="__('Run sync command')" />
+                                <DropdownItem icon="sync" @click="runCommand('mirror')">
+                                    <span>{{ __('Mirror') }}</span> Sync local and remote
+                                </DropdownItem>
+                                <DropdownItem icon="upload-cloud" @click="runCommand('upload')">
+                                    <span>{{ __('Upload') }}</span> Upload local videos
+                                </DropdownItem>
+                                <DropdownItem icon="ai-spark" @click="runCommand('prune')">
+                                    <span>{{ __('Prune') }}</span> Delete orphaned remote videos
+                                </DropdownItem>
+                            </DropdownMenu>
+                        </Dropdown>
+                    </ButtonGroup>
+                </div>
+            </div>
         </Header>
 
         <Tabs v-model="activeTab">
@@ -122,6 +161,11 @@
 import {
     Badge,
     Button,
+    ButtonGroup,
+    Dropdown,
+    DropdownItem,
+    DropdownLabel,
+    DropdownMenu,
     Header,
     Icon,
     Listing,
@@ -132,23 +176,25 @@ import {
 } from '@statamic/cms/ui';
 
 export default {
-    components: { Badge, Button, Header, Icon, Listing, TabContent, TabList, Tabs, TabTrigger },
+    components: { Badge, Button, ButtonGroup, Dropdown, DropdownItem, DropdownLabel, DropdownMenu, Header, Icon, Listing, TabContent, TabList, Tabs, TabTrigger },
 
     props: {
         localEndpoint: { type: String, required: true },
         remoteEndpoint: { type: String, required: true },
         refreshEndpoint: { type: String, required: true },
+        commandEndpoint: { type: String, required: true },
     },
 
     data() {
         return {
             activeTab: 'local',
             refreshing: false,
+            runningCommand: null,
             localColumns: [
                 { field: 'thumbnail_url', label: __('Thumbnail'), sortable: false, visible: true },
                 { field: 'title', label: __('Title'), sortable: true, visible: true },
-                { field: 'is_stale', label: __('State'), sortable: true, visible: true },
                 { field: 'status', label: __('Status'), sortable: true, visible: true },
+                { field: 'is_stale', label: __('State'), sortable: true, visible: true },
                 { field: 'duration', label: __('Duration'), sortable: true, visible: true },
                 { field: 'playback_policy', label: __('Policy'), sortable: true, visible: true },
                 { field: 'created_at', label: __('Mux Created'), sortable: true, visible: true },
@@ -166,14 +212,37 @@ export default {
     },
 
     methods: {
+        async runCommand(command) {
+            if (this.runningCommand) return;
+
+            if (command === 'prune' && !window.confirm(__('Prune orphaned videos from Mux? This queues deletion jobs for remote videos with no local asset.'))) {
+                return;
+            }
+
+            if (!this.commandEndpoint) return;
+
+            this.runningCommand = command;
+            try {
+                const response = await this.$axios.post(this.commandEndpoint, { command });
+                Statamic.$toast.success(response.data.message || __('Mux command queued. Refresh later to see updates.'));
+            } catch (e) {
+                console.error(e);
+                Statamic.$toast.error(e.response?.data?.message || __('Failed to queue Mux command'));
+            } finally {
+                this.runningCommand = null;
+            }
+        },
+
         async refresh() {
             this.refreshing = true;
             try {
-                await Statamic.$axios.post(this.refreshEndpoint);
+                await this.$axios.post(this.refreshEndpoint);
                 this.$refs.localListing?.refresh();
                 this.$refs.remoteListing?.refresh();
                 Statamic.$toast.success(__('Remote assets refreshed'));
             } catch (e) {
+                console.error(e);
+                console.error(e);
                 Statamic.$toast.error(__('Failed to refresh remote assets'));
             } finally {
                 this.refreshing = false;

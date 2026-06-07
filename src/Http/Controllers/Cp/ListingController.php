@@ -20,9 +20,10 @@ class ListingController extends Controller
 
         return view('statamic-mux::cp.videos.index', [
             'title' => __('Mux Videos'),
-            'localEndpoint' => cp_route('mux.api.videos.local'),
-            'remoteEndpoint' => cp_route('mux.api.videos.remote'),
-            'refreshEndpoint' => cp_route('mux.api.videos.refresh'),
+            'localEndpoint' => cp_route('mux.listing.local'),
+            'remoteEndpoint' => cp_route('mux.listing.remote'),
+            'refreshEndpoint' => cp_route('mux.listing.refresh'),
+            'commandEndpoint' => cp_route('mux.command'),
         ]);
     }
 

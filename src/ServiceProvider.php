@@ -172,12 +172,7 @@ class ServiceProvider extends AddonServiceProvider
                 $permission
                     ->label('View Mux Assets')
                     ->children([
-                        Permission::make('edit mux')
-                            ->label('Edit Mux Assets')
-                            ->children([
-                                Permission::make('create mux')->label('Create Mux Assets'),
-                                Permission::make('delete mux')->label('Delete Mux Assets'),
-                            ]),
+                        Permission::make('manage mux')->label('Manage Mux Assets'),
                     ]);
             });
         });

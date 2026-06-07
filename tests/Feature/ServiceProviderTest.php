@@ -6,6 +6,7 @@ use Daun\StatamicMux\Mux\MuxUrls;
 use Daun\StatamicMux\ServiceProvider;
 use Daun\StatamicMux\Thumbnails\PlaceholderService;
 use Daun\StatamicMux\Thumbnails\ThumbnailService;
+use Statamic\Facades\Permission;
 
 test('provides services', function () {
     $provider = new ServiceProvider($this->app);
@@ -35,4 +36,11 @@ test('binds placeholder service', function () {
 test('binds url service', function () {
     expect($this->app[MuxUrls::class])->toBeInstanceOf(MuxUrls::class);
     expect($this->app['mux.urls'])->toBeInstanceOf(MuxUrls::class);
+});
+
+test('registers mux permission', function () {
+    Permission::boot();
+
+    expect(Permission::get('view mux'))->not->toBeNull();
+    expect(Permission::get('manage mux'))->not->toBeNull();
 });

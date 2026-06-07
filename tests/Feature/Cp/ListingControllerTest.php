@@ -1,18 +1,23 @@
 <?php
 
+use Daun\StatamicMux\Http\Controllers\Cp\CommandController;
 use Daun\StatamicMux\Http\Controllers\Cp\ListingController;
 use Daun\StatamicMux\Http\Controllers\Cp\ListingController as ApiListingController;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
+use Illuminate\Foundation\Console\QueuedCommand;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Queue;
 use MuxPhp\Api\AssetsApi;
 use MuxPhp\ApiException;
 use MuxPhp\Models\Asset;
 use MuxPhp\Models\PlaybackID;
+use Statamic\Facades\Role;
 use Statamic\Facades\Stache;
 use Statamic\Facades\User;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 beforeEach(function () {
     config([
@@ -89,7 +94,7 @@ test('page controller returns view', function () {
     $response = $controller->index();
 
     expect($response->getName())->toBe('statamic-mux::cp.videos.index');
-    expect($response->getData())->toHaveKeys(['title', 'localEndpoint', 'remoteEndpoint', 'refreshEndpoint']);
+    expect($response->getData())->toHaveKeys(['title', 'localEndpoint', 'remoteEndpoint', 'refreshEndpoint', 'commandEndpoint']);
 });
 
 test('page controller passes correct endpoints', function () {
@@ -97,14 +102,15 @@ test('page controller passes correct endpoints', function () {
     $response = $controller->index();
     $data = $response->getData();
 
-    expect($data['localEndpoint'])->toContain('/mux/api/videos/local');
-    expect($data['remoteEndpoint'])->toContain('/mux/api/videos/remote');
-    expect($data['refreshEndpoint'])->toContain('/mux/api/videos/refresh');
+    expect($data['localEndpoint'])->toContain('/mux/listing/local');
+    expect($data['remoteEndpoint'])->toContain('/mux/listing/remote');
+    expect($data['refreshEndpoint'])->toContain('/mux/listing/refresh');
+    expect($data['commandEndpoint'])->toContain('/mux/command');
 });
 
 test('local api returns json with data and meta', function () {
     $controller = $this->app->make(ApiListingController::class);
-    $request = Request::create('/mux/api/videos/local', 'GET');
+    $request = Request::create('/mux/listing/local', 'GET');
     $response = $controller->local($request);
 
     expect($response)->toBeInstanceOf(JsonResponse::class);
@@ -116,7 +122,7 @@ test('local api returns json with data and meta', function () {
 
 test('local api data has expected fields', function () {
     $controller = $this->app->make(ApiListingController::class);
-    $request = Request::create('/mux/api/videos/local', 'GET');
+    $request = Request::create('/mux/listing/local', 'GET');
     $response = $controller->local($request);
     $json = $response->getData(true);
 
@@ -128,7 +134,7 @@ test('local api data has expected fields', function () {
 
 test('remote api returns json with data and meta', function () {
     $controller = $this->app->make(ApiListingController::class);
-    $request = Request::create('/mux/api/videos/remote', 'GET');
+    $request = Request::create('/mux/listing/remote', 'GET');
     $response = $controller->remote($request);
 
     expect($response)->toBeInstanceOf(JsonResponse::class);
@@ -140,7 +146,7 @@ test('remote api returns json with data and meta', function () {
 
 test('remote api data has expected fields', function () {
     $controller = $this->app->make(ApiListingController::class);
-    $request = Request::create('/mux/api/videos/remote', 'GET');
+    $request = Request::create('/mux/listing/remote', 'GET');
     $response = $controller->remote($request);
     $json = $response->getData(true);
 
@@ -160,9 +166,79 @@ test('refresh endpoint returns success', function () {
     expect($json['count'])->toBe(1);
 });
 
+test('command endpoint queues mirror command', function () {
+    Queue::fake();
+
+    $controller = $this->app->make(CommandController::class);
+    $this->app->instance('request', Request::create('/mux/command', 'POST', ['command' => 'mirror']));
+    $response = $controller->run();
+
+    expect($response)->toBeInstanceOf(JsonResponse::class);
+    expect($response->getStatusCode())->toBe(202);
+    expect($response->getData(true))->toHaveKeys(['message', 'command']);
+    expect($response->getData(true)['command'])->toBe('mirror');
+
+    Queue::assertPushed(QueuedCommand::class, fn (QueuedCommand $job) => $job->displayName() === 'mux:mirror');
+});
+
+test('command endpoint queues upload command', function () {
+    Queue::fake();
+
+    $controller = $this->app->make(CommandController::class);
+    $this->app->instance('request', Request::create('/mux/command', 'POST', ['command' => 'upload']));
+    $response = $controller->run();
+
+    expect($response->getStatusCode())->toBe(202);
+
+    Queue::assertPushed(QueuedCommand::class, fn (QueuedCommand $job) => $job->displayName() === 'mux:upload');
+});
+
+test('command endpoint queues prune command', function () {
+    Queue::fake();
+
+    $controller = $this->app->make(CommandController::class);
+    $this->app->instance('request', Request::create('/mux/command', 'POST', ['command' => 'prune']));
+    $response = $controller->run();
+
+    expect($response->getStatusCode())->toBe(202);
+
+    Queue::assertPushed(QueuedCommand::class, fn (QueuedCommand $job) => $job->displayName() === 'mux:prune');
+});
+
+test('command endpoint requires manage mux permission', function () {
+    $user = User::make()->email('viewer@test.com')->password('secret');
+    $user->save();
+
+    $role = Role::make('mux-viewer')->title('Mux Viewer')->addPermission('view mux');
+    $role->save();
+
+    $user->assignRole('mux-viewer')->save();
+    Auth::guard()->login($user);
+
+    Queue::fake();
+
+    $controller = $this->app->make(CommandController::class);
+
+    $this->app->instance('request', Request::create('/mux/command', 'POST', ['command' => 'mirror']));
+
+    expect(fn () => $controller->run())->toThrow(HttpException::class);
+    Queue::assertNothingPushed();
+});
+
+test('command endpoint rejects unknown commands', function () {
+    Queue::fake();
+
+    $controller = $this->app->make(CommandController::class);
+
+    $this->app->instance('request', Request::create('/mux/command', 'POST', ['command' => 'debug']));
+
+    expect(fn () => $controller->run())->toThrow(HttpException::class);
+    Queue::assertNothingPushed();
+});
+
 test('local api supports search parameter', function () {
     $controller = $this->app->make(ApiListingController::class);
-    $request = Request::create('/mux/api/videos/local', 'GET', ['search' => 'test']);
+    $request = Request::create('/mux/listing/local', 'GET', ['search' => 'test']);
     $response = $controller->local($request);
 
     expect($response->getStatusCode())->toBe(200);
@@ -170,7 +246,7 @@ test('local api supports search parameter', function () {
 
 test('local api supports pagination', function () {
     $controller = $this->app->make(ApiListingController::class);
-    $request = Request::create('/mux/api/videos/local', 'GET', ['page' => 1, 'perPage' => 10]);
+    $request = Request::create('/mux/listing/local', 'GET', ['page' => 1, 'perPage' => 10]);
     $response = $controller->local($request);
     $json = $response->getData(true);
 
@@ -180,7 +256,7 @@ test('local api supports pagination', function () {
 
 test('local api supports sorting', function () {
     $controller = $this->app->make(ApiListingController::class);
-    $request = Request::create('/mux/api/videos/local', 'GET', ['sort' => 'title', 'order' => 'desc']);
+    $request = Request::create('/mux/listing/local', 'GET', ['sort' => 'title', 'order' => 'desc']);
     $response = $controller->local($request);
 
     expect($response->getStatusCode())->toBe(200);
@@ -188,7 +264,7 @@ test('local api supports sorting', function () {
 
 test('remote api columns include state', function () {
     $controller = $this->app->make(ApiListingController::class);
-    $request = Request::create('/mux/api/videos/remote', 'GET');
+    $request = Request::create('/mux/listing/remote', 'GET');
     $response = $controller->remote($request);
     $json = $response->getData(true);
     $columns = collect($json['meta']['columns']);
@@ -198,7 +274,7 @@ test('remote api columns include state', function () {
 
 test('local api columns include is_stale', function () {
     $controller = $this->app->make(ApiListingController::class);
-    $request = Request::create('/mux/api/videos/local', 'GET');
+    $request = Request::create('/mux/listing/local', 'GET');
     $response = $controller->local($request);
     $json = $response->getData(true);
     $columns = collect($json['meta']['columns']);
@@ -208,7 +284,7 @@ test('local api columns include is_stale', function () {
 
 test('local api response excludes mux_asset', function () {
     $controller = $this->app->make(ApiListingController::class);
-    $request = Request::create('/mux/api/videos/local', 'GET');
+    $request = Request::create('/mux/listing/local', 'GET');
     $response = $controller->local($request);
     $json = $response->getData(true);
 
@@ -219,7 +295,7 @@ test('local api response excludes mux_asset', function () {
 
 test('remote api includes filter definitions', function () {
     $controller = $this->app->make(ApiListingController::class);
-    $request = Request::create('/mux/api/videos/remote', 'GET');
+    $request = Request::create('/mux/listing/remote', 'GET');
     $response = $controller->remote($request);
     $json = $response->getData(true);
 
@@ -233,7 +309,8 @@ test('remote api includes filter definitions', function () {
 
 test('routes are registered', function () {
     expect(cp_route('mux.index'))->toContain('/mux');
-    expect(cp_route('mux.api.videos.local'))->toContain('/mux/api/videos/local');
-    expect(cp_route('mux.api.videos.remote'))->toContain('/mux/api/videos/remote');
-    expect(cp_route('mux.api.videos.refresh'))->toContain('/mux/api/videos/refresh');
+    expect(cp_route('mux.listing.local'))->toContain('/mux/listing/local');
+    expect(cp_route('mux.listing.remote'))->toContain('/mux/listing/remote');
+    expect(cp_route('mux.listing.refresh'))->toContain('/mux/listing/refresh');
+    expect(cp_route('mux.command'))->toContain('/mux/command');
 });
