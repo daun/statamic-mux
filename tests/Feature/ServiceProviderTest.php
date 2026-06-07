@@ -6,6 +6,7 @@ use Daun\StatamicMux\Mux\MuxUrls;
 use Daun\StatamicMux\ServiceProvider;
 use Daun\StatamicMux\Thumbnails\PlaceholderService;
 use Daun\StatamicMux\Thumbnails\ThumbnailService;
+use Illuminate\Console\Application as ArtisanApplication;
 use Statamic\Facades\Permission;
 
 test('provides services', function () {
@@ -43,4 +44,20 @@ test('registers mux permission', function () {
 
     expect(Permission::get('view mux'))->not->toBeNull();
     expect(Permission::get('manage mux'))->not->toBeNull();
+});
+
+test('registers commands when artisan starts outside console', function () {
+    $runningInConsole = new ReflectionProperty($this->app, 'isRunningInConsole');
+    $runningInConsole->setValue($this->app, false);
+
+    $provider = new ServiceProvider($this->app);
+    $bootCommands = new ReflectionMethod($provider, 'bootCommands');
+    $bootCommands->invoke($provider);
+
+    $artisan = new ArtisanApplication($this->app, $this->app['events'], $this->app->version());
+    $commands = array_keys($artisan->all());
+
+    expect($commands)->toContain('mux:mirror');
+    expect($commands)->toContain('mux:upload');
+    expect($commands)->toContain('mux:prune');
 });

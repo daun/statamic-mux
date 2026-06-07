@@ -10,6 +10,7 @@ use Daun\StatamicMux\Support\Logging\LoggerInterface;
 use Daun\StatamicMux\Support\Logging\LogManager;
 use Daun\StatamicMux\Thumbnails\PlaceholderService;
 use Daun\StatamicMux\Thumbnails\ThumbnailService;
+use Illuminate\Console\Command;
 use Illuminate\Foundation\Application;
 use Illuminate\Log\LogManager as IlluminateLog;
 use Statamic\Facades\CP\Nav;
@@ -66,6 +67,19 @@ class ServiceProvider extends AddonServiceProvider
         $this->autoPublishConfig();
         $this->publishViews();
         $this->bootThumbnails();
+    }
+
+    protected function bootCommands()
+    {
+        $commands = collect($this->commands)
+            ->merge($this->autoloadFilesFromFolder('Commands', Command::class))
+            ->merge($this->autoloadFilesFromFolder('Console/Commands', Command::class))
+            ->unique()
+            ->all();
+
+        $this->commands($commands);
+
+        return $this;
     }
 
     protected function registerHooks()

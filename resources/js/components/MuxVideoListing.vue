@@ -33,13 +33,22 @@
                             <DropdownMenu>
                                 <DropdownLabel :text="__('Run sync command')" />
                                 <DropdownItem icon="sync" @click="runCommand('mirror')">
-                                    <span>{{ __('Mirror') }}</span> Sync local and remote
+                                    <span class="flex items-baseline gap-2">
+                                        <span>{{ __('Mirror') }}</span>
+                                        <span class="text-sm text-gray-400 dark:text-gray-500">{{ __('Sync local and remote') }}</span>
+                                    </span>
                                 </DropdownItem>
                                 <DropdownItem icon="upload-cloud" @click="runCommand('upload')">
-                                    <span>{{ __('Upload') }}</span> Upload local videos
+                                    <span class="flex items-baseline gap-2">
+                                        <span>{{ __('Upload') }}</span>
+                                        <span class="text-sm text-gray-400 dark:text-gray-500">{{ __('Upload local videos') }}</span>
+                                    </span>
                                 </DropdownItem>
                                 <DropdownItem icon="ai-spark" @click="runCommand('prune')">
-                                    <span>{{ __('Prune') }}</span> Delete orphaned remote videos
+                                    <span class="flex items-baseline gap-2">
+                                        <span>{{ __('Prune') }}</span>
+                                        <span class="text-sm text-gray-400 dark:text-gray-500">{{ __('Delete orphaned remote videos') }}</span>
+                                    </span>
                                 </DropdownItem>
                             </DropdownMenu>
                         </Dropdown>

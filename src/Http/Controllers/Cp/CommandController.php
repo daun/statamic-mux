@@ -12,16 +12,19 @@ class CommandController extends Controller
 {
     protected const COMMANDS = [
         'mirror' => [
-            'signature' => 'mux:mirror',
-            'message' => 'Mirror queued. Uploads and deletions will continue in the background. Refresh later to see updates.',
+            'command' => 'mux:mirror',
+            'dispatched' => 'Mirror queued in the background. Refresh later to see updates.',
+            'called' => 'Mirror finished. Refreshing now.',
         ],
         'upload' => [
-            'signature' => 'mux:upload',
-            'message' => 'Upload queued. Video uploads will continue in the background. Refresh later to see updates.',
+            'command' => 'mux:upload',
+            'dispatched' => 'Upload queued in the background. Refresh later to see updates.',
+            'called' => 'Upload finished. Refreshing now.',
         ],
         'prune' => [
-            'signature' => 'mux:prune',
-            'message' => 'Prune queued. Orphan removals will continue in the background. Refresh later to see updates.',
+            'command' => 'mux:prune',
+            'dispatched' => 'Prune queued in the background. Refresh later to see updates.',
+            'called' => 'Prune finished. Refreshing now.',
         ],
     ];
 
@@ -35,13 +38,20 @@ class CommandController extends Controller
 
         $definition = self::COMMANDS[$command];
 
-        Artisan::queue($definition['signature'])
-            ->onConnection(MuxQueue::connection())
-            ->onQueue(MuxQueue::queue());
+        if (MuxQueue::isSync()) {
+            $status = 'dispatched';
+            Artisan::call($definition['command']);
+        } else {
+            $status = 'called';
+            Artisan::queue($definition['command'])
+                ->onConnection(MuxQueue::connection())
+                ->onQueue(MuxQueue::queue());
+        }
 
         return response()->json([
-            'message' => __($definition['message']),
+            'message' => __($definition[$status]),
             'command' => $command,
+            'status' => $status,
         ], 202);
     }
 }
