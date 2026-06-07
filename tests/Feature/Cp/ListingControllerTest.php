@@ -136,7 +136,9 @@ test('local api data has expected fields', function () {
     expect($json['data'])->not->toBeEmpty();
     $row = collect($json['data'])->firstWhere('mux_id', 'mux-asset-001');
     expect($row)->not->toBeNull();
-    expect($row)->toHaveKeys(['id', 'title', 'mux_id', 'has_mux_data', 'status', 'duration', 'playback_policy', 'playback_id', 'playback_ids']);
+    expect($row)->toHaveKeys(['id', 'title', 'path', 'edit_url', 'can_edit', 'mux_id', 'has_mux_data', 'status', 'duration', 'playback_policy', 'playback_id', 'playback_ids']);
+    expect($row['edit_url'])->toContain('/assets/');
+    expect($row['can_edit'])->toBeTrue();
     expect($row['playback_id'])->toBe('playback-001');
 });
 

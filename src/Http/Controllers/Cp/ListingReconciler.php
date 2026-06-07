@@ -9,6 +9,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Statamic\Assets\Asset;
+use Statamic\Facades\User;
 
 class ListingReconciler
 {
@@ -169,8 +170,11 @@ class ListingReconciler
      */
     protected function buildLocalRows(): Collection
     {
-        return MirrorField::assets()->map(function (Asset $asset) {
+        $user = User::current();
+
+        return MirrorField::assets()->map(function (Asset $asset) use ($user) {
             $muxAsset = MuxAsset::fromAsset($asset);
+            $canEdit = $user?->can('edit', $asset) ?? false; // @phpstan-ignore method.notFound
 
             $playbackIds = $this->getLocalPlaybackIds($muxAsset);
 
@@ -179,6 +183,8 @@ class ListingReconciler
                 'title' => $asset->get('title') ?: basename($asset->path()),
                 'path' => $asset->path(),
                 'container' => $asset->containerHandle(),
+                'edit_url' => $canEdit ? $asset->editUrl() : null,
+                'can_edit' => $canEdit,
                 'mux_id' => $muxAsset->id(),
                 'has_mux_data' => $muxAsset->exists(),
                 'exists_remotely' => null,

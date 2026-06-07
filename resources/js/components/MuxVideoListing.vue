@@ -92,8 +92,14 @@
 
                     <template #cell-title="{ row, value }">
                         <div>
-                            <span class="text-sm font-medium" v-text="value" />
-                            <span v-if="row.path" class="block text-2xs text-gray-500 dark:text-dark-175" v-text="row.path" />
+                            <a
+                                v-if="row.can_edit && row.edit_url"
+                                :href="row.edit_url"
+                                target="_blank"
+                                class="group inline-flex items-center gap-1 text-sm font-medium"
+                            >{{ value }}</a>
+                            <span v-else class="text-sm font-medium">{{ value }}</span>
+                            <span v-if="row.path" class="block text-2xs text-gray-500 dark:text-dark-175">{{ row.path }}</span>
                         </div>
                     </template>
 
@@ -159,8 +165,21 @@
 
                     <template #cell-title="{ row, value }">
                         <div>
-                            <span class="text-sm font-medium" v-text="value" />
-                            <span class="block text-2xs text-gray-500 dark:text-dark-175 font-mono" v-text="row.mux_id" />
+                            <a
+                                v-if="dashboardAssetUrl(row)"
+                                :href="dashboardAssetUrl(row)"
+                                target="_blank"
+                                class="group inline-flex items-center gap-1 text-sm font-medium"
+                            >
+                                <span>{{ value }}</span>
+                                <Icon
+                                    name="external-link"
+                                    class="size-3 opacity-0 transition-opacity group-hover:opacity-100 group-focus:opacity-100 group-focus-visible:opacity-100"
+                                    aria-hidden="true"
+                                />
+                            </a>
+                            <span v-else class="text-sm font-medium">{{ value }}</span>
+                            <span class="block text-2xs text-gray-500 dark:text-dark-175 font-mono">{{ row.mux_id }}</span>
                         </div>
                     </template>
 
@@ -317,20 +336,26 @@ export default {
         playerUrl(row) {
             const playbackId = this.primaryPlaybackId(row);
 
-            return playbackId ? `https://player.mux.com/${playbackId}` : null;
+            return playbackId
+                ? `https://player.mux.com/${playbackId}`
+                : null;
         },
 
         embedCode(row) {
             const url = this.playerUrl(row);
 
-            return url ? `<iframe src="${url}" style="width: 100%; border: none; aspect-ratio: 16/9;" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen ></iframe>` : null;
+            return url
+                ? `<iframe src="${url}" style="width: 100%; border: none; aspect-ratio: 16/9;" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen ></iframe>`
+                : null;
         },
 
         dashboardAssetUrl(row) {
-            if (!this.dashboardUrl || !row?.mux_id) return null;
+            const baseUrl = this.dashboardUrl?.replace(/\/+$/, '');
+            const muxId = encodeURIComponent(row?.mux_id ?? '');
 
-            const baseUrl = this.dashboardUrl.replace(/\/+$/, '');
-            return `${baseUrl}/video/assets/${encodeURIComponent(row.mux_id)}/monitor`;
+            return baseUrl && muxId
+                ? `${baseUrl}/video/assets/${muxId}/monitor`
+                : null;
         },
 
         async copyToClipboard(value) {
