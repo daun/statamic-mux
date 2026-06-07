@@ -1,6 +1,6 @@
 <template>
     <div>
-        <Header :title="__('Mux Videos')">
+        <Header icon="fieldtype-video" :title="__('Mux Videos')">
             <Button
                 :icon="refreshing ? 'loading' : 'sync'"
                 :text="refreshing ? __('Refreshing…') : __('Refresh')"
