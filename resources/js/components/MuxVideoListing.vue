@@ -120,6 +120,20 @@
                         <span v-if="value" class="text-sm tabular-nums" v-text="formatDate(value)" />
                         <span v-else class="text-gray-400">—</span>
                     </template>
+
+                    <template #cell-_actions="{ row }">
+                        <div class="flex justify-end">
+                            <Dropdown v-if="hasMuxActions(row)" align="end">
+                                <DropdownMenu>
+                                    <DropdownItem icon="taxonomies" :text="__('Copy asset ID')" @click="copyAssetId(row)" />
+                                    <DropdownItem v-if="primaryPlaybackId(row)" icon="taxonomies" :text="__('Copy playback ID')" @click="copyPlaybackId(row)" />
+                                    <DropdownItem v-if="primaryPlaybackId(row)" icon="web" :text="__('Copy playback URL')" @click="copyPlaybackUrl(row)" />
+                                    <DropdownItem v-if="primaryPlaybackId(row)" icon="programming-code-block" :text="__('Copy embed code')" @click="copyEmbedCode(row)" />
+                                    <DropdownItem v-if="dashboardAssetUrl(row)" icon="external-link-original" :text="__('Open in Mux dashboard')" :href="dashboardAssetUrl(row)" target="_blank" />
+                                </DropdownMenu>
+                            </Dropdown>
+                        </div>
+                    </template>
                 </Listing>
             </TabContent>
 
@@ -169,6 +183,20 @@
                         <span v-if="value" class="text-sm tabular-nums" v-text="formatDate(value)" />
                         <span v-else class="text-gray-400">—</span>
                     </template>
+
+                    <template #cell-_actions="{ row }">
+                        <div class="flex justify-end">
+                            <Dropdown v-if="hasMuxActions(row)" align="end">
+                                <DropdownMenu>
+                                    <DropdownItem icon="taxonomies" :text="__('Copy asset ID')" @click="copyAssetId(row)" />
+                                    <DropdownItem v-if="primaryPlaybackId(row)" icon="taxonomies" :text="__('Copy playback ID')" @click="copyPlaybackId(row)" />
+                                    <DropdownItem v-if="primaryPlaybackId(row)" icon="web" :text="__('Copy playback URL')" @click="copyPlaybackUrl(row)" />
+                                    <DropdownItem v-if="primaryPlaybackId(row)" icon="programming-code-block" :text="__('Copy embed code')" @click="copyEmbedCode(row)" />
+                                    <DropdownItem v-if="dashboardAssetUrl(row)" icon="external-link-original" :text="__('Open in Mux dashboard')" :href="dashboardAssetUrl(row)" target="_blank" />
+                                </DropdownMenu>
+                            </Dropdown>
+                        </div>
+                    </template>
                 </Listing>
             </TabContent>
         </Tabs>
@@ -217,6 +245,7 @@ export default {
                 { field: 'duration', label: __('Duration'), sortable: true, visible: true },
                 { field: 'playback_policy', label: __('Policy'), sortable: true, visible: true },
                 { field: 'created_at', label: __('Mux Created'), sortable: true, visible: true },
+                { field: '_actions', label: '', sortable: false, visible: true, width: '1%' },
             ],
             remoteColumns: [
                 { field: 'thumbnail_url', label: __('Thumbnail'), sortable: false, visible: true },
@@ -226,6 +255,7 @@ export default {
                 { field: 'duration', label: __('Duration'), sortable: true, visible: true },
                 { field: 'playback_policy', label: __('Policy'), sortable: true, visible: true },
                 { field: 'created_at', label: __('Created'), sortable: true, visible: true },
+                { field: '_actions', label: '', sortable: false, visible: true, width: '1%' },
             ],
         };
     },
@@ -266,6 +296,79 @@ export default {
             } finally {
                 this.refreshing = false;
             }
+        },
+
+        hasMuxActions(row) {
+            return Boolean(row?.mux_id);
+        },
+
+        primaryPlaybackId(row) {
+            if (row?.playback_id) return row.playback_id;
+
+            const playbackIds = Array.isArray(row?.playback_ids) ? row.playback_ids : [];
+            return playbackIds.find((id) => id.policy === 'public')?.id || playbackIds[0]?.id || null;
+        },
+
+        playerUrl(row) {
+            const playbackId = this.primaryPlaybackId(row);
+
+            return playbackId ? `https://player.mux.com/${playbackId}` : null;
+        },
+
+        embedCode(row) {
+            const url = this.playerUrl(row);
+
+            return url ? `<iframe src="${url}" style="width: 100%; border: none; aspect-ratio: 16/9;" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen ></iframe>` : null;
+        },
+
+        dashboardAssetUrl(row) {
+            if (!this.dashboardUrl || !row?.mux_id) return null;
+
+            const baseUrl = this.dashboardUrl.replace(/\/+$/, '');
+            return `${baseUrl}/video/assets/${encodeURIComponent(row.mux_id)}/monitor`;
+        },
+
+        async copyToClipboard(value) {
+            if (!value) {
+                Statamic.$toast.error(__('Nothing to copy'));
+                return;
+            }
+
+            try {
+                if (navigator.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(value);
+                } else {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = value;
+                    textarea.setAttribute('readonly', '');
+                    textarea.style.position = 'absolute';
+                    textarea.style.left = '-9999px';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                }
+                Statamic.$toast.success(__('Copied to clipboard'));
+            } catch (e) {
+                console.error(e);
+                Statamic.$toast.error(__('Failed to copy to clipboard'));
+            }
+        },
+
+        copyAssetId(row) {
+            return this.copyToClipboard(row.mux_id);
+        },
+
+        copyPlaybackId(row) {
+            return this.copyToClipboard(this.primaryPlaybackId(row));
+        },
+
+        copyPlaybackUrl(row) {
+            return this.copyToClipboard(this.playerUrl(row));
+        },
+
+        copyEmbedCode(row) {
+            return this.copyToClipboard(this.embedCode(row));
         },
 
         statusColor(status) {

@@ -129,6 +129,11 @@ class ListingReconciler
             $row['duration'] = $this->getLocalDuration($row['mux_asset'], $remote);
             $row['created_at'] = $this->getLocalMuxCreatedAt($remote);
 
+            if ($remote && empty($row['playback_ids'])) {
+                $row['playback_ids'] = $this->getRemotePlaybackIds($remote);
+                $row['playback_id'] = $this->getPrimaryPlaybackId($row['playback_ids']);
+            }
+
             unset($row['mux_asset']);
 
             return $row;
@@ -167,6 +172,8 @@ class ListingReconciler
         return MirrorField::assets()->map(function (Asset $asset) {
             $muxAsset = MuxAsset::fromAsset($asset);
 
+            $playbackIds = $this->getLocalPlaybackIds($muxAsset);
+
             return [
                 'id' => $asset->id(),
                 'title' => $asset->get('title') ?: basename($asset->path()),
@@ -179,6 +186,8 @@ class ListingReconciler
                 'is_stale' => false,
                 'duration' => $muxAsset->duration(),
                 'playback_policy' => $this->getLocalPlaybackPolicy($muxAsset),
+                'playback_id' => $this->getPrimaryPlaybackId($playbackIds),
+                'playback_ids' => $playbackIds,
                 'created_at' => null,
                 'thumbnail_url' => $this->getLocalThumbnailUrl($asset),
                 'is_proxy' => $muxAsset->isProxy(),
@@ -203,9 +212,8 @@ class ListingReconciler
                 default => 'mirrored',
             };
 
-            $playbackIds = collect($muxAsset->getPlaybackIds() ?? []);
-            $publicPlaybackId = $playbackIds->first(fn ($pid) => $pid->getPolicy() === 'public');
-            $firstPlaybackId = $publicPlaybackId ?? $playbackIds->first();
+            $playbackIds = $this->getRemotePlaybackIds($muxAsset);
+            $playbackId = $this->getPrimaryPlaybackId($playbackIds);
 
             return [
                 'id' => $muxId,
@@ -216,11 +224,13 @@ class ListingReconciler
                 'status' => $muxAsset->getStatus(),
                 'duration' => $muxAsset->getDuration(),
                 'playback_policy' => $this->getRemotePlaybackPolicy($muxAsset),
+                'playback_id' => $playbackId,
+                'playback_ids' => $playbackIds,
                 'resolution_tier' => $muxAsset->getResolutionTier(),
                 'max_resolution_tier' => $muxAsset->getMaxResolutionTier(),
                 'is_test' => (bool) $muxAsset->getTest(),
                 'created_at' => $muxAsset->getCreatedAt() ? Carbon::createFromTimestamp($muxAsset->getCreatedAt())->toIso8601String() : null,
-                'thumbnail_url' => $firstPlaybackId ? "https://image.mux.com/{$firstPlaybackId->getId()}/thumbnail.webp?width=120" : null,
+                'thumbnail_url' => $playbackId ? "https://image.mux.com/{$playbackId}/thumbnail.webp?width=120" : null,
                 'aspect_ratio' => $muxAsset->getAspectRatio(),
             ];
         });
@@ -255,6 +265,54 @@ class ListingReconciler
         return $playbackId?->policy();
     }
 
+    protected function getLocalPlaybackIds(MuxAsset $muxAsset): array
+    {
+        return collect($muxAsset->playbackIds()->all())
+            ->map(fn ($playbackId) => [
+                'id' => $playbackId->id(),
+                'policy' => $playbackId->policy(),
+            ])
+            ->values()
+            ->all();
+    }
+
+    protected function getRemotePlaybackIds($muxAsset): array
+    {
+        return collect($muxAsset->getPlaybackIds() ?? [])
+            ->map(fn ($playbackId) => [
+                'id' => $playbackId->getId(),
+                'policy' => $this->normalizePlaybackPolicy($playbackId->getPolicy()),
+            ])
+            ->filter(fn ($playbackId) => $playbackId['id'])
+            ->values()
+            ->all();
+    }
+
+    protected function getPrimaryPlaybackId(array $playbackIds): ?string
+    {
+        $playbackIds = collect($playbackIds);
+        $playbackId = $playbackIds->firstWhere('policy', 'public') ?? $playbackIds->first();
+
+        return $playbackId['id'] ?? null;
+    }
+
+    protected function normalizePlaybackPolicy(mixed $policy): ?string
+    {
+        if ($policy === null) {
+            return null;
+        }
+
+        if ($policy instanceof \BackedEnum) {
+            return (string) $policy->value;
+        }
+
+        if (is_object($policy) && method_exists($policy, 'getValue')) {
+            return $policy->getValue();
+        }
+
+        return (string) $policy;
+    }
+
     protected function getLocalMuxCreatedAt($remoteAsset = null): ?string
     {
         if (! $remoteAsset) {
@@ -281,7 +339,7 @@ class ListingReconciler
             return null;
         }
 
-        $policies = $playbackIds->map(fn ($pid) => $pid->getPolicy())->unique()->sort()->values();
+        $policies = $playbackIds->map(fn ($pid) => $this->normalizePlaybackPolicy($pid->getPolicy()))->unique()->sort()->values();
 
         if ($policies->count() === 1) {
             return $policies->first();

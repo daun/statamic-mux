@@ -122,6 +122,7 @@ class ListingController extends Controller
             ['field' => 'duration', 'label' => __('Duration'), 'sortable' => true, 'visible' => true],
             ['field' => 'playback_policy', 'label' => __('Policy'), 'sortable' => true, 'visible' => true],
             ['field' => 'created_at', 'label' => __('Mux Created'), 'sortable' => true, 'visible' => true],
+            ['field' => '_actions', 'label' => '', 'sortable' => false, 'visible' => true, 'width' => '1%'],
         ];
     }
 
@@ -135,6 +136,7 @@ class ListingController extends Controller
             ['field' => 'duration', 'label' => __('Duration'), 'sortable' => true, 'visible' => true],
             ['field' => 'playback_policy', 'label' => __('Policy'), 'sortable' => true, 'visible' => true],
             ['field' => 'created_at', 'label' => __('Created'), 'sortable' => true, 'visible' => true],
+            ['field' => '_actions', 'label' => '', 'sortable' => false, 'visible' => true, 'width' => '1%'],
         ];
     }
 

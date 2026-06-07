@@ -112,6 +112,8 @@ test('builds local rows with remote state enrichment', function () {
     expect($mirrored['exists_remotely'])->toBeTrue();
     expect($mirrored['is_stale'])->toBeFalse();
     expect($mirrored['status'])->toBe('ready');
+    expect($mirrored['playback_id'])->toBe('playback-001');
+    expect($mirrored['playback_ids'])->toBe([['id' => 'playback-001', 'policy' => 'public']]);
 
     // Asset without mux data
     $waiting = $rows->first(fn ($r) => ! $r['has_mux_data']);
@@ -149,6 +151,8 @@ test('builds remote rows with correct state badges', function () {
     // Mirrored: remote asset with exactly 1 local match
     $mirrored = $rows->firstWhere('mux_id', 'mux-asset-001');
     expect($mirrored['state'])->toBe('mirrored');
+    expect($mirrored['playback_id'])->toBe('playback-mux-asset-001');
+    expect($mirrored['playback_ids'])->toBe([['id' => 'playback-mux-asset-001', 'policy' => 'public']]);
 
     // Orphaned: remote asset with 0 local matches
     $orphaned = $rows->firstWhere('mux_id', 'mux-asset-orphan');

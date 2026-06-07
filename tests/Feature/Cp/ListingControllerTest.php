@@ -136,7 +136,8 @@ test('local api data has expected fields', function () {
     expect($json['data'])->not->toBeEmpty();
     $row = collect($json['data'])->firstWhere('mux_id', 'mux-asset-001');
     expect($row)->not->toBeNull();
-    expect($row)->toHaveKeys(['id', 'title', 'mux_id', 'has_mux_data', 'status', 'duration', 'playback_policy']);
+    expect($row)->toHaveKeys(['id', 'title', 'mux_id', 'has_mux_data', 'status', 'duration', 'playback_policy', 'playback_id', 'playback_ids']);
+    expect($row['playback_id'])->toBe('playback-001');
 });
 
 test('remote api returns json with data and meta', function () {
@@ -159,7 +160,8 @@ test('remote api data has expected fields', function () {
 
     expect($json['data'])->not->toBeEmpty();
     $row = $json['data'][0];
-    expect($row)->toHaveKeys(['id', 'title', 'mux_id', 'state', 'status', 'duration', 'playback_policy']);
+    expect($row)->toHaveKeys(['id', 'title', 'mux_id', 'state', 'status', 'duration', 'playback_policy', 'playback_id', 'playback_ids']);
+    expect($row['playback_id'])->toBe('playback-mux-asset-001');
 });
 
 test('refresh endpoint returns success', function () {
