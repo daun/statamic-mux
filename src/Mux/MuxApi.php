@@ -185,7 +185,7 @@ class MuxApi
         $environmentId = $info['environment_id'] ?? null;
 
         return $environmentId
-            ? "https://dashboard.mux.com/environments/{$environmentId}"
+            ? "https://dashboard.mux.com/environments/{$environmentId}/"
             : null;
     }
 
