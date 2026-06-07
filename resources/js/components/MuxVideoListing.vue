@@ -130,6 +130,7 @@
                                     <DropdownItem v-if="primaryPlaybackId(row)" icon="taxonomies" :text="__('Copy playback ID')" @click="copyPlaybackId(row)" />
                                     <DropdownItem v-if="primaryPlaybackId(row)" icon="web" :text="__('Copy playback URL')" @click="copyPlaybackUrl(row)" />
                                     <DropdownItem v-if="primaryPlaybackId(row)" icon="programming-code-block" :text="__('Copy embed code')" @click="copyEmbedCode(row)" />
+                                    <DropdownSeparator v-if="dashboardAssetUrl(row)" />
                                     <DropdownItem v-if="dashboardAssetUrl(row)" icon="external-link-original" :text="__('Open in Mux dashboard')" :href="dashboardAssetUrl(row)" target="_blank" />
                                 </DropdownMenu>
                             </Dropdown>
@@ -194,6 +195,7 @@
                                     <DropdownItem v-if="primaryPlaybackId(row)" icon="taxonomies" :text="__('Copy playback ID')" @click="copyPlaybackId(row)" />
                                     <DropdownItem v-if="primaryPlaybackId(row)" icon="web" :text="__('Copy playback URL')" @click="copyPlaybackUrl(row)" />
                                     <DropdownItem v-if="primaryPlaybackId(row)" icon="programming-code-block" :text="__('Copy embed code')" @click="copyEmbedCode(row)" />
+                                    <DropdownSeparator v-if="dashboardAssetUrl(row)" />
                                     <DropdownItem v-if="dashboardAssetUrl(row)" icon="external-link-original" :text="__('Open in Mux dashboard')" :href="dashboardAssetUrl(row)" target="_blank" />
                                 </DropdownMenu>
                             </Dropdown>
@@ -214,6 +216,7 @@ import {
     DropdownItem,
     DropdownLabel,
     DropdownMenu,
+    DropdownSeparator,
     Header,
     Icon,
     Listing,
