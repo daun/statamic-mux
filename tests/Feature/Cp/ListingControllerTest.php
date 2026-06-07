@@ -176,6 +176,7 @@ test('refresh endpoint returns success', function () {
 });
 
 test('command endpoint queues mirror command', function () {
+    config(['queue.default' => 'database']);
     Queue::fake();
 
     $controller = $this->app->make(CommandController::class);
@@ -184,13 +185,15 @@ test('command endpoint queues mirror command', function () {
 
     expect($response)->toBeInstanceOf(JsonResponse::class);
     expect($response->getStatusCode())->toBe(202);
-    expect($response->getData(true))->toHaveKeys(['message', 'command']);
+    expect($response->getData(true))->toHaveKeys(['message', 'command', 'status']);
     expect($response->getData(true)['command'])->toBe('mirror');
+    expect($response->getData(true)['status'])->toBe('dispatched');
 
     Queue::assertPushed(QueuedCommand::class, fn (QueuedCommand $job) => $job->displayName() === 'mux:mirror');
 });
 
 test('command endpoint queues upload command', function () {
+    config(['queue.default' => 'database']);
     Queue::fake();
 
     $controller = $this->app->make(CommandController::class);
@@ -203,6 +206,7 @@ test('command endpoint queues upload command', function () {
 });
 
 test('command endpoint queues prune command', function () {
+    config(['queue.default' => 'database']);
     Queue::fake();
 
     $controller = $this->app->make(CommandController::class);
