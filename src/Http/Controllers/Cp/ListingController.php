@@ -22,34 +22,28 @@ class ListingController extends CpController
 
     public function mirrored()
     {
-        return $this->listingView('mirrored', __('Mirrored Assets'));
+        $this->authorize('view mux');
+
+        return view('statamic-mux::cp.mirrored', [
+            'endpoint' => cp_route('mux.listing.local'),
+            'commandEndpoint' => cp_route('mux.command'),
+        ]);
     }
 
     public function library()
     {
-        return $this->listingView('library', __('Mux Library'));
-    }
+        $this->authorize('view mux');
 
-    protected function listingView(string $listingPage, string $title)
-    {
-        $user = User::current();
-        abort_unless($user && $user->can('view mux'), 403); // @phpstan-ignore method.notFound
-
-        return view('statamic-mux::cp.listing', [
-            'title' => $title,
-            'listingPage' => $listingPage,
-            'localEndpoint' => cp_route('mux.listing.local'),
-            'remoteEndpoint' => cp_route('mux.listing.remote'),
+        return view('statamic-mux::cp.library', [
+            'endpoint' => cp_route('mux.listing.remote'),
             'refreshEndpoint' => cp_route('mux.listing.refresh'),
-            'commandEndpoint' => cp_route('mux.command'),
             'dashboardUrl' => $this->mux->dashboardUrl(),
         ]);
     }
 
     public function local(Request $request): JsonResponse
     {
-        $user = User::current();
-        abort_unless($user && $user->can('view mux'), 403); // @phpstan-ignore method.notFound
+        $this->authorize('view mux');
 
         $result = $this->listing->getLocalVideos(
             $this->extractParams($request),
@@ -66,8 +60,7 @@ class ListingController extends CpController
 
     public function remote(Request $request): JsonResponse
     {
-        $user = User::current();
-        abort_unless($user && $user->can('view mux'), 403); // @phpstan-ignore method.notFound
+        $this->authorize('view mux');
 
         $result = $this->listing->getRemoteVideos(
             $this->extractParams($request),
@@ -85,8 +78,7 @@ class ListingController extends CpController
 
     public function refresh(): JsonResponse
     {
-        $user = User::current();
-        abort_unless($user && $user->can('view mux'), 403); // @phpstan-ignore method.notFound
+        $this->authorize('view mux');
 
         $assets = $this->listing->refreshRemoteAssets();
 

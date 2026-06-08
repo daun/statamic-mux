@@ -1,0 +1,107 @@
+<template>
+    <div>
+        <Header icon="fieldtype-video" :title="__('Mux Library')">
+            <div v-if="can('manage mux')" class="flex items-center gap-2 sm:gap-3">
+                <Button
+                    icon="sync"
+                    :text="__('Clear cache and reload')"
+                    :loading="refreshing"
+                    :disabled="refreshing"
+                    @click="refresh"
+                />
+                <Button
+                    v-if="dashboardUrl"
+                    :href="dashboardUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    icon-append="external-link"
+                    :text="__('Open Mux Dashboard')"
+                />
+            </div>
+        </Header>
+
+        <Listing
+            ref="listing"
+            :url="remoteEndpoint"
+            :columns="remoteColumns"
+            sort-column="created_at"
+            sort-direction="desc"
+            :allow-bulk-actions="false"
+            :allow-presets="false"
+            :allow-customizing-columns="false"
+        >
+            <template #cell-thumbnail_url="{ row, value }">
+                <div class="w-16 h-10 rounded overflow-hidden bg-gray-200 dark:bg-dark-700 flex items-center justify-center">
+                    <img v-if="value" :src="value" class="w-full h-full object-cover" loading="lazy" @error="$event.target.style.display='none'" />
+                    <Icon v-else name="movie-video-clip" class="size-5 text-gray-400" />
+                </div>
+            </template>
+
+            <template #cell-title="{ row, value }">
+                <div>
+                    <a
+                        v-if="row.dashboard_url"
+                        :href="row.dashboard_url"
+                        target="_blank"
+                        class="group inline-flex items-center gap-1 text-sm font-medium"
+                    >
+                        <span>{{ value }}</span>
+                        <Icon
+                            name="external-link"
+                            class="size-2 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 group-focus:opacity-100 group-focus-visible:opacity-100"
+                            aria-hidden="true"
+                        />
+                    </a>
+                    <span v-else class="text-sm font-medium">{{ value }}</span>
+                    <span class="block text-2xs text-gray-500 dark:text-dark-175 font-mono">{{ row.mux_id }}</span>
+                </div>
+            </template>
+
+            <template #cell-state="{ value }">
+                <Badge pill :color="stateColor(value)" class="text-2xs capitalize">{{ value }}</Badge>
+            </template>
+
+            <template #cell-status="{ value }">
+                <Badge pill :color="statusColor(value)" class="text-2xs">{{ statusLabel(value) }}</Badge>
+            </template>
+
+            <template #cell-duration="{ value }">
+                <span v-if="value" class="text-sm tabular-nums" v-text="formatDuration(value)" />
+                <span v-else class="text-gray-400">—</span>
+            </template>
+
+            <template #cell-playback_policy="{ value }">
+                <Badge v-if="value" pill class="text-2xs capitalize">{{ value }}</Badge>
+                <span v-else class="text-gray-400">—</span>
+            </template>
+
+            <template #cell-created_at="{ value }">
+                <span v-if="value" class="text-sm tabular-nums" v-text="formatDate(value)" />
+                <span v-else class="text-gray-400">—</span>
+            </template>
+
+            <template #cell-_actions="{ row }">
+                <div class="flex justify-end">
+                    <Dropdown v-if="hasMuxActions(row)" align="end">
+                        <DropdownMenu>
+                            <DropdownItem icon="taxonomies" :text="__('Copy asset ID')" @click="copyAssetId(row)" />
+                            <DropdownItem v-if="primaryPlaybackId(row)" icon="taxonomies" :text="__('Copy playback ID')" @click="copyPlaybackId(row)" />
+                            <DropdownItem v-if="primaryPlaybackId(row)" icon="web" :text="__('Copy playback URL')" @click="copyPlaybackUrl(row)" />
+                            <DropdownItem v-if="primaryPlaybackId(row)" icon="programming-code-block" :text="__('Copy embed code')" @click="copyEmbedCode(row)" />
+                            <DropdownSeparator v-if="row.dashboard_url" />
+                            <DropdownItem v-if="row.dashboard_url" icon="external-link-original" :text="__('Open in Mux dashboard')" :href="row.dashboard_url" target="_blank" rel="noopener noreferrer" />
+                        </DropdownMenu>
+                    </Dropdown>
+                </div>
+            </template>
+        </Listing>
+    </div>
+</template>
+
+<script>
+import MuxListingMixin from './MuxListingMixin';
+
+export default {
+    mixins: [MuxListingMixin],
+};
+</script>

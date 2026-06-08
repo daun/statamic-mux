@@ -101,31 +101,31 @@ test('page controller returns mirrored assets view by default', function () {
     $controller = $this->app->make(ListingController::class);
     $response = $controller->index();
 
-    expect($response->getName())->toBe('statamic-mux::cp.listing');
-    expect($response->getData())->toHaveKeys(['title', 'listingPage', 'localEndpoint', 'remoteEndpoint', 'refreshEndpoint', 'commandEndpoint']);
-    expect($response->getData())->not->toHaveKey('page');
+    expect($response->getName())->toBe('statamic-mux::cp.mirrored');
+    expect($response->getData())->toHaveKeys(['title', 'localEndpoint', 'commandEndpoint']);
+    expect($response->getData())->not->toHaveKeys(['page', 'listingPage', 'remoteEndpoint', 'refreshEndpoint']);
     expect($response->getData()['title'])->toBe('Mirrored Assets');
-    expect($response->getData()['listingPage'])->toBe('mirrored');
 });
 
 test('page controller returns mux library view', function () {
     $controller = $this->app->make(ListingController::class);
     $response = $controller->library();
 
-    expect($response->getName())->toBe('statamic-mux::cp.listing');
+    expect($response->getName())->toBe('statamic-mux::cp.library');
+    expect($response->getData())->toHaveKeys(['title', 'remoteEndpoint', 'refreshEndpoint', 'dashboardUrl']);
+    expect($response->getData())->not->toHaveKeys(['listingPage', 'localEndpoint', 'commandEndpoint']);
     expect($response->getData()['title'])->toBe('Mux Library');
-    expect($response->getData()['listingPage'])->toBe('library');
 });
 
 test('page controller passes correct endpoints', function () {
     $controller = $this->app->make(ListingController::class);
-    $response = $controller->index();
-    $data = $response->getData();
+    $mirrored = $controller->index()->getData();
+    $library = $controller->library()->getData();
 
-    expect($data['localEndpoint'])->toContain('/mux/listing/local');
-    expect($data['remoteEndpoint'])->toContain('/mux/listing/remote');
-    expect($data['refreshEndpoint'])->toContain('/mux/listing/refresh');
-    expect($data['commandEndpoint'])->toContain('/mux/command');
+    expect($mirrored['localEndpoint'])->toContain('/mux/listing/local');
+    expect($mirrored['commandEndpoint'])->toContain('/mux/command');
+    expect($library['remoteEndpoint'])->toContain('/mux/listing/remote');
+    expect($library['refreshEndpoint'])->toContain('/mux/listing/refresh');
 });
 
 test('local api returns json with data and meta', function () {
