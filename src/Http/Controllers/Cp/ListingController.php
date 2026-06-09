@@ -125,7 +125,7 @@ class ListingController extends CpController
         return [
             ['field' => 'thumbnail_url', 'label' => __('Thumbnail'), 'sortable' => false],
             ['field' => 'title', 'label' => __('Title'), 'sortable' => true],
-            ['field' => 'status', 'label' => __('Status'), 'sortable' => true],
+            ['field' => 'status', 'label' => __('Processing'), 'sortable' => true],
             ['field' => 'is_stale', 'label' => __('State'), 'sortable' => true],
             ['field' => 'duration', 'label' => __('Duration'), 'sortable' => true],
             ['field' => 'playback_policy', 'label' => __('Policy'), 'sortable' => true],
@@ -140,7 +140,7 @@ class ListingController extends CpController
             ['field' => 'thumbnail_url', 'label' => __('Thumbnail'), 'sortable' => false],
             ['field' => 'title', 'label' => __('Title'), 'sortable' => true],
             ['field' => 'state', 'label' => __('State'), 'sortable' => true],
-            ['field' => 'status', 'label' => __('Status'), 'sortable' => true],
+            ['field' => 'status', 'label' => __('Processing'), 'sortable' => true],
             ['field' => 'duration', 'label' => __('Duration'), 'sortable' => true],
             ['field' => 'playback_policy', 'label' => __('Policy'), 'sortable' => true],
             ['field' => 'created_at', 'label' => __('Created'), 'sortable' => true],
