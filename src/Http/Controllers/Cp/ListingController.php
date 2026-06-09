@@ -5,7 +5,7 @@ namespace Daun\StatamicMux\Http\Controllers\Cp;
 use Daun\StatamicMux\Mux\MuxApi;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Statamic\Facades\User;
+use Inertia\Inertia;
 use Statamic\Http\Controllers\CP\CpController;
 
 class ListingController extends CpController
@@ -24,7 +24,7 @@ class ListingController extends CpController
     {
         $this->authorize('view mux');
 
-        return view('statamic-mux::cp.mirrored', [
+        return Inertia::render('MuxAssetsPage', [
             'endpoint' => cp_route('mux.listing.local'),
             'commandEndpoint' => cp_route('mux.command'),
         ]);
@@ -34,7 +34,7 @@ class ListingController extends CpController
     {
         $this->authorize('view mux');
 
-        return view('statamic-mux::cp.library', [
+        return Inertia::render('MuxLibraryPage', [
             'endpoint' => cp_route('mux.listing.remote'),
             'refreshEndpoint' => cp_route('mux.listing.refresh'),
             'dashboardUrl' => $this->mux->dashboardUrl(),

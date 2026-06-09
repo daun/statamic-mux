@@ -40,8 +40,8 @@
 
         <Listing
             ref="listing"
-            :url="localEndpoint"
-            :columns="localColumns"
+            :url="endpoint"
+            :columns="columns"
             sort-column="title"
             sort-direction="asc"
             :allow-bulk-actions="false"
@@ -112,9 +112,31 @@
 </template>
 
 <script>
-import MuxListingMixin from './MuxListingMixin';
+import MuxPageMixin from './MuxPageMixin';
 
 export default {
-    mixins: [MuxListingMixin],
+    mixins: [MuxPageMixin],
+
+    props: {
+        endpoint: { type: String, default: null },
+        commandEndpoint: { type: String, default: null },
+        dashboardUrl: { type: String, default: null },
+    },
+
+    data() {
+        return {
+            columns: [
+                { field: 'thumbnail_url', label: __('Thumbnail'), sortable: false },
+                { field: 'title', label: __('Title'), sortable: true },
+                { field: 'status', label: __('Status'), sortable: true },
+                { field: 'is_stale', label: __('State'), sortable: true },
+                { field: 'duration', label: __('Duration'), sortable: true },
+                { field: 'playback_policy', label: __('Policy'), sortable: true },
+                { field: 'created_at', label: __('Mux Created'), sortable: true },
+                { field: '_actions', label: '', sortable: false, width: '1%' },
+            ],
+        };
+    },
+
 };
 </script>

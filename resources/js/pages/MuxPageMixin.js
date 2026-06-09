@@ -16,8 +16,6 @@ export default {
     components: { Badge, Button, ButtonGroup, Dropdown, DropdownItem, DropdownLabel, DropdownMenu, DropdownSeparator, Header, Icon, Listing },
 
     props: {
-        localEndpoint: { type: String, default: null },
-        remoteEndpoint: { type: String, default: null },
         refreshEndpoint: { type: String, default: null },
         commandEndpoint: { type: String, default: null },
         dashboardUrl: { type: String, default: null },
@@ -25,28 +23,7 @@ export default {
 
     data() {
         return {
-            refreshing: false,
             runningCommand: null,
-            localColumns: [
-                { field: 'thumbnail_url', label: __('Thumbnail'), sortable: false },
-                { field: 'title', label: __('Title'), sortable: true },
-                { field: 'status', label: __('Status'), sortable: true },
-                { field: 'is_stale', label: __('State'), sortable: true },
-                { field: 'duration', label: __('Duration'), sortable: true },
-                { field: 'playback_policy', label: __('Policy'), sortable: true },
-                { field: 'created_at', label: __('Mux Created'), sortable: true },
-                { field: '_actions', label: '', sortable: false, width: '1%' },
-            ],
-            remoteColumns: [
-                { field: 'thumbnail_url', label: __('Thumbnail'), sortable: false },
-                { field: 'title', label: __('Title'), sortable: true },
-                { field: 'state', label: __('State'), sortable: true },
-                { field: 'status', label: __('Status'), sortable: true },
-                { field: 'duration', label: __('Duration'), sortable: true },
-                { field: 'playback_policy', label: __('Policy'), sortable: true },
-                { field: 'created_at', label: __('Created'), sortable: true },
-                { field: '_actions', label: '', sortable: false, width: '1%' },
-            ],
         };
     },
 
@@ -69,22 +46,6 @@ export default {
                 Statamic.$toast.error(e.response?.data?.message || __('Failed to queue Mux command'));
             } finally {
                 this.runningCommand = null;
-            }
-        },
-
-        async refresh() {
-            if (!this.refreshEndpoint) return;
-
-            this.refreshing = true;
-            try {
-                await this.$axios.post(this.refreshEndpoint);
-                this.$refs.listing?.refresh();
-                Statamic.$toast.success(__('Mux Library refreshed'));
-            } catch (e) {
-                console.error(e);
-                Statamic.$toast.error(__('Failed to refresh Mux Library'));
-            } finally {
-                this.refreshing = false;
             }
         },
 

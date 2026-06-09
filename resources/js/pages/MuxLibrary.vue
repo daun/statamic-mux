@@ -22,8 +22,8 @@
 
         <Listing
             ref="listing"
-            :url="remoteEndpoint"
-            :columns="remoteColumns"
+            :url="endpoint"
+            :columns="columns"
             sort-column="created_at"
             sort-direction="desc"
             :allow-bulk-actions="false"
@@ -43,12 +43,12 @@
                         v-if="row.dashboard_url"
                         :href="row.dashboard_url"
                         target="_blank"
-                        class="group inline-flex items-center gap-1 text-sm font-medium"
+                        class="group inline-flex items-center gap-2 text-sm font-medium"
                     >
                         <span>{{ value }}</span>
                         <Icon
                             name="external-link"
-                            class="size-2 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 group-focus:opacity-100 group-focus-visible:opacity-100"
+                            class="size-1.5 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 group-focus:opacity-100 group-focus-visible:opacity-100"
                             aria-hidden="true"
                         />
                     </a>
@@ -99,9 +99,51 @@
 </template>
 
 <script>
-import MuxListingMixin from './MuxListingMixin';
+import MuxPageMixin from './MuxPageMixin';
 
 export default {
-    mixins: [MuxListingMixin],
+    mixins: [MuxPageMixin],
+
+    props: {
+        endpoint: { type: String, default: null },
+        refreshEndpoint: { type: String, default: null },
+        commandEndpoint: { type: String, default: null },
+        dashboardUrl: { type: String, default: null },
+    },
+
+
+    data() {
+        return {
+            refreshing: false,
+            columns: [
+                { field: 'thumbnail_url', label: __('Thumbnail'), sortable: false },
+                { field: 'title', label: __('Title'), sortable: true },
+                { field: 'state', label: __('State'), sortable: true },
+                { field: 'status', label: __('Status'), sortable: true },
+                { field: 'duration', label: __('Duration'), sortable: true },
+                { field: 'playback_policy', label: __('Policy'), sortable: true },
+                { field: 'created_at', label: __('Created'), sortable: true },
+                { field: '_actions', label: '', sortable: false, width: '1%' },
+            ],
+        };
+    },
+
+    methods: {
+        async refresh() {
+            if (!this.refreshEndpoint) return;
+
+            this.refreshing = true;
+            try {
+                await this.$axios.post(this.refreshEndpoint);
+                this.$refs.listing?.refresh();
+                Statamic.$toast.success(__('Mux Library refreshed'));
+            } catch (e) {
+                console.error(e);
+                Statamic.$toast.error(__('Failed to refresh Mux Library'));
+            } finally {
+                this.refreshing = false;
+            }
+        },
+    },
 };
 </script>
