@@ -1,21 +1,29 @@
 <template>
     <div>
-        <Header icon="fieldtype-video" :title="__('Mux Library')">
+        <Header icon="mux::cloud-video" :title="__('Mux Library')">
             <div v-if="can('manage mux')" class="flex items-center gap-2 sm:gap-3">
-                <Button
-                    icon="sync"
-                    :text="__('Clear cache and reload')"
-                    :loading="refreshing"
-                    :disabled="refreshing"
-                    @click="refresh"
-                />
+                <Dropdown align="end">
+                    <template #trigger>
+                        <Button
+                            icon="dots"
+                            variant="ghost"
+                            size="sm"
+                            :aria-label="__('Open dropdown menu')"
+                        />
+                    </template>
+                    <DropdownMenu>
+                        <DropdownItem icon="mux::reload" @click="refresh">
+                            {{ __('Clear cache and reload') }}
+                        </DropdownItem>
+                    </DropdownMenu>
+                </Dropdown>
                 <Button
                     v-if="dashboardUrl"
                     :href="dashboardUrl"
                     target="_blank"
                     rel="noopener noreferrer"
-                    icon-append="external-link"
-                    :text="__('Open Mux Dashboard')"
+                    icon-append="external-link-original"
+                    :text="__('Mux Dashboard')"
                 />
             </div>
         </Header>
@@ -47,8 +55,8 @@
                     >
                         <span>{{ value }}</span>
                         <Icon
-                            name="external-link"
-                            class="size-1.5 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 group-focus:opacity-100 group-focus-visible:opacity-100"
+                            name="external-link-original"
+                            class="size-3! text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 group-focus:opacity-100 group-focus-visible:opacity-100"
                             aria-hidden="true"
                         />
                     </a>
@@ -84,12 +92,13 @@
                 <div class="flex justify-end">
                     <Dropdown v-if="hasMuxActions(row)" align="end">
                         <DropdownMenu>
+                            <DropdownItem v-if="row.dashboard_url" icon="external-link-original" :text="__('Open in Mux dashboard')" :href="row.dashboard_url" target="_blank" />
+                            <DropdownItem v-if="playerUrl(row)" icon="external-link-original" :text="__('Open playback page')" :href="playerUrl(row)" target="_blank" />
+                            <DropdownSeparator />
                             <DropdownItem icon="taxonomies" :text="__('Copy asset ID')" @click="copyAssetId(row)" />
                             <DropdownItem v-if="primaryPlaybackId(row)" icon="taxonomies" :text="__('Copy playback ID')" @click="copyPlaybackId(row)" />
                             <DropdownItem v-if="primaryPlaybackId(row)" icon="web" :text="__('Copy playback URL')" @click="copyPlaybackUrl(row)" />
                             <DropdownItem v-if="primaryPlaybackId(row)" icon="programming-code-block" :text="__('Copy embed code')" @click="copyEmbedCode(row)" />
-                            <DropdownSeparator v-if="row.dashboard_url" />
-                            <DropdownItem v-if="row.dashboard_url" icon="external-link-original" :text="__('Open in Mux dashboard')" :href="row.dashboard_url" target="_blank" rel="noopener noreferrer" />
                         </DropdownMenu>
                     </Dropdown>
                 </div>
@@ -119,7 +128,7 @@ export default {
                 { field: 'thumbnail_url', label: __('Thumbnail'), sortable: false },
                 { field: 'title', label: __('Title'), sortable: true },
                 { field: 'state', label: __('State'), sortable: true },
-                { field: 'status', label: __('Status'), sortable: true },
+                { field: 'status', label: __('Processing'), sortable: true },
                 { field: 'duration', label: __('Duration'), sortable: true },
                 { field: 'playback_policy', label: __('Policy'), sortable: true },
                 { field: 'created_at', label: __('Created'), sortable: true },

@@ -28,16 +28,16 @@
                     <tbody class="divide-y divide-gray-800/10 dark:divide-white/10 [&_td]:px-1.5! [&_td]:py-2! [&_td:first-child]:pl-3! [&_td:last-child]:pr-3! [&_td]:text-left [&_svg]:opacity-60">
                         <tr key="id">
                             <td>
-                                <ui-icon name="fingerprint" v-tooltip="'Mux ID'"></ui-icon>
+                                <ui-icon name="mux::fingerprint" v-tooltip="'Mux ID'"></ui-icon>
                             </td>
                             <td>{{ value.id }}</td>
                         </tr>
                         <tr v-for="[policy, id] in playbackIds" :key="id">
                             <td v-if="policy === 'signed'">
-                                <ui-icon name="key" v-tooltip="'Signed Playback ID'"></ui-icon>
+                                <ui-icon name="mux::padlock" v-tooltip="'Signed Playback ID'"></ui-icon>
                             </td>
                             <td v-else>
-                                <ui-icon name="globals" v-tooltip="'Public Playback ID'"></ui-icon>
+                                <ui-icon name="mux::play-button" v-tooltip="'Public Playback ID'"></ui-icon>
                             </td>
                             <td>{{ id }}</td>
                         </tr>
