@@ -101,30 +101,34 @@ test('page controller returns mirrored assets view by default', function () {
     $controller = $this->app->make(ListingController::class);
     $response = $controller->index();
 
-    expect($response->getName())->toBe('statamic-mux::cp.mirrored');
-    expect($response->getData())->toHaveKeys(['title', 'localEndpoint', 'commandEndpoint']);
-    expect($response->getData())->not->toHaveKeys(['page', 'listingPage', 'remoteEndpoint', 'refreshEndpoint']);
-    expect($response->getData()['title'])->toBe('Mirrored Assets');
+    $component = (fn () => $this->component)->call($response);
+    $props = (fn () => $this->props)->call($response);
+
+    expect($component)->toBe('MuxAssetsPage');
+    expect($props)->toHaveKeys(['endpoint', 'commandEndpoint', 'assetEditorChunks']);
+    expect($props)->not->toHaveKeys(['refreshEndpoint', 'dashboardUrl']);
 });
 
 test('page controller returns mux library view', function () {
     $controller = $this->app->make(ListingController::class);
     $response = $controller->library();
 
-    expect($response->getName())->toBe('statamic-mux::cp.library');
-    expect($response->getData())->toHaveKeys(['title', 'remoteEndpoint', 'refreshEndpoint', 'dashboardUrl']);
-    expect($response->getData())->not->toHaveKeys(['listingPage', 'localEndpoint', 'commandEndpoint']);
-    expect($response->getData()['title'])->toBe('Mux Library');
+    $component = (fn () => $this->component)->call($response);
+    $props = (fn () => $this->props)->call($response);
+
+    expect($component)->toBe('MuxLibraryPage');
+    expect($props)->toHaveKeys(['endpoint', 'refreshEndpoint', 'dashboardUrl']);
+    expect($props)->not->toHaveKeys(['commandEndpoint', 'assetEditorChunks']);
 });
 
 test('page controller passes correct endpoints', function () {
     $controller = $this->app->make(ListingController::class);
-    $mirrored = $controller->index()->getData();
-    $library = $controller->library()->getData();
+    $mirrored = (fn () => $this->props)->call($controller->index());
+    $library = (fn () => $this->props)->call($controller->library());
 
-    expect($mirrored['localEndpoint'])->toContain('/mux/listing/local');
+    expect($mirrored['endpoint'])->toContain('/mux/listing/local');
     expect($mirrored['commandEndpoint'])->toContain('/mux/command');
-    expect($library['remoteEndpoint'])->toContain('/mux/listing/remote');
+    expect($library['endpoint'])->toContain('/mux/listing/remote');
     expect($library['refreshEndpoint'])->toContain('/mux/listing/refresh');
 });
 
