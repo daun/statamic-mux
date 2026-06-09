@@ -1,0 +1,9 @@
+var e=`<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14"><g>
+    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.31643 6.47758c-0.82606 -0.91715 -2.00169 -1.53203 -3.25897 -1.93461 -0.53128 -0.17011 -1.07743 0.18316 -1.14941 0.73635 -0.15151 1.16441 -0.15149 2.27702 0.00007 3.44142 0.072 0.55315 0.61814 0.90639 1.1494 0.73629C7.3148 9.05447 8.49046 8.4396 9.31647 7.52244c0.26856 -0.2982 0.26854 -0.74667 -0.00004 -1.04486Z" stroke-width="1"></path>
+    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M1.76172 11.3121C2.85444 12.7386 4.63243 13.5 6.99985 13.5c4.16005 0 6.50005 -2.351 6.50005 -6.53055 0 -3.64249 -1.7773 -5.89617 -4.98769 -6.41519" stroke-width="1"></path>
+    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M1.77876 2.60541C1.32733 3.1883 0.991311 3.88338 0.777344 4.68397" stroke-width="1"></path>
+    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M3.71582 1.08054C4.35117 0.787152 5.07521 0.591985 5.88298 0.5" stroke-width="1"></path>
+    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M0.5 6.96948c0 0.76803 0.079015 1.47431 0.233819 2.1156" stroke-width="1"></path>
+  </g>
+</svg>
+`;export{e as default};

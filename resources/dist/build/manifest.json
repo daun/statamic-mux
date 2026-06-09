@@ -1,6 +1,6 @@
 {
   "resources/css/addon.css": {
-    "file": "assets/addon-DBWs7wEP.css",
+    "file": "assets/addon-CZoPSe_f.css",
     "name": "addon",
     "names": [
       "addon.css"
@@ -9,9 +9,137 @@
     "isEntry": true
   },
   "resources/js/addon.js": {
-    "file": "assets/addon-CSWmI8eu.js",
+    "file": "assets/addon-DY1x61Kn.js",
     "name": "addon",
     "src": "resources/js/addon.js",
-    "isEntry": true
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/svg/icons/cloud-spark.svg?raw",
+      "resources/svg/icons/cloud-transfer.svg?raw",
+      "resources/svg/icons/cloud-upload.svg?raw",
+      "resources/svg/icons/cloud-video.svg?raw",
+      "resources/svg/icons/fingerprint.svg?raw",
+      "resources/svg/icons/padlock.svg?raw",
+      "resources/svg/icons/play-button.svg?raw",
+      "resources/svg/icons/reload-vertical.svg?raw",
+      "resources/svg/icons/reload.svg?raw",
+      "resources/svg/icons/video-card.svg?raw",
+      "resources/svg/icons/video-folder.svg?raw",
+      "resources/svg/icons/video-live.svg?raw",
+      "resources/svg/icons/video-player.svg?raw",
+      "resources/svg/icons/video-playlist.svg?raw",
+      "resources/svg/icons/video-slow.svg?raw",
+      "resources/svg/icons/video-square.svg?raw",
+      "resources/svg/icons/videos-square.svg?raw",
+      "resources/svg/icons/videos.svg?raw"
+    ]
+  },
+  "resources/svg/icons/cloud-spark.svg?raw": {
+    "file": "assets/cloud-spark-D84x1F1-.js",
+    "name": "cloud-spark",
+    "src": "resources/svg/icons/cloud-spark.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/icons/cloud-transfer.svg?raw": {
+    "file": "assets/cloud-transfer-DdaveTKz.js",
+    "name": "cloud-transfer",
+    "src": "resources/svg/icons/cloud-transfer.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/icons/cloud-upload.svg?raw": {
+    "file": "assets/cloud-upload-Cgpa1gP_.js",
+    "name": "cloud-upload",
+    "src": "resources/svg/icons/cloud-upload.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/icons/cloud-video.svg?raw": {
+    "file": "assets/cloud-video-oTau7QHF.js",
+    "name": "cloud-video",
+    "src": "resources/svg/icons/cloud-video.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/icons/fingerprint.svg?raw": {
+    "file": "assets/fingerprint-CbbpOU1i.js",
+    "name": "fingerprint",
+    "src": "resources/svg/icons/fingerprint.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/icons/padlock.svg?raw": {
+    "file": "assets/padlock-BqQWo3Rg.js",
+    "name": "padlock",
+    "src": "resources/svg/icons/padlock.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/icons/play-button.svg?raw": {
+    "file": "assets/play-button-DoJdcppZ.js",
+    "name": "play-button",
+    "src": "resources/svg/icons/play-button.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/icons/reload-vertical.svg?raw": {
+    "file": "assets/reload-vertical-DEoBraid.js",
+    "name": "reload-vertical",
+    "src": "resources/svg/icons/reload-vertical.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/icons/reload.svg?raw": {
+    "file": "assets/reload-Bq8qVQgE.js",
+    "name": "reload",
+    "src": "resources/svg/icons/reload.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/icons/video-card.svg?raw": {
+    "file": "assets/video-card-CvKqYb3G.js",
+    "name": "video-card",
+    "src": "resources/svg/icons/video-card.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/icons/video-folder.svg?raw": {
+    "file": "assets/video-folder-3J_KQWaA.js",
+    "name": "video-folder",
+    "src": "resources/svg/icons/video-folder.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/icons/video-live.svg?raw": {
+    "file": "assets/video-live-xr0UBZJr.js",
+    "name": "video-live",
+    "src": "resources/svg/icons/video-live.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/icons/video-player.svg?raw": {
+    "file": "assets/video-player-RlMZyWLT.js",
+    "name": "video-player",
+    "src": "resources/svg/icons/video-player.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/icons/video-playlist.svg?raw": {
+    "file": "assets/video-playlist-CGCOuEzP.js",
+    "name": "video-playlist",
+    "src": "resources/svg/icons/video-playlist.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/icons/video-slow.svg?raw": {
+    "file": "assets/video-slow-C5yCaeHJ.js",
+    "name": "video-slow",
+    "src": "resources/svg/icons/video-slow.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/icons/video-square.svg?raw": {
+    "file": "assets/video-square-DGNhO3Gk.js",
+    "name": "video-square",
+    "src": "resources/svg/icons/video-square.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/icons/videos-square.svg?raw": {
+    "file": "assets/videos-square-CM4ivbqI.js",
+    "name": "videos-square",
+    "src": "resources/svg/icons/videos-square.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/icons/videos.svg?raw": {
+    "file": "assets/videos-DiOqyfH2.js",
+    "name": "videos",
+    "src": "resources/svg/icons/videos.svg?raw",
+    "isDynamicEntry": true
   }
 }
