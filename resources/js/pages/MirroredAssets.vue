@@ -22,13 +22,13 @@
                             </DropdownItem>
                             <DropdownItem icon="upload-cloud" @click="runCommand('upload')">
                                 <span class="flex items-baseline gap-2">
-                                    <span>{{ __('Upload') }}</span>
+                                    <span class="font-medium">{{ __('Upload') }}</span>
                                     <span class="text-sm text-gray-400 dark:text-gray-500">{{ __('Upload new videos to Mux') }}</span>
                                 </span>
                             </DropdownItem>
                             <DropdownItem icon="ai-spark" @click="runCommand('prune')">
                                 <span class="flex items-baseline gap-2">
-                                    <span>{{ __('Prune') }}</span>
+                                    <span class="font-medium">{{ __('Prune') }}</span>
                                     <span class="text-sm text-gray-400 dark:text-gray-500">{{ __('Delete orphaned Mux videos') }}</span>
                                 </span>
                             </DropdownItem>
