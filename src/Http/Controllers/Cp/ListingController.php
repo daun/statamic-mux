@@ -3,6 +3,7 @@
 namespace Daun\StatamicMux\Http\Controllers\Cp;
 
 use Daun\StatamicMux\Mux\MuxApi;
+use Daun\StatamicMux\Support\CpAssets;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -27,6 +28,7 @@ class ListingController extends CpController
         return Inertia::render('MuxAssetsPage', [
             'endpoint' => cp_route('mux.listing.local'),
             'commandEndpoint' => cp_route('mux.command'),
+            'assetEditorChunks' => CpAssets::assetEditorChunkUrls(),
         ]);
     }
 
