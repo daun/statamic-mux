@@ -74,33 +74,46 @@ export default {
             return this.copyToClipboard(this.embedCode(row));
         },
 
-        statusColor(status) {
+        // Mux processing pipeline state (remote-derived).
+        processingStatusColor(status) {
             return {
                 ready: 'green',
                 preparing: 'amber',
-                waiting: 'gray',
-                stale: 'red',
                 errored: 'red',
             }[status] || 'gray';
         },
 
-        statusLabel(status) {
+        processingStatusLabel(status) {
             return {
                 ready: __('Ready'),
                 preparing: __('Preparing'),
-                waiting: __('Waiting'),
-                stale: __('Stale'),
                 errored: __('Errored'),
             }[status] || status;
         },
 
-        stateColor(state) {
+        // Local tab: has this asset been uploaded to Mux?
+        mirrorStatusColor(status) {
+            return {
+                uploaded: 'green',
+                not_uploaded: 'gray',
+            }[status] || 'gray';
+        },
+
+        mirrorStatusLabel(status) {
+            return {
+                uploaded: __('Uploaded'),
+                not_uploaded: __('Not uploaded'),
+            }[status] || status;
+        },
+
+        // Remote tab: how does this Mux asset map to local assets?
+        matchStatusColor(status) {
             return {
                 mirrored: 'green',
                 proxy: 'gray',
                 orphaned: 'amber',
                 duplicated: 'red',
-            }[state] || 'gray';
+            }[status] || 'gray';
         },
 
     },

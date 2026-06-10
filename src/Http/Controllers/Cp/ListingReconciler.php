@@ -3,9 +3,10 @@
 namespace Daun\StatamicMux\Http\Controllers\Cp;
 
 use Daun\StatamicMux\Data\MuxAsset;
+use Daun\StatamicMux\Http\Controllers\Cp\Listing\RemoteVideoSource;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Support\MirrorField;
-use Daun\StatamicMux\Support\Attribution;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -26,7 +27,7 @@ class ListingReconciler
     ) {}
 
     /**
-     * Get local video assets with Mux data, enriched with remote state.
+     * Get local video assets with Mux data, enriched with remote data.
      *
      * Builds rows from local data first, paginates, then batch-fetches
      * only the Mux IDs on the current page for enrichment.
@@ -45,7 +46,7 @@ class ListingReconciler
     }
 
     /**
-     * Get remote Mux assets, enriched with local state.
+     * Get remote Mux assets, enriched with local data.
      */
     public function getRemoteVideos(array $params = []): array
     {
@@ -162,6 +163,11 @@ class ListingReconciler
 
     /**
      * Enrich paginated local rows with remote Mux data.
+     *
+     * Remote is authoritative: when an asset still exists on Mux, its remote
+     * values override the placeholders/fallbacks set in buildLocalRows(). When
+     * it doesn't (deleted on Mux, or never uploaded), the remote-only fields
+     * stay empty and duration/created_at keep their local fallback.
      */
     protected function enrichLocalRowsWithRemoteData(array $rows): array
     {
@@ -171,21 +177,21 @@ class ListingReconciler
         return collect($rows)->map(function (array $row) use ($remoteIndex) {
             $muxId = $row['mux_id'];
             $remote = $muxId ? $remoteIndex->get($muxId) : null;
-            $existsRemotely = $remote !== null;
 
-            $row['exists_remotely'] = $existsRemotely;
-            $row['is_stale'] = $row['has_mux_data'] && ! $existsRemotely;
-            $row['status'] = $this->getLocalMuxStatus($row['mux_asset'], $remote);
-            $row['duration'] = $this->getLocalDuration($row['mux_asset'], $remote);
-            $row['duration_formatted'] = $row['duration'] ? Str::durationForHumans($row['duration']) : null;
-            $row['created_at'] = $this->getLocalMuxCreatedAt($remote);
-
-            if ($remote && empty($row['playback_ids'])) {
-                $row['playback_ids'] = $this->getRemotePlaybackIds($remote);
-                $row['playback_id'] = $this->getPrimaryPlaybackId($row['playback_ids']);
+            if ($remote) {
+                $remoteRow = $this->normalizeRow(new RemoteVideoSource($remote));
+                $row = array_merge($row, Arr::only($remoteRow, [
+                    'processing_status',
+                    'duration',
+                    'duration_formatted',
+                    'playback_ids',
+                    'playback_id',
+                    'playback_policy',
+                    'created_at',
+                ]));
             }
 
-            unset($row['mux_asset']);
+            $row['exists_remotely'] = $remote !== null;
 
             return $row;
         })->all();
@@ -215,45 +221,52 @@ class ListingReconciler
 
     /**
      * Build rows for the local tab from local data only.
-     * Remote-dependent fields (exists_remotely, is_stale, status, duration, created_at)
-     * are set to defaults and enriched later via enrichLocalRowsWithRemoteData().
+     *
+     * Most Mux fields (processing_status, playback, policy) are remote-only and
+     * stay empty until enrichLocalRowsWithRemoteData() fills them in for the
+     * current page. Two fields keep a local fallback so a row is never blank
+     * when the asset isn't (or no longer is) on Mux:
+     *   - duration   -> the duration cached on the asset
+     *   - created_at -> the asset's own last-modified date
      */
     protected function buildLocalRows(): Collection
     {
         $user = User::current();
         $dashboardUrl = $this->api->dashboardUrl();
 
-        return MirrorField::assets()->map(function (Asset $asset) use ($user, $dashboardUrl) {
-            $muxAsset = MuxAsset::fromAsset($asset);
-            $muxId = $muxAsset->id();
-            $canEdit = $user?->can('edit', $asset) ?? false; // @phpstan-ignore method.notFound
+        return MirrorField::assets()
+            ->map(function (Asset $asset) use ($user, $dashboardUrl) {
+                $mux = MuxAsset::fromAsset($asset);
+                $muxId = $mux->id();
+                $hasMuxData = $muxId !== null;
+                $duration = $mux->duration();
+                $canEdit = $user?->can('edit', $asset) ?? false; // @phpstan-ignore method.notFound
 
-            $playbackIds = $this->getLocalPlaybackIds($muxAsset);
-
-            return [
-                'id' => $asset->id(),
-                'title' => $asset->get('title') ?: basename($asset->path()),
-                'path' => $asset->path(),
-                'container' => $asset->containerHandle(),
-                'edit_url' => $canEdit ? $asset->editUrl() : null,
-                'can_edit' => $canEdit,
-                'mux_id' => $muxId,
-                'dashboard_url' => $this->dashboardAssetUrl($muxId, $dashboardUrl),
-                'has_mux_data' => $muxAsset->exists(),
-                'exists_remotely' => null,
-                'status' => $muxAsset->exists() ? null : 'waiting',
-                'is_stale' => false,
-                'duration' => $muxAsset->duration(),
-                'duration_formatted' => $muxAsset->duration() ? Str::durationForHumans($muxAsset->duration()) : null,
-                'playback_policy' => $this->getLocalPlaybackPolicy($muxAsset),
-                'playback_id' => $this->getPrimaryPlaybackId($playbackIds),
-                'playback_ids' => $playbackIds,
-                'created_at' => null,
-                'thumbnail_url' => $this->getLocalThumbnailUrl($asset),
-                'is_proxy' => $muxAsset->isProxy(),
-                'mux_asset' => $muxAsset, // carried through for enrichment, stripped before response
-            ];
-        });
+                return [
+                    'id' => $asset->id(),
+                    'title' => $asset->get('title') ?: basename($asset->path()),
+                    'path' => $asset->path(),
+                    'container' => $asset->containerHandle(),
+                    'edit_url' => $canEdit ? $asset->editUrl() : null,
+                    'can_edit' => $canEdit,
+                    'mux_id' => $muxId,
+                    'dashboard_url' => $this->dashboardAssetUrl($muxId, $dashboardUrl),
+                    'thumbnail_url' => $this->getLocalThumbnailUrl($asset),
+                    'has_mux_data' => $hasMuxData,
+                    'exists_remotely' => null,
+                    'mirror_status' => $hasMuxData ? 'uploaded' : 'not_uploaded',
+                    'is_proxy' => $mux->isProxy(),
+                    // Remote-only display fields (filled in during enrichment).
+                    'processing_status' => null,
+                    'playback_ids' => [],
+                    'playback_id' => null,
+                    'playback_policy' => null,
+                    // Local fallbacks, overridden by remote when present.
+                    'duration' => $duration,
+                    'duration_formatted' => $this->formatDuration($duration),
+                    'created_at' => $this->assetCreatedAt($asset),
+                ];
+            });
     }
 
     /**
@@ -263,44 +276,35 @@ class ListingReconciler
     {
         $dashboardUrl = $this->api->dashboardUrl();
 
-        return $this->getCachedRemoteAssets()->map(function ($muxAsset) use ($localIndex, $dashboardUrl) {
-            $muxId = $muxAsset->getId();
-            $localMatches = $localIndex->get($muxId, collect());
-            $localCount = $localMatches->count();
+        return $this->getCachedRemoteAssets()
+            ->map(function ($muxAsset) use ($localIndex, $dashboardUrl) {
+                $source = new RemoteVideoSource($muxAsset);
+                $row = $this->normalizeRow($source);
+                $muxId = $row['mux_id'];
+                $playbackId = $row['playback_id'];
+                $localCount = $localIndex->get($muxId, collect())->count();
 
-            $passthrough = $muxAsset->getPassthrough();
+                $matchStatus = match (true) {
+                    $source->isProxy() => 'proxy',
+                    $localCount === 0 => 'orphaned',
+                    $localCount > 1 => 'duplicated',
+                    default => 'mirrored',
+                };
 
-            $state = match (true) {
-                Attribution::isProxy($passthrough) => 'proxy',
-                $localCount === 0 => 'orphaned',
-                $localCount > 1 => 'duplicated',
-                default => 'mirrored',
-            };
-
-            $playbackIds = $this->getRemotePlaybackIds($muxAsset);
-            $playbackId = $this->getPrimaryPlaybackId($playbackIds);
-
-            return [
-                'id' => $muxId,
-                'title' => $muxAsset->getMeta()?->getTitle() ?: $muxId,
-                'mux_id' => $muxId,
-                'dashboard_url' => $this->dashboardAssetUrl($muxId, $dashboardUrl),
-                'state' => $state,
-                'local_matches' => $localCount,
-                'status' => $muxAsset->getStatus(),
-                'duration' => $muxAsset->getDuration(),
-                'duration_formatted' => $muxAsset->getDuration() ? Str::durationForHumans($muxAsset->getDuration()) : null,
-                'playback_policy' => $this->getRemotePlaybackPolicy($muxAsset),
-                'playback_id' => $playbackId,
-                'playback_ids' => $playbackIds,
-                'resolution_tier' => $muxAsset->getResolutionTier(),
-                'max_resolution_tier' => $muxAsset->getMaxResolutionTier(),
-                'is_test' => (bool) $muxAsset->getTest(),
-                'created_at' => $muxAsset->getCreatedAt() ? Carbon::createFromTimestamp($muxAsset->getCreatedAt())->toIso8601String() : null,
-                'thumbnail_url' => $playbackId ? "https://image.mux.com/{$playbackId}/thumbnail.webp?width=120" : null,
-                'aspect_ratio' => $muxAsset->getAspectRatio(),
-            ];
-        });
+                return [
+                    ...$row,
+                    'id' => $muxId,
+                    'title' => $muxAsset->getMeta()?->getTitle() ?: $muxId,
+                    'dashboard_url' => $this->dashboardAssetUrl($muxId, $dashboardUrl),
+                    'match_status' => $matchStatus,
+                    'local_matches' => $localCount,
+                    'resolution_tier' => $muxAsset->getResolutionTier(),
+                    'max_resolution_tier' => $muxAsset->getMaxResolutionTier(),
+                    'is_test' => (bool) $muxAsset->getTest(),
+                    'thumbnail_url' => $playbackId ? "https://image.mux.com/{$playbackId}/thumbnail.webp?width=120" : null,
+                    'aspect_ratio' => $muxAsset->getAspectRatio(),
+                ];
+            });
     }
 
     protected function dashboardAssetUrl(?string $muxId, ?string $dashboardUrl): ?string
@@ -314,56 +318,43 @@ class ListingReconciler
         return "{$baseUrl}/video/assets/".rawurlencode($muxId).'/monitor';
     }
 
-    protected function getLocalMuxStatus(MuxAsset $muxAsset, $remoteAsset = null): ?string
+    /**
+     * Shape Mux SDK data into the row fields shared by the remote tab and the
+     * local tab's enrichment. The single place remote video data is normalized.
+     */
+    protected function normalizeRow(RemoteVideoSource $source): array
     {
-        if (! $muxAsset->exists()) {
-            return 'waiting';
-        }
+        $duration = $source->duration();
+        $playbackIds = $source->playbackIds();
 
-        if (! $remoteAsset) {
-            return 'stale';
-        }
-
-        return $remoteAsset->getStatus();
+        return [
+            'mux_id' => $source->id(),
+            'processing_status' => $source->processingStatus(),
+            'duration' => $duration,
+            'duration_formatted' => $this->formatDuration($duration),
+            'playback_ids' => $playbackIds,
+            'playback_id' => $this->getPrimaryPlaybackId($playbackIds),
+            'playback_policy' => $this->aggregatePlaybackPolicy($playbackIds),
+            'created_at' => $source->createdAt(),
+            'is_proxy' => $source->isProxy(),
+        ];
     }
 
-    protected function getLocalDuration(MuxAsset $muxAsset, $remoteAsset = null): ?float
+    protected function formatDuration(?float $duration): ?string
     {
-        if ($remoteAsset) {
-            return $remoteAsset->getDuration();
-        }
-
-        return $muxAsset->duration();
+        return $duration ? Str::durationForHumans($duration) : null;
     }
 
-    protected function getLocalPlaybackPolicy(MuxAsset $muxAsset): ?string
+    /**
+     * The asset's own creation date, used as a fallback for the "Created"
+     * column when there is no remote Mux asset to read the real date from.
+     * Statamic only tracks the file's last-modified time.
+     */
+    protected function assetCreatedAt(Asset $asset): ?string
     {
-        $playbackId = $muxAsset->playbackId();
+        $timestamp = $asset->meta('last_modified');
 
-        return $playbackId?->policy();
-    }
-
-    protected function getLocalPlaybackIds(MuxAsset $muxAsset): array
-    {
-        return collect($muxAsset->playbackIds()->all())
-            ->map(fn ($playbackId) => [
-                'id' => $playbackId->id(),
-                'policy' => $playbackId->policy(),
-            ])
-            ->values()
-            ->all();
-    }
-
-    protected function getRemotePlaybackIds($muxAsset): array
-    {
-        return collect($muxAsset->getPlaybackIds() ?? [])
-            ->map(fn ($playbackId) => [
-                'id' => $playbackId->getId(),
-                'policy' => $this->normalizePlaybackPolicy($playbackId->getPolicy()),
-            ])
-            ->filter(fn ($playbackId) => $playbackId['id'])
-            ->values()
-            ->all();
+        return $timestamp ? Carbon::createFromTimestamp($timestamp)->toIso8601String() : null;
     }
 
     protected function getPrimaryPlaybackId(array $playbackIds): ?string
@@ -374,32 +365,20 @@ class ListingReconciler
         return $playbackId['id'] ?? null;
     }
 
-    protected function normalizePlaybackPolicy(mixed $policy): ?string
+    /**
+     * Collapse all playback policies into a single label
+     * (e.g. "public" or "public, signed").
+     */
+    protected function aggregatePlaybackPolicy(array $playbackIds): ?string
     {
-        if ($policy === null) {
-            return null;
-        }
+        $policies = collect($playbackIds)
+            ->pluck('policy')
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
 
-        if ($policy instanceof \BackedEnum) {
-            return (string) $policy->value;
-        }
-
-        if (is_object($policy) && method_exists($policy, 'getValue')) {
-            return $policy->getValue();
-        }
-
-        return (string) $policy;
-    }
-
-    protected function getLocalMuxCreatedAt($remoteAsset = null): ?string
-    {
-        if (! $remoteAsset) {
-            return null;
-        }
-
-        $timestamp = $remoteAsset->getCreatedAt();
-
-        return $timestamp ? Carbon::createFromTimestamp($timestamp)->toIso8601String() : null;
+        return $policies->isEmpty() ? null : $policies->implode(', ');
     }
 
     protected function getLocalThumbnailUrl(Asset $asset): ?string
@@ -407,23 +386,6 @@ class ListingReconciler
         $id = base64_encode($asset->id());
 
         return cp_route('mux.thumbnail', $id);
-    }
-
-    protected function getRemotePlaybackPolicy($muxAsset): ?string
-    {
-        $playbackIds = collect($muxAsset->getPlaybackIds() ?? []);
-
-        if ($playbackIds->isEmpty()) {
-            return null;
-        }
-
-        $policies = $playbackIds->map(fn ($pid) => $this->normalizePlaybackPolicy($pid->getPolicy()))->unique()->sort()->values();
-
-        if ($policies->count() === 1) {
-            return $policies->first();
-        }
-
-        return $policies->implode(', ');
     }
 
     /**
@@ -460,7 +422,7 @@ class ListingReconciler
             $items = match ($field) {
                 'duration_range' => $this->filterDurationRange($items, $value),
                 'is_test' => $items->where('is_test', filter_var($value, FILTER_VALIDATE_BOOLEAN)),
-                'status', 'state', 'playback_policy', 'resolution_tier' => is_array($value)
+                'processing_status', 'match_status', 'playback_policy', 'resolution_tier' => is_array($value)
                     ? $items->whereIn($field, $value)
                     : $items->where($field, $value),
                 default => $items,

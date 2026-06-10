@@ -48,29 +48,24 @@
                 </div>
             </template>
 
-            <template #cell-is_stale="{ row }">
-                <Badge v-if="row.is_stale" pill color="red" class="text-2xs">{{ __('Stale') }}</Badge>
-                <Badge v-else-if="row.has_mux_data && row.exists_remotely" pill color="green" class="text-2xs">{{ __('Mirrored') }}</Badge>
-                <Badge v-else-if="!row.has_mux_data" pill color="gray" class="text-2xs">{{ __('Waiting') }}</Badge>
+            <template #cell-mirror_status="{ value }">
+                <Badge pill :color="mirrorStatusColor(value)" class="text-2xs">{{ mirrorStatusLabel(value) }}</Badge>
             </template>
 
-            <template #cell-status="{ value }">
-                <Badge pill :color="statusColor(value)" class="text-2xs">{{ statusLabel(value) }}</Badge>
+            <template #cell-processing_status="{ value }">
+                <Badge v-if="value" pill :color="processingStatusColor(value)" class="text-2xs">{{ processingStatusLabel(value) }}</Badge>
             </template>
 
             <template #cell-duration="{ row }">
                 <span v-if="row.duration_formatted" class="text-sm tabular-nums" v-text="row.duration_formatted" />
-                <span v-else class="text-gray-400">—</span>
             </template>
 
             <template #cell-playback_policy="{ value }">
                 <Badge v-if="value" pill class="text-2xs capitalize">{{ value }}</Badge>
-                <span v-else class="text-gray-400">—</span>
             </template>
 
             <template #cell-created_at="{ value }">
                 <date-time v-if="value" :of="value" date-only />
-                <ui-text v-else variant="subtle" class="text-gray-400">—</ui-text>
             </template>
 
             <template #prepended-row-actions="{ row }">
@@ -81,7 +76,7 @@
                 <template v-if="row.dashboard_url || playerUrl(row)">
                     <DropdownItem v-if="row.dashboard_url" icon="external-link-original" :text="__('Open in Mux dashboard')" :href="row.dashboard_url" target="_blank" />
                     <DropdownItem v-if="playerUrl(row)" icon="external-link-original" :text="__('Open playback page')" :href="playerUrl(row)" target="_blank" />
-                    <DropdownSeparator />
+                    <DropdownSeparator v-if="row.mux_id" />
                 </template>
                 <DropdownItem v-if="row.mux_id" icon="taxonomies" :text="__('Copy asset ID')" @click="copyAssetId(row)" />
                 <DropdownItem v-if="primaryPlaybackId(row)" icon="taxonomies" :text="__('Copy playback ID')" @click="copyPlaybackId(row)" />
@@ -138,10 +133,10 @@ export default {
                 { field: 'thumbnail_url', label: __('Thumbnail'), sortable: false },
                 { field: 'title', label: __('Title'), sortable: true },
                 { field: 'duration', label: __('Duration'), sortable: true },
-                { field: 'status', label: __('Processing'), sortable: true },
-                { field: 'is_stale', label: __('State'), sortable: true },
+                { field: 'mirror_status', label: __('Status'), sortable: true },
+                { field: 'processing_status', label: __('Processing'), sortable: true },
                 { field: 'playback_policy', label: __('Policy'), sortable: true },
-                { field: 'created_at', label: __('Mux Created'), sortable: true },
+                { field: 'created_at', label: __('Created'), sortable: true },
                 { field: '_actions', label: '', sortable: false, width: '1%' },
             ],
         };

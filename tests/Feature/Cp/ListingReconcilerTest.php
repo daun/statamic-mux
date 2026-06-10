@@ -107,26 +107,26 @@ test('builds local rows with remote state enrichment', function () {
 
     $rows = collect($result['data']);
 
-    // Asset with matching remote
+    // Asset with matching remote: remote is authoritative, so its values win.
     $mirrored = $rows->firstWhere('mux_id', 'mux-asset-001');
     expect($mirrored)->not->toBeNull();
     expect($mirrored['has_mux_data'])->toBeTrue();
     expect($mirrored['exists_remotely'])->toBeTrue();
-    expect($mirrored['is_stale'])->toBeFalse();
-    expect($mirrored['status'])->toBe('ready');
-    expect($mirrored['playback_id'])->toBe('playback-001');
-    expect($mirrored['playback_ids'])->toBe([['id' => 'playback-001', 'policy' => 'public']]);
+    expect($mirrored['mirror_status'])->toBe('uploaded');
+    expect($mirrored['processing_status'])->toBe('ready');
+    expect($mirrored['playback_id'])->toBe('playback-mux-asset-001');
+    expect($mirrored['playback_ids'])->toBe([['id' => 'playback-mux-asset-001', 'policy' => 'public']]);
 
     // Asset without mux data
     $waiting = $rows->first(fn ($r) => ! $r['has_mux_data']);
     expect($waiting)->not->toBeNull();
-    expect($waiting['status'])->toBe('waiting');
-    expect($waiting['is_stale'])->toBeFalse();
+    expect($waiting['mirror_status'])->toBe('not_uploaded');
+    expect($waiting['processing_status'])->toBeNull();
 });
 
-test('detects stale local assets', function () {
-    // Set up asset with mux ID that doesn't exist remotely
-    $this->mp4b->set('mux', ['id' => 'mux-asset-gone', 'playback_ids' => ['public' => 'playback-gone']]);
+test('falls back to local data when asset is gone from Mux', function () {
+    // Asset with a Mux ID + cached duration that no longer exists remotely.
+    $this->mp4b->set('mux', ['id' => 'mux-asset-gone', 'playback_ids' => ['public' => 'playback-gone'], 'duration' => 99.0]);
     $this->mp4b->save();
     Stache::clear();
     Cache::forget('mux.remote_assets');
@@ -136,8 +136,23 @@ test('detects stale local assets', function () {
 
     $stale = $rows->firstWhere('mux_id', 'mux-asset-gone');
     expect($stale)->not->toBeNull();
-    expect($stale['is_stale'])->toBeTrue();
-    expect($stale['status'])->toBe('stale');
+
+    // Still counts as uploaded (it has a Mux ID); status is binary.
+    expect($stale['mirror_status'])->toBe('uploaded');
+    expect($stale['exists_remotely'])->toBeFalse();
+
+    // Remote-only fields are empty, not em-dashed.
+    expect($stale['processing_status'])->toBeNull();
+    expect($stale['playback_ids'])->toBe([]);
+    expect($stale['playback_id'])->toBeNull();
+    expect($stale['playback_policy'])->toBeNull();
+
+    // Duration falls back to the locally cached value.
+    expect($stale['duration'])->toBe(99.0);
+    expect($stale['duration_formatted'])->not->toBeNull();
+
+    // Created date falls back to the asset's own date.
+    expect($stale['created_at'])->not->toBeNull();
 });
 
 test('builds remote rows with correct state badges', function () {
@@ -152,13 +167,13 @@ test('builds remote rows with correct state badges', function () {
 
     // Mirrored: remote asset with exactly 1 local match
     $mirrored = $rows->firstWhere('mux_id', 'mux-asset-001');
-    expect($mirrored['state'])->toBe('mirrored');
+    expect($mirrored['match_status'])->toBe('mirrored');
     expect($mirrored['playback_id'])->toBe('playback-mux-asset-001');
     expect($mirrored['playback_ids'])->toBe([['id' => 'playback-mux-asset-001', 'policy' => 'public']]);
 
     // Orphaned: remote asset with 0 local matches
     $orphaned = $rows->firstWhere('mux_id', 'mux-asset-orphan');
-    expect($orphaned['state'])->toBe('orphaned');
+    expect($orphaned['match_status'])->toBe('orphaned');
     expect($orphaned['title'])->toBe('Orphaned Video');
 });
 
@@ -173,7 +188,7 @@ test('detects duplicated remote references', function () {
     $rows = collect($result['data']);
 
     $duplicated = $rows->firstWhere('mux_id', 'mux-asset-001');
-    expect($duplicated['state'])->toBe('duplicated');
+    expect($duplicated['match_status'])->toBe('duplicated');
     expect($duplicated['local_matches'])->toBe(2);
 });
 
@@ -248,21 +263,21 @@ test('sort by duration descending', function () {
     expect($durations)->toBe([120.5, 60.0, 30.0]);
 });
 
-test('filters remote by state', function () {
+test('filters remote by match status', function () {
     Cache::forget('mux.remote_assets');
 
     $result = $this->reconciler->getRemoteVideos([
-        'filters' => [['field' => 'state', 'value' => 'orphaned']],
+        'filters' => [['field' => 'match_status', 'value' => 'orphaned']],
     ]);
     expect($result['meta']['total'])->toBe(1);
-    expect($result['data'][0]['state'])->toBe('orphaned');
+    expect($result['data'][0]['match_status'])->toBe('orphaned');
 });
 
-test('filters remote by status', function () {
+test('filters remote by processing status', function () {
     Cache::forget('mux.remote_assets');
 
     $result = $this->reconciler->getRemoteVideos([
-        'filters' => [['field' => 'status', 'value' => 'ready']],
+        'filters' => [['field' => 'processing_status', 'value' => 'ready']],
     ]);
     expect($result['meta']['total'])->toBe(3);
 });

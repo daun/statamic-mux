@@ -154,11 +154,11 @@ test('local api data has expected fields', function () {
     expect($json['data'])->not->toBeEmpty();
     $row = collect($json['data'])->firstWhere('mux_id', 'mux-asset-001');
     expect($row)->not->toBeNull();
-    expect($row)->toHaveKeys(['id', 'title', 'path', 'edit_url', 'can_edit', 'mux_id', 'dashboard_url', 'has_mux_data', 'status', 'duration', 'duration_formatted', 'playback_policy', 'playback_id', 'playback_ids']);
+    expect($row)->toHaveKeys(['id', 'title', 'path', 'edit_url', 'can_edit', 'mux_id', 'dashboard_url', 'has_mux_data', 'mirror_status', 'processing_status', 'duration', 'duration_formatted', 'playback_policy', 'playback_id', 'playback_ids']);
     expect($row['edit_url'])->toContain('/assets/');
     expect($row['can_edit'])->toBeTrue();
     expect($row['dashboard_url'])->toBe('https://dashboard.mux.com/environments/env-001/video/assets/mux-asset-001/monitor');
-    expect($row['playback_id'])->toBe('playback-001');
+    expect($row['playback_id'])->toBe('playback-mux-asset-001');
 });
 
 test('remote api returns json with data and meta', function () {
@@ -181,7 +181,7 @@ test('remote api data has expected fields', function () {
 
     expect($json['data'])->not->toBeEmpty();
     $row = $json['data'][0];
-    expect($row)->toHaveKeys(['id', 'title', 'mux_id', 'dashboard_url', 'state', 'status', 'duration', 'duration_formatted', 'playback_policy', 'playback_id', 'playback_ids']);
+    expect($row)->toHaveKeys(['id', 'title', 'mux_id', 'dashboard_url', 'match_status', 'processing_status', 'duration', 'duration_formatted', 'playback_policy', 'playback_id', 'playback_ids']);
     expect($row['dashboard_url'])->toBe('https://dashboard.mux.com/environments/env-001/video/assets/mux-asset-001/monitor');
     expect($row['playback_id'])->toBe('playback-mux-asset-001');
 });
@@ -297,24 +297,24 @@ test('local api supports sorting', function () {
     expect($response->getStatusCode())->toBe(200);
 });
 
-test('remote api columns include state', function () {
+test('remote api columns include match status', function () {
     $controller = $this->app->make(ApiListingController::class);
     $request = Request::create('/mux/listing/remote', 'GET');
     $response = $controller->remote($request);
     $json = $response->getData(true);
     $columns = collect($json['meta']['columns']);
 
-    expect($columns->pluck('field')->toArray())->toContain('state');
+    expect($columns->pluck('field')->toArray())->toContain('match_status');
 });
 
-test('local api columns include is_stale', function () {
+test('local api columns include mirror status', function () {
     $controller = $this->app->make(ApiListingController::class);
     $request = Request::create('/mux/listing/local', 'GET');
     $response = $controller->local($request);
     $json = $response->getData(true);
     $columns = collect($json['meta']['columns']);
 
-    expect($columns->pluck('field')->toArray())->toContain('is_stale');
+    expect($columns->pluck('field')->toArray())->toContain('mirror_status');
 });
 
 test('local api response excludes mux_asset', function () {
@@ -336,8 +336,8 @@ test('remote api includes filter definitions', function () {
 
     expect($json['meta']['filters'])->not->toBeEmpty();
     $handles = collect($json['meta']['filters'])->pluck('handle')->toArray();
-    expect($handles)->toContain('status');
-    expect($handles)->toContain('state');
+    expect($handles)->toContain('processing_status');
+    expect($handles)->toContain('match_status');
     expect($handles)->toContain('resolution_tier');
     expect($handles)->toContain('is_test');
 });

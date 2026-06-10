@@ -67,27 +67,24 @@
                 </div>
             </template>
 
-            <template #cell-state="{ value }">
-                <Badge pill :color="stateColor(value)" class="text-2xs capitalize">{{ value }}</Badge>
+            <template #cell-match_status="{ value }">
+                <Badge pill :color="matchStatusColor(value)" class="text-2xs capitalize">{{ value }}</Badge>
             </template>
 
-            <template #cell-status="{ value }">
-                <Badge pill :color="statusColor(value)" class="text-2xs">{{ statusLabel(value) }}</Badge>
+            <template #cell-processing_status="{ value }">
+                <Badge v-if="value" pill :color="processingStatusColor(value)" class="text-2xs">{{ processingStatusLabel(value) }}</Badge>
             </template>
 
             <template #cell-duration="{ row }">
                 <span v-if="row.duration_formatted" class="text-sm tabular-nums" v-text="row.duration_formatted" />
-                <span v-else class="text-gray-400">—</span>
             </template>
 
             <template #cell-playback_policy="{ value }">
                 <Badge v-if="value" pill class="text-2xs capitalize">{{ value }}</Badge>
-                <span v-else class="text-gray-400">—</span>
             </template>
 
             <template #cell-created_at="{ value }">
                 <date-time v-if="value" :of="value" date-only />
-                <ui-text v-else variant="subtle" class="text-gray-400">—</ui-text>
             </template>
 
             <template #prepended-row-actions="{ row }">
@@ -122,8 +119,8 @@ export default {
                 { field: 'thumbnail_url', label: __('Thumbnail'), sortable: false },
                 { field: 'title', label: __('Title'), sortable: true },
                 { field: 'duration', label: __('Duration'), sortable: true },
-                { field: 'state', label: __('State'), sortable: true },
-                { field: 'status', label: __('Processing'), sortable: true },
+                { field: 'match_status', label: __('Status'), sortable: true },
+                { field: 'processing_status', label: __('Processing'), sortable: true },
                 { field: 'playback_policy', label: __('Policy'), sortable: true },
                 { field: 'created_at', label: __('Created'), sortable: true },
             ],
