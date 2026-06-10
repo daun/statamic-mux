@@ -239,7 +239,7 @@ class ListingReconciler
                 $mux = MuxAsset::fromAsset($asset);
                 $muxId = $mux->id();
                 $hasMuxData = $muxId !== null;
-                $duration = $mux->duration();
+                $duration = $mux->duration() ?? $this->assetDuration($asset);
                 $canEdit = $user?->can('edit', $asset) ?? false; // @phpstan-ignore method.notFound
 
                 return [
@@ -314,8 +314,9 @@ class ListingReconciler
         }
 
         $baseUrl = rtrim($dashboardUrl, '/');
+        $muxId = rawurlencode($muxId);
 
-        return "{$baseUrl}/video/assets/".rawurlencode($muxId).'/monitor';
+        return "{$baseUrl}/video/assets/{$muxId}";
     }
 
     /**
@@ -355,6 +356,13 @@ class ListingReconciler
         $timestamp = $asset->meta('last_modified');
 
         return $timestamp ? Carbon::createFromTimestamp($timestamp)->toIso8601String() : null;
+    }
+
+    protected function assetDuration(Asset $asset): ?float
+    {
+        $duration = $asset->duration();
+
+        return $duration !== null ? (float) $duration : null;
     }
 
     protected function getPrimaryPlaybackId(array $playbackIds): ?string

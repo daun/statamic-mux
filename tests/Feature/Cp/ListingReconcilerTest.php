@@ -155,6 +155,22 @@ test('falls back to local data when asset is gone from Mux', function () {
     expect($stale['created_at'])->not->toBeNull();
 });
 
+test('falls back to the file duration for assets not uploaded to Mux', function () {
+    Cache::forget('mux.remote_assets');
+
+    $result = $this->reconciler->getLocalVideos();
+    $rows = collect($result['data']);
+
+    // mp4c was never given Mux data, so it has no mux_id.
+    $notUploaded = $rows->first(fn ($r) => ! $r['has_mux_data']);
+    expect($notUploaded)->not->toBeNull();
+    expect($notUploaded['mirror_status'])->toBe('not_uploaded');
+
+    // Duration still comes from the asset file itself.
+    expect($notUploaded['duration'])->toBe($this->mp4c->duration());
+    expect($notUploaded['duration'])->not->toBeNull();
+});
+
 test('builds remote rows with correct state badges', function () {
     Cache::forget('mux.remote_assets');
 
