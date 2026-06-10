@@ -143,7 +143,9 @@ class ListingReconciler
             $uncached = $muxIds->diff($index->keys());
         }
 
-        $index = $index->merge($this->api->getAssets($uncached));
+        if ($uncached->isNotEmpty()) {
+            $index = $index->merge($this->api->getAssets($uncached));
+        }
 
         return $index;
     }
