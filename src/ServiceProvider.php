@@ -41,7 +41,13 @@ class ServiceProvider extends AddonServiceProvider
         Tags\MuxTags::class,
     ];
 
-    protected $vite = [];
+    protected $vite = [
+        'input' => [
+            'resources/js/addon.js',
+            'resources/css/addon.css',
+        ],
+        'publicDirectory' => 'resources/dist',
+    ];
 
     public function register()
     {
@@ -62,19 +68,6 @@ class ServiceProvider extends AddonServiceProvider
         $this->autoPublishConfig();
         $this->publishViews();
         $this->bootThumbnails();
-    }
-
-    protected function bootVite()
-    {
-        $this->registerVite([
-            'input' => [
-                'resources/js/addon.js',
-                'resources/css/addon.css',
-            ],
-            'publicDirectory' => 'resources/dist',
-        ]);
-
-        return $this;
     }
 
     protected function bootCommands()
