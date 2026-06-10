@@ -135,7 +135,7 @@ class DeleteMuxAsset
     {
         $asset = $this->api->assets()->getAsset($muxId)->getData();
         $identifier = $asset?->getPassthrough() ?? null;
-        $expected = ['statamic::', 'statamic-proxy::'];
+        $expected = ['statamic::', 'statamic-proxy::', 'proxy::']; // proxy:: is legacy
 
         Log::debug(
             'Checking Mux asset ownership by passthrough identifier',
