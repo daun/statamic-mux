@@ -28,6 +28,7 @@ class ListingController extends CpController
         return Inertia::render('MuxAssetsPage', [
             'endpoint' => cp_route('mux.listing.local'),
             'commandEndpoint' => cp_route('mux.command'),
+            'actionUrl' => cp_route('mux.actions.run'),
             'assetEditorChunks' => CpAssets::assetEditorChunkUrls(),
         ]);
     }
@@ -39,7 +40,7 @@ class ListingController extends CpController
         return Inertia::render('MuxLibraryPage', [
             'endpoint' => cp_route('mux.listing.remote'),
             'refreshEndpoint' => cp_route('mux.listing.refresh'),
-            'actionUrl' => cp_route('mux.actions.run'),
+            'actionUrl' => cp_route('mux.actions.remote.run'),
             'dashboardUrl' => $this->mux->dashboardUrl(),
         ]);
     }

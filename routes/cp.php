@@ -19,6 +19,11 @@ Route::prefix('mux')->name('mux.')->group(function () {
 
     Route::get('/thumbnail/{id}', [ThumbnailController::class, 'thumbnail'])->where('id', '.*')->name('thumbnail');
     Route::post('/command', [CommandController::class, 'run'])->name('command');
-    Route::post('/actions', [ActionsController::class, 'run'])->name('actions.run');
-    Route::post('/actions/list', [ActionsController::class, 'bulkActions'])->name('actions.bulk');
+
+    Route::prefix('actions')->name('actions.')->group(function () {
+        Route::post('/', [ActionsController::class, 'run'])->name('run');
+        Route::post('/list', [ActionsController::class, 'bulkActions'])->name('bulk');
+        Route::post('/remote', [ActionsController::class, 'run'])->name('remote.run');
+        Route::post('/remote/list', [ActionsController::class, 'bulkActions'])->name('remote.bulk');
+    });
 });
