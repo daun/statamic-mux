@@ -108,13 +108,9 @@ import { markRaw } from 'vue';
 import MuxPageMixin from './MuxPageMixin';
 
 // Statamic 6 no longer registers the asset editor globally nor exports it from
-// `@statamic/cms`. The component is only bundled into an internal, content-hashed
-// CP chunk. The controller resolves that chunk's public URL(s) from Statamic's
-// Vite manifest and passes them as `assetEditorChunks`; we dynamic-import them at
-// runtime. The browser keys ES modules by URL, so this returns the same module
-// instance Statamic already loaded (same Vue + deps), letting us reuse the editor.
-// We identify it by its distinctive emits signature rather than a minified export
-// name, so resolution survives Statamic rebuilds.
+// `@statamic/cms`. The component is only bundled into an internal CP chunk.
+// The controller resolves that chunk's public URL(s) from Statamic's Vite manifest
+// and passes them as `assetEditorChunks`; we dynamically import them at runtime.
 function isAssetEditor(component) {
     const emits = component?.emits;
     if (!Array.isArray(emits)) return false;
@@ -137,11 +133,6 @@ export default {
     data() {
         return {
             assetEditor: null,
-            // Set to true once the inline editor is resolved on mount. Stays false
-            // if it can't be loaded (e.g. no CP build published, or running in dev
-            // mode), in which case we fall back to opening the asset's edit page in
-            // a new tab.
-            assetEditorAvailable: false,
             editingAssetId: null,
             columns: [
                 { field: 'thumbnail_url', label: __('Thumbnail'), sortable: false },
@@ -169,18 +160,14 @@ export default {
 
                     if (component) {
                         this.assetEditor = markRaw(component);
-                        this.assetEditorAvailable = true;
                         return;
                     }
-                } catch (error) {
+                } catch (_e) {
                     // Try the next candidate chunk.
                 }
             }
 
-            console.warn(
-                '[mux] Could not resolve the Statamic asset editor component; ' +
-                    'falling back to opening assets in a new tab.',
-            );
+            console.warn('Could not resolve asset editor component, falling back to new tab.');
         },
 
         canEditAsset(row) {
@@ -196,7 +183,7 @@ export default {
 
             // If the inline editor couldn't be loaded, open the asset's edit
             // page in a new tab instead.
-            if (!this.assetEditorAvailable) {
+            if (!this.assetEditor) {
                 if (row.edit_url) {
                     window.open(row.edit_url, '_blank', 'noopener');
                 }
