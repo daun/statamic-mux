@@ -56,7 +56,7 @@ class MuxService
         }
 
         if (is_string($asset)) {
-            if ($instance = Assets::find($asset)) {
+            if (($instance = Assets::find($asset)) instanceof Asset) {
                 $asset = $instance;
             } else {
                 Log::warning('Cannot create Mux asset: local asset not found', [
@@ -80,7 +80,7 @@ class MuxService
         }
 
         if (is_string($asset)) {
-            if ($instance = Assets::find($asset)) {
+            if (($instance = Assets::find($asset)) instanceof Asset) {
                 $asset = $instance;
             } else {
                 Log::warning('Cannot update Mux asset: local asset not found', [

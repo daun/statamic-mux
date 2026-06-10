@@ -116,7 +116,7 @@ class CreateMuxAsset
      */
     protected function assetIsPubliclyAccessible(Asset $asset): bool
     {
-        $filesystem = $asset->container()->disk()->filesystem()->getConfig();
+        $filesystem = $asset->disk()->filesystem()->getConfig();
 
         $public = true;
 

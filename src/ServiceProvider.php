@@ -41,13 +41,7 @@ class ServiceProvider extends AddonServiceProvider
         Tags\MuxTags::class,
     ];
 
-    protected $vite = [
-        'input' => [
-            'resources/js/addon.js',
-            'resources/css/addon.css',
-        ],
-        'publicDirectory' => 'resources/dist',
-    ];
+    protected $vite = [];
 
     public function register()
     {
@@ -68,6 +62,19 @@ class ServiceProvider extends AddonServiceProvider
         $this->autoPublishConfig();
         $this->publishViews();
         $this->bootThumbnails();
+    }
+
+    protected function bootVite()
+    {
+        $this->registerVite([
+            'input' => [
+                'resources/js/addon.js',
+                'resources/css/addon.css',
+            ],
+            'publicDirectory' => 'resources/dist',
+        ]);
+
+        return $this;
     }
 
     protected function bootCommands()
@@ -171,7 +178,7 @@ class ServiceProvider extends AddonServiceProvider
     protected function bootNav(): self
     {
         Nav::extend(function (\Statamic\CP\Navigation\Nav $nav) {
-            $nav->tools('Mux')
+            $nav->findOrCreate('Tools', 'Mux')
                 ->route('mux.index')
                 ->icon('mux::video-player')
                 ->can('view mux')

@@ -86,18 +86,18 @@ class MuxTags extends Tags
 
             $data = [
                 'mux_id' => $muxId,
-                'playback_id' => $this->defer(fn () => $playbackId?->id()),
-                'playback_policy' => $playbackId?->policy(),
+                'playback_id' => $this->defer(fn () => $playbackId->id()),
+                'playback_policy' => $playbackId->policy(),
                 'playback_modifiers' => ($playbackModifiers = $this->getPlaybackModifiers()),
                 'playback_url' => $this->defer(fn () => $this->getPlaybackUrl($asset)),
                 'thumbnail' => $this->defer(fn () => $this->getThumbnailUrl($asset)),
                 'gif' => $this->defer(fn () => $this->getGifUrl($asset)),
                 'placeholder' => $this->defer(fn () => $this->getPlaceholderDataUri($asset)),
-                'is_public' => $playbackId?->isPublic(),
-                'is_signed' => $playbackId?->isSigned(),
+                'is_public' => $playbackId->isPublic(),
+                'is_signed' => $playbackId->isSigned(),
             ];
 
-            if ($playbackId?->isSigned()) {
+            if ($playbackId->isSigned()) {
                 $data = $data + [
                     'playback_token' => $this->defer(fn () => $this->getPlaybackToken($asset, $playbackModifiers)),
                     'thumbnail_token' => $this->defer(fn () => $this->getThumbnailToken($asset)),

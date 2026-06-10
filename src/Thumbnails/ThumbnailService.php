@@ -55,16 +55,24 @@ class ThumbnailService
         $self = $this;
 
         AssetResource::hook('asset', function ($payload, $next) use ($self) {
-            if ($self->service->getMuxId($this->resource)) {
-                $payload->data->thumbnail = $self->forAsset($this->resource) ?? $payload->data->thumbnail;
+            /** @phpstan-ignore-next-line */
+            $resource = $this->resource;
+
+            if ($resource instanceof Asset && $self->service->getMuxId($resource)) {
+                $payload->data->thumbnail = $self->forAsset($resource) ?? $payload->data->thumbnail;
             }
+
             return $next($payload);
         });
 
         FolderAssetResource::hook('asset', function ($payload, $next) use ($self) {
-            if ($self->service->getMuxId($this->resource)) {
-                $payload->data->thumbnail = $self->forAsset($this->resource) ?? $payload->data->thumbnail;
+            /** @phpstan-ignore-next-line */
+            $resource = $this->resource;
+
+            if ($resource instanceof Asset && $self->service->getMuxId($resource)) {
+                $payload->data->thumbnail = $self->forAsset($resource) ?? $payload->data->thumbnail;
             }
+
             return $next($payload);
         });
     }

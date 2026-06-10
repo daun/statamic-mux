@@ -47,7 +47,7 @@ class ReUploadToMux extends Action
     public function run($items, $values)
     {
         collect($items)
-            ->map(fn ($item) => $this->getMuxAsset($item)?->asset ?? null)
+            ->map(fn ($item) => $this->getMuxAsset($item)->asset ?? null)
             ->filter()
             ->each(fn ($muxAsset) => CreateMuxAssetJob::dispatchAsync($muxAsset, true));
 

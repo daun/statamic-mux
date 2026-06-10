@@ -29,12 +29,12 @@ class MuxAsset implements Augmentable
         $this->field = $field ?? MirrorField::getHandle($asset);
     }
 
-    public static function fromAsset(Asset $asset, ?string $field = null): static
+    public static function fromAsset(Asset $asset, ?string $field = null): self
     {
         $field = $field ?? MirrorField::getHandle($asset);
         $data = $field ? $asset->get($field) : [];
 
-        return new static($data, $asset, $field);
+        return new self($data, $asset, $field);
     }
 
     public function id(): ?string
