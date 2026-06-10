@@ -111,14 +111,5 @@ export default {
             if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
             return `${m}:${String(s).padStart(2, '0')}`;
         },
-
-        formatDate(iso) {
-            if (!iso) return '—';
-            return new Date(iso).toLocaleDateString(undefined, {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-            });
-        },
     },
 };

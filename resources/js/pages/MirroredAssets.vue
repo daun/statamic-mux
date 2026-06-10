@@ -69,8 +69,8 @@
             </template>
 
             <template #cell-created_at="{ value }">
-                <span v-if="value" class="text-sm tabular-nums" v-text="formatDate(value)" />
-                <span v-else class="text-gray-400">—</span>
+                <date-time v-if="value" :of="value" />
+                <ui-text v-else variant="subtle" class="text-gray-400">—</ui-text>
             </template>
 
             <template #prepended-row-actions="{ row }">
