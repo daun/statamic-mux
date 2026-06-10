@@ -18,4 +18,5 @@ Route::prefix('mux')->name('mux.')->group(function () {
 
     Route::get('/thumbnail/{id}', [ThumbnailController::class, 'thumbnail'])->where('id', '.*')->name('thumbnail');
     Route::post('/command', [CommandController::class, 'run'])->name('command');
+    Route::delete('/asset/{muxId}', [ListingController::class, 'destroy'])->where('muxId', '.*')->name('asset.destroy');
 });

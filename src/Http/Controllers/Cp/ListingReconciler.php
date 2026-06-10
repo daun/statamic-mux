@@ -66,6 +66,24 @@ class ListingReconciler
     }
 
     /**
+     * Remove a single asset from the remote cache by Mux ID.
+     */
+    public function forgetRemoteAsset(string $muxId): void
+    {
+        $cached = Cache::get(self::CACHE_KEY);
+
+        if (! $cached) {
+            return;
+        }
+
+        $filtered = $cached->reject(fn ($asset) => $asset->getId() === $muxId);
+
+        if ($filtered->count() < $cached->count()) {
+            Cache::put(self::CACHE_KEY, $filtered, self::CACHE_TTL);
+        }
+    }
+
+    /**
      * Get all remote Mux assets, cached for 10 minutes.
      */
     public function getCachedRemoteAssets(): Collection

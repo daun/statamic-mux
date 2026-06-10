@@ -2,6 +2,7 @@ import {
     Badge,
     Button,
     ButtonGroup,
+    ConfirmationModal,
     Dropdown,
     DropdownItem,
     DropdownLabel,
@@ -13,7 +14,7 @@ import {
 } from '@statamic/cms/ui';
 
 export default {
-    components: { Badge, Button, ButtonGroup, Dropdown, DropdownItem, DropdownLabel, DropdownMenu, DropdownSeparator, Header, Icon, Listing },
+    components: { Badge, Button, ButtonGroup, ConfirmationModal, Dropdown, DropdownItem, DropdownLabel, DropdownMenu, DropdownSeparator, Header, Icon, Listing },
 
     props: {
         refreshEndpoint: { type: String, default: null },

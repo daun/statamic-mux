@@ -3,6 +3,7 @@
 namespace Daun\StatamicMux\Http\Controllers\Cp;
 
 use Daun\StatamicMux\Mux\MuxApi;
+use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Support\CpAssets;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,7 @@ class ListingController extends CpController
     public function __construct(
         protected ListingReconciler $listing,
         protected MuxApi $mux,
+        protected MuxService $muxService,
     ) {}
 
     public function index()
@@ -39,7 +41,33 @@ class ListingController extends CpController
         return Inertia::render('MuxLibraryPage', [
             'endpoint' => cp_route('mux.listing.remote'),
             'refreshEndpoint' => cp_route('mux.listing.refresh'),
+            'deleteEndpoint' => cp_route('mux.asset.destroy', '__MUX_ID__'),
             'dashboardUrl' => $this->mux->dashboardUrl(),
+        ]);
+    }
+
+    public function destroy(string $muxId): JsonResponse
+    {
+        $this->authorize('manage mux');
+
+        try {
+            $deleted = $this->muxService->deleteMuxAsset($muxId);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => __('Failed to delete Mux asset: :error', ['error' => $e->getMessage()]),
+            ], 500);
+        }
+
+        if (! $deleted) {
+            return response()->json([
+                'message' => __('Mux asset could not be deleted. It may not have been created by this addon or is still referenced by local assets.'),
+            ], 422);
+        }
+
+        $this->listing->forgetRemoteAsset($muxId);
+
+        return response()->json([
+            'message' => __('Mux asset deleted'),
         ]);
     }
 
