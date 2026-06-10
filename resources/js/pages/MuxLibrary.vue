@@ -112,7 +112,6 @@ export default {
     props: {
         endpoint: { type: String, default: null },
         refreshEndpoint: { type: String, default: null },
-        actionUrl: { type: String, default: null },
         dashboardUrl: { type: String, default: null },
     },
 

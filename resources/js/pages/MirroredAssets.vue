@@ -10,9 +10,10 @@
             ref="listing"
             :url="endpoint"
             :columns="columns"
+            :action-url="actionUrl"
             sort-column="title"
             sort-direction="asc"
-            :allow-bulk-actions="false"
+            :allow-bulk-actions="true"
             :allow-presets="false"
             :allow-customizing-columns="false"
         >
@@ -72,22 +73,20 @@
                 <span v-else class="text-gray-400">—</span>
             </template>
 
-            <template #cell-_actions="{ row }">
-                <div class="flex justify-end">
-                    <Dropdown v-if="hasActions(row)" align="end">
-                        <DropdownMenu>
-                            <DropdownItem v-if="canEditAsset(row)" icon="edit" :text="__('Edit asset')" @click="openAssetEditor(row)" />
-                            <DropdownSeparator v-if="row.dashboard_url || playerUrl(row)" />
-                            <DropdownItem v-if="row.dashboard_url" icon="external-link-original" :text="__('Open in Mux dashboard')" :href="row.dashboard_url" target="_blank" />
-                            <DropdownItem v-if="playerUrl(row)" icon="external-link-original" :text="__('Open playback page')" :href="playerUrl(row)" target="_blank" />
-                            <DropdownSeparator v-if="canEditAsset(row) && hasMuxActions(row)" />
-                            <DropdownItem v-if="hasMuxActions(row)" icon="taxonomies" :text="__('Copy asset ID')" @click="copyAssetId(row)" />
-                            <DropdownItem v-if="primaryPlaybackId(row)" icon="taxonomies" :text="__('Copy playback ID')" @click="copyPlaybackId(row)" />
-                            <DropdownItem v-if="primaryPlaybackId(row)" icon="web" :text="__('Copy playback URL')" @click="copyPlaybackUrl(row)" />
-                            <DropdownItem v-if="primaryPlaybackId(row)" icon="programming-code-block" :text="__('Copy embed code')" @click="copyEmbedCode(row)" />
-                        </DropdownMenu>
-                    </Dropdown>
-                </div>
+            <template #prepended-row-actions="{ row }">
+                <template v-if="canEditAsset(row)">
+                    <DropdownItem icon="edit" :text="__('Edit asset')" @click="openAssetEditor(row)" />
+                    <DropdownSeparator />
+                </template>
+                <template v-if="row.dashboard_url || playerUrl(row)">
+                    <DropdownItem v-if="row.dashboard_url" icon="external-link-original" :text="__('Open in Mux dashboard')" :href="row.dashboard_url" target="_blank" />
+                    <DropdownItem v-if="playerUrl(row)" icon="external-link-original" :text="__('Open playback page')" :href="playerUrl(row)" target="_blank" />
+                    <DropdownSeparator />
+                </template>
+                <DropdownItem v-if="row.mux_id" icon="taxonomies" :text="__('Copy asset ID')" @click="copyAssetId(row)" />
+                <DropdownItem v-if="primaryPlaybackId(row)" icon="taxonomies" :text="__('Copy playback ID')" @click="copyPlaybackId(row)" />
+                <DropdownItem v-if="primaryPlaybackId(row)" icon="web" :text="__('Copy playback URL')" @click="copyPlaybackUrl(row)" />
+                <DropdownItem v-if="primaryPlaybackId(row)" icon="programming-code-block" :text="__('Copy embed code')" @click="copyEmbedCode(row)" />
             </template>
         </Listing>
 
@@ -185,7 +184,7 @@ export default {
         },
 
         canEditAsset(row) {
-            return Boolean(row?.can_edit && row?.id);
+            return row?.can_edit && row?.id;
         },
 
         hasActions(row) {

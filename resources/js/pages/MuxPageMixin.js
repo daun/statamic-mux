@@ -20,6 +20,7 @@ export default {
     props: {
         refreshEndpoint: { type: String, default: null },
         commandEndpoint: { type: String, default: null },
+        actionUrl: { type: String, default: null },
         dashboardUrl: { type: String, default: null },
     },
 
