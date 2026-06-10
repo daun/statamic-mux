@@ -41,9 +41,8 @@
             :allow-customizing-columns="false"
         >
             <template #cell-thumbnail_url="{ row, value }">
-                <div class="w-16 h-10 rounded overflow-hidden bg-gray-200 dark:bg-dark-700 flex items-center justify-center">
+                <div class="w-16 h-10 rounded overflow-hidden bg-gray-100 dark:bg-dark-800 flex items-center justify-center">
                     <img v-if="value" :src="value" class="w-full h-full object-cover" loading="lazy" @error="$event.target.style.display='none'" />
-                    <Icon v-else name="movie-video-clip" class="size-5 text-gray-400" />
                 </div>
             </template>
 
