@@ -78,7 +78,7 @@ export default {
         processingStatusColor(status) {
             return {
                 ready: 'green',
-                preparing: 'amber',
+                preparing: 'blue',
                 errored: 'red',
             }[status] || 'gray';
         },
@@ -95,7 +95,7 @@ export default {
         mirrorStatusColor(status) {
             return {
                 uploaded: 'green',
-                not_uploaded: 'gray',
+                not_uploaded: 'amber',
             }[status] || 'gray';
         },
 

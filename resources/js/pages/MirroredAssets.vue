@@ -71,7 +71,7 @@
             <template #prepended-row-actions="{ row }">
                 <template v-if="canEditAsset(row)">
                     <DropdownItem icon="edit" :text="__('Edit asset')" @click="openAssetEditor(row)" />
-                    <DropdownSeparator />
+                    <DropdownSeparator v-if="row.mux_id" />
                 </template>
                 <template v-if="row.dashboard_url || playerUrl(row)">
                     <DropdownItem v-if="row.dashboard_url" icon="external-link-original" :text="__('Open in Mux dashboard')" :href="row.dashboard_url" target="_blank" />
@@ -137,7 +137,6 @@ export default {
                 { field: 'processing_status', label: __('Processing'), sortable: true },
                 { field: 'playback_policy', label: __('Policy'), sortable: true },
                 { field: 'created_at', label: __('Created'), sortable: true },
-                { field: '_actions', label: '', sortable: false, width: '1%' },
             ],
         };
     },
