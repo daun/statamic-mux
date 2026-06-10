@@ -17,7 +17,7 @@ class ActionsController extends ActionController
 
     protected function getSelectedItems($items, $context)
     {
-        return request()->routeIs('mux.actions.remote*')
+        return request()->routeIs('statamic.cp.mux.actions.remote.*')
             ? $this->getRemoteItems($items)
             : $this->getLocalItems($items);
     }
@@ -25,8 +25,9 @@ class ActionsController extends ActionController
     protected function getLocalItems($items)
     {
         return collect($items)
+            ->filter(fn ($id) => str_contains($id, '::'))
             ->map(function ($id) {
-                [$container, $path] = explode('::', $id);
+                [$container, $path] = explode('::', $id, 2);
                 return ['container' => $container, 'path' => $path];
             })
             ->groupBy->container
