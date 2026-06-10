@@ -137,9 +137,9 @@ export default {
             columns: [
                 { field: 'thumbnail_url', label: __('Thumbnail'), sortable: false },
                 { field: 'title', label: __('Title'), sortable: true },
+                { field: 'duration', label: __('Duration'), sortable: true },
                 { field: 'status', label: __('Processing'), sortable: true },
                 { field: 'is_stale', label: __('State'), sortable: true },
-                { field: 'duration', label: __('Duration'), sortable: true },
                 { field: 'playback_policy', label: __('Policy'), sortable: true },
                 { field: 'created_at', label: __('Mux Created'), sortable: true },
                 { field: '_actions', label: '', sortable: false, width: '1%' },

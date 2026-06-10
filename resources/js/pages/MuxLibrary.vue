@@ -121,9 +121,9 @@ export default {
             columns: [
                 { field: 'thumbnail_url', label: __('Thumbnail'), sortable: false },
                 { field: 'title', label: __('Title'), sortable: true },
+                { field: 'duration', label: __('Duration'), sortable: true },
                 { field: 'state', label: __('State'), sortable: true },
                 { field: 'status', label: __('Processing'), sortable: true },
-                { field: 'duration', label: __('Duration'), sortable: true },
                 { field: 'playback_policy', label: __('Policy'), sortable: true },
                 { field: 'created_at', label: __('Created'), sortable: true },
             ],
