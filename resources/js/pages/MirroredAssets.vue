@@ -74,8 +74,8 @@
                     <DropdownSeparator v-if="row.mux_id" />
                 </template>
                 <template v-if="row.dashboard_url || playerUrl(row)">
-                    <DropdownItem v-if="row.dashboard_url" icon="external-link-original" :text="__('Open in Mux dashboard')" :href="row.dashboard_url" target="_blank" />
-                    <DropdownItem v-if="playerUrl(row)" icon="external-link-original" :text="__('Open playback page')" :href="playerUrl(row)" target="_blank" />
+                    <DropdownItem v-if="row.dashboard_url" icon="external-link" :text="__('Open in Mux dashboard')" :href="row.dashboard_url" target="_blank" />
+                    <DropdownItem v-if="playerUrl(row)" icon="external-link" :text="__('Open playback page')" :href="playerUrl(row)" target="_blank" />
                     <DropdownSeparator v-if="row.mux_id" />
                 </template>
                 <DropdownItem v-if="row.mux_id" icon="taxonomies" :text="__('Copy asset ID')" @click="copyAssetId(row)" />

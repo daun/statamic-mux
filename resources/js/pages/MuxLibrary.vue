@@ -23,7 +23,7 @@
                     :href="dashboardUrl"
                     target="_blank"
                     rel="noopener noreferrer"
-                    icon-append="external-link-original"
+                    icon-append="external-link"
                     :text="__('Mux Dashboard')"
                 />
             </div>
@@ -57,7 +57,7 @@
                     >
                         <span>{{ value }}</span>
                         <Icon
-                            name="external-link-original"
+                            name="external-link"
                             class="size-3! text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 group-focus:opacity-100 group-focus-visible:opacity-100"
                             aria-hidden="true"
                         />
@@ -88,8 +88,8 @@
             </template>
 
             <template #prepended-row-actions="{ row }">
-                <DropdownItem v-if="row.dashboard_url" icon="external-link-original" :text="__('Open in Mux dashboard')" :href="row.dashboard_url" target="_blank" />
-                <DropdownItem v-if="playerUrl(row)" icon="external-link-original" :text="__('Open playback page')" :href="playerUrl(row)" target="_blank" />
+                <DropdownItem v-if="row.dashboard_url" icon="external-link" :text="__('Open in Mux dashboard')" :href="row.dashboard_url" target="_blank" />
+                <DropdownItem v-if="playerUrl(row)" icon="external-link" :text="__('Open playback page')" :href="playerUrl(row)" target="_blank" />
                 <DropdownSeparator v-if="row.dashboard_url || playerUrl(row)" />
                 <DropdownItem icon="taxonomies" :text="__('Copy asset ID')" @click="copyAssetId(row)" />
                 <DropdownItem v-if="primaryPlaybackId(row)" icon="taxonomies" :text="__('Copy playback ID')" @click="copyPlaybackId(row)" />
