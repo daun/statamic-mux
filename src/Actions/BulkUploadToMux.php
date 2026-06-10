@@ -5,7 +5,6 @@ namespace Daun\StatamicMux\Actions;
 use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Http\Controllers\Cp\ListingReconciler;
 use Daun\StatamicMux\Jobs\CreateMuxAssetJob;
-use Daun\StatamicMux\Support\MirrorField;
 use Statamic\Actions\Action;
 
 use function Statamic\trans as __;

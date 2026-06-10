@@ -7,7 +7,6 @@ use Daun\StatamicMux\GraphQL\MuxMirrorType;
 use Daun\StatamicMux\GraphQL\MuxPlaybackIdType;
 use Daun\StatamicMux\Jobs\CreateMuxAssetJob;
 use Daun\StatamicMux\Query\Scopes\Filters\Fields\MuxMirrorFieldtypeFilter;
-use Daun\StatamicMux\Support\Queue;
 use Statamic\Assets\Asset;
 use Statamic\Facades\GraphQL;
 use Statamic\Fields\Fieldtype;

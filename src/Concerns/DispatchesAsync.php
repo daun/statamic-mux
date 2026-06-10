@@ -3,6 +3,7 @@
 namespace Daun\StatamicMux\Concerns;
 
 use Daun\StatamicMux\Support\Queue;
+use Illuminate\Foundation\Bus\PendingDispatch;
 
 trait DispatchesAsync
 {
@@ -12,7 +13,7 @@ trait DispatchesAsync
      * Uses dispath or dispatchAfterResponse depending on the configured queue.
      *
      * @param  mixed  ...$arguments
-     * @return \Illuminate\Foundation\Bus\PendingDispatch
+     * @return PendingDispatch
      */
     public static function dispatchAsync(...$arguments)
     {

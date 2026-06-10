@@ -8,8 +8,8 @@ use Daun\StatamicMux\Events\AssetDeletingFromMux;
 use Daun\StatamicMux\Facades\Log;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
-use Daun\StatamicMux\Support\MirrorField;
 use Daun\StatamicMux\Support\Attribution;
+use Daun\StatamicMux\Support\MirrorField;
 use Statamic\Assets\Asset;
 
 class DeleteMuxAsset
