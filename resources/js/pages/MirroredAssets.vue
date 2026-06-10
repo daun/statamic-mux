@@ -21,17 +21,17 @@
                 <button
                     v-if="row.can_edit && row.edit_url"
                     type="button"
-                    class="w-16 h-10 rounded overflow-hidden bg-gray-200 dark:bg-dark-700 flex items-center justify-center cursor-pointer"
+                    class="w-16 h-10 rounded overflow-hidden bg-gray-100 dark:bg-dark-800 flex items-center justify-center cursor-pointer"
                     :title="__('Edit Asset')"
                     :aria-label="__('Edit Asset')"
                     @click="openAssetEditor(row)"
                 >
                     <img v-if="value" :src="value" class="w-full h-full object-cover" loading="lazy" @error="$event.target.style.display='none'" />
-                    <Icon v-else name="movie-video-clip" class="size-5 text-gray-400" />
+                    <Icon v-else name="mux::video-player" class="size-5 text-gray-400" />
                 </button>
-                <div v-else class="w-16 h-10 rounded overflow-hidden bg-gray-200 dark:bg-dark-700 flex items-center justify-center">
+                <div v-else class="w-16 h-10 rounded overflow-hidden bg-gray-100 dark:bg-dark-800 flex items-center justify-center">
                     <img v-if="value" :src="value" class="w-full h-full object-cover" loading="lazy" @error="$event.target.style.display='none'" />
-                    <Icon v-else name="movie-video-clip" class="size-5 text-gray-400" />
+                    <Icon v-else name="mux::video-player" class="size-5 text-gray-400" />
                 </div>
             </template>
 

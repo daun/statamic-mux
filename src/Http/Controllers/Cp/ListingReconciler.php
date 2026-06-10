@@ -6,6 +6,7 @@ use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Http\Controllers\Cp\Listing\RemoteVideoSource;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Support\MirrorField;
+use Daun\StatamicMux\Thumbnails\ThumbnailService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -24,6 +25,7 @@ class ListingReconciler
 
     public function __construct(
         protected MuxApi $api,
+        protected ThumbnailService $thumbnails,
     ) {}
 
     /**
@@ -282,12 +284,13 @@ class ListingReconciler
                 $row = $this->normalizeRow($source);
                 $muxId = $row['mux_id'];
                 $playbackId = $row['playback_id'];
-                $localCount = $localIndex->get($muxId, collect())->count();
+                $localAssets = $localIndex->get($muxId, collect());
+                $localAsset = $localAssets->first();
 
                 $matchStatus = match (true) {
                     $source->isProxy() => 'proxy',
-                    $localCount === 0 => 'orphaned',
-                    $localCount > 1 => 'duplicated',
+                    $localAssets->count() === 0 => 'orphaned',
+                    $localAssets->count() > 1 => 'duplicated',
                     default => 'mirrored',
                 };
 
@@ -297,11 +300,13 @@ class ListingReconciler
                     'title' => $muxAsset->getMeta()?->getTitle() ?: $muxId,
                     'dashboard_url' => $this->dashboardAssetUrl($muxId, $dashboardUrl),
                     'match_status' => $matchStatus,
-                    'local_matches' => $localCount,
+                    'local_matches' => $localAssets->count(),
                     'resolution_tier' => $muxAsset->getResolutionTier(),
                     'max_resolution_tier' => $muxAsset->getMaxResolutionTier(),
                     'is_test' => (bool) $muxAsset->getTest(),
-                    'thumbnail_url' => $playbackId ? "https://image.mux.com/{$playbackId}/thumbnail.webp?width=120" : null,
+                    'thumbnail_url' => $playbackId
+                        ? "https://image.mux.com/{$playbackId}/thumbnail.webp?width=120"
+                        : $localAsset?->thumbnailUrl('small'),
                     'aspect_ratio' => $muxAsset->getAspectRatio(),
                 ];
             });
@@ -391,9 +396,7 @@ class ListingReconciler
 
     protected function getLocalThumbnailUrl(Asset $asset): ?string
     {
-        $id = base64_encode($asset->id());
-
-        return cp_route('mux.thumbnail', $id);
+        return $this->thumbnails->forAsset($asset);
     }
 
     /**
