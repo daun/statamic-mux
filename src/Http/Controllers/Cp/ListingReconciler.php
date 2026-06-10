@@ -63,9 +63,18 @@ class ListingReconciler
      */
     public function refreshRemoteAssets(): Collection
     {
-        Cache::forget(self::CACHE_VALIDITY_KEY);
+        $this->invalidateRemoteAssets();
 
         return $this->getCachedRemoteAssets();
+    }
+
+    /**
+     * Invalidate the remote assets cache without refetching.
+     * Next call to getCachedRemoteAssets() will trigger a fresh fetch.
+     */
+    public function invalidateRemoteAssets(): void
+    {
+        Cache::forget(self::CACHE_VALIDITY_KEY);
     }
 
     /**
