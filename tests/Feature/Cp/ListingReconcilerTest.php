@@ -171,6 +171,36 @@ test('falls back to the file duration for assets not uploaded to Mux', function 
     expect($notUploaded['duration'])->not->toBeNull();
 });
 
+test('errored remote assets expose no public playback', function () {
+    $this->remoteAssets->push(makeRemoteAsset('mux-asset-errored', 'errored', 12.0, 'Broken Video'));
+    Cache::forget('mux.remote_assets');
+
+    $result = $this->reconciler->getRemoteVideos();
+    $errored = collect($result['data'])->firstWhere('mux_id', 'mux-asset-errored');
+
+    expect($errored)->not->toBeNull();
+    expect($errored['processing_status'])->toBe('errored');
+    expect($errored['playback_id'])->toBeNull();
+    expect($errored['playback_ids'])->toBe([]);
+    expect($errored['playback_policy'])->toBeNull();
+    expect($errored['thumbnail_url'])->toBeNull();
+});
+
+test('local rows hide playback when the remote asset is errored', function () {
+    // Same Mux ID as mp4, but remote now reports an errored encode.
+    $this->remoteAssetsById->put('mux-asset-001', makeRemoteAsset('mux-asset-001', 'errored', 12.0, 'My Video'));
+    Cache::forget('mux.remote_assets');
+
+    $result = $this->reconciler->getLocalVideos();
+    $row = collect($result['data'])->firstWhere('mux_id', 'mux-asset-001');
+
+    expect($row)->not->toBeNull();
+    expect($row['processing_status'])->toBe('errored');
+    expect($row['playback_id'])->toBeNull();
+    expect($row['playback_ids'])->toBe([]);
+    expect($row['playback_policy'])->toBeNull();
+});
+
 test('builds remote rows with correct state badges', function () {
     Cache::forget('mux.remote_assets');
 

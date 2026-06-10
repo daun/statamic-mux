@@ -29,6 +29,13 @@ class RemoteVideoSource
 
     public function playbackIds(): array
     {
+        // An errored asset never produced a usable playback, so we expose none.
+        // This removes its public playback URLs, thumbnail and player/embed
+        // actions everywhere the row is rendered.
+        if ($this->processingStatus() === Asset::STATUS_ERRORED) {
+            return [];
+        }
+
         return collect($this->asset->getPlaybackIds() ?? [])
             ->map(fn ($playbackId) => [
                 'id' => $playbackId->getId(),

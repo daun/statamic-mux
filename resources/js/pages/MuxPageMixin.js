@@ -30,6 +30,8 @@ export default {
         },
 
         primaryPlaybackId(row) {
+            if (row?.processing_status === 'errored') return null;
+
             if (row?.playback_id) return row.playback_id;
 
             const playbackIds = Array.isArray(row?.playback_ids) ? row.playback_ids : [];
