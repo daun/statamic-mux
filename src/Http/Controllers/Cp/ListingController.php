@@ -134,7 +134,6 @@ class ListingController extends CpController
             ['field' => 'is_stale', 'label' => __('State'), 'sortable' => true],
             ['field' => 'playback_policy', 'label' => __('Policy'), 'sortable' => true],
             ['field' => 'created_at', 'label' => __('Mux Created'), 'sortable' => true],
-            ['field' => '_actions', 'label' => '', 'sortable' => false, 'width' => '1%'],
         ];
     }
 

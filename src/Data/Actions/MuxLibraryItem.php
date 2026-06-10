@@ -1,6 +1,6 @@
 <?php
 
-namespace Daun\StatamicMux\Data;
+namespace Daun\StatamicMux\Data\Actions;
 
 use MuxPhp\Models\Asset as MuxApiAsset;
 

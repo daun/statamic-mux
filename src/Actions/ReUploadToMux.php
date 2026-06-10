@@ -3,7 +3,6 @@
 namespace Daun\StatamicMux\Actions;
 
 use Daun\StatamicMux\Data\MuxAsset;
-use Daun\StatamicMux\Http\Controllers\Cp\ListingReconciler;
 use Daun\StatamicMux\Jobs\CreateMuxAssetJob;
 use Daun\StatamicMux\Support\MirrorField;
 use Statamic\Actions\Action;
@@ -14,37 +13,18 @@ use function Statamic\trans_choice;
 
 class ReUploadToMux extends Action
 {
+    protected $icon = 'mux::cloud-upload';
+
     public static function title()
     {
-        return __('Re-upload to Mux');
+        return __('Reupload to Mux');
     }
 
     public function visibleTo($item)
     {
-        if (! $item instanceof Asset) {
-            return false;
-        }
+        $asset = $this->getMuxAsset($item);
 
-        if (! MirrorField::shouldMirror($item)) {
-            return false;
-        }
-
-        $muxAsset = MuxAsset::fromAsset($item);
-
-        if (! $muxAsset->exists()) {
-            return false;
-        }
-
-        // Only show if the stored mux ID is confirmed in the reconciler cache
-        $muxId = $muxAsset->id();
-        $cached = app(ListingReconciler::class)->getCachedRemoteAssetsIfAvailable();
-
-        return $cached->contains(fn ($remote) => $remote->getId() === $muxId);
-    }
-
-    public function visibleToBulk($items)
-    {
-        return false;
+        return $asset && $asset->exists();
     }
 
     public function authorize($user, $item)
@@ -55,21 +35,35 @@ class ReUploadToMux extends Action
     public function confirmationText()
     {
         /** @translation */
-        return 'Are you sure you want to re-upload this video to Mux? The existing Mux asset will be replaced and its playback ID will change.|Are you sure you want to re-upload these :count videos to Mux? The existing Mux assets will be replaced and their playback IDs will change.';
+        return 'Are you sure you want to reupload this video to Mux?|Are you sure you want to reupload these :count videos to Mux?';
     }
 
     public function buttonText()
     {
         /** @translation */
-        return 'Re-upload|Re-upload :count videos';
+        return 'Reupload|Reupload :count videos';
     }
 
     public function run($items, $values)
     {
-        foreach ($items as $item) {
-            CreateMuxAssetJob::dispatch($item, true);
+        collect($items)
+            ->map(fn ($item) => $this->getMuxAsset($item)?->asset ?? null)
+            ->filter()
+            ->each(fn ($muxAsset) => CreateMuxAssetJob::dispatchAsync($muxAsset, true));
+
+        return trans_choice('Video queued for reupload to Mux|:count videos queued for reupload to Mux', $items->count(), ['count' => $items->count()]);
+    }
+
+    protected function getMuxAsset(mixed $item): ?MuxAsset
+    {
+        if ($item instanceof Asset && MirrorField::shouldMirror($item)) {
+            $item = MuxAsset::fromAsset($item);
         }
 
-        return trans_choice('Video queued for re-upload to Mux|:count videos queued for re-upload to Mux', $items->count(), ['count' => $items->count()]);
+        if ($item instanceof MuxAsset) {
+            return $item;
+        }
+
+        return null;
     }
 }

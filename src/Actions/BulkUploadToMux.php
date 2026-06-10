@@ -7,13 +7,14 @@ use Daun\StatamicMux\Http\Controllers\Cp\ListingReconciler;
 use Daun\StatamicMux\Jobs\CreateMuxAssetJob;
 use Daun\StatamicMux\Support\MirrorField;
 use Statamic\Actions\Action;
-use Statamic\Assets\Asset;
 
 use function Statamic\trans as __;
 use function Statamic\trans_choice;
 
 class BulkUploadToMux extends Action
 {
+    protected $icon = 'mux::cloud-upload';
+
     public static function title()
     {
         return __('Upload to Mux');
@@ -21,13 +22,15 @@ class BulkUploadToMux extends Action
 
     public function visibleTo($item)
     {
-        // Never shown in single-row dropdowns; handled by UploadToMux / ReUploadToMux
+        // Never shown in single-row dropdowns -- handled by UploadToMux / ReUploadToMux
         return false;
     }
 
     public function visibleToBulk($items)
     {
-        return $items->every(fn ($item) => $item instanceof Asset && MirrorField::shouldMirror($item));
+        // Only show when items have different upload statuses
+        return $items->every(fn ($item) => $item instanceof MuxAsset)
+            && $items->map(fn ($item) => $item->exists())->unique()->count() > 1;
     }
 
     public function authorize($user, $item)
@@ -38,7 +41,7 @@ class BulkUploadToMux extends Action
     public function confirmationText()
     {
         /** @translation */
-        return 'Upload or re-upload the selected videos to Mux?';
+        return 'Upload the selected videos to Mux?';
     }
 
     public function buttonText()
@@ -47,7 +50,7 @@ class BulkUploadToMux extends Action
         return 'Upload to Mux';
     }
 
-    public function fields()
+    public function fieldItems()
     {
         return [
             'force_reupload' => [
@@ -71,7 +74,8 @@ class BulkUploadToMux extends Action
         $skipped = 0;
 
         foreach ($items as $item) {
-            $muxAsset = MuxAsset::fromAsset($item);
+            $asset = $item->asset();
+            $muxAsset = MuxAsset::fromAsset($asset);
             $muxId = $muxAsset->id();
             $isOnMux = $muxId && $cached->has($muxId);
 
@@ -80,7 +84,7 @@ class BulkUploadToMux extends Action
                 continue;
             }
 
-            CreateMuxAssetJob::dispatch($item, $isOnMux);
+            CreateMuxAssetJob::dispatch($asset, $isOnMux);
             $queued++;
         }
 

@@ -2,7 +2,7 @@
 
 namespace Daun\StatamicMux\Actions;
 
-use Daun\StatamicMux\Data\MuxLibraryItem;
+use Daun\StatamicMux\Data\Actions\MuxLibraryItem;
 use Daun\StatamicMux\Http\Controllers\Cp\ListingReconciler;
 use Daun\StatamicMux\Mux\MuxService;
 use Statamic\Actions\Action;
