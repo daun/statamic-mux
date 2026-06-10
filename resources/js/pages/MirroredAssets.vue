@@ -58,8 +58,8 @@
                 <Badge pill :color="statusColor(value)" class="text-2xs">{{ statusLabel(value) }}</Badge>
             </template>
 
-            <template #cell-duration="{ value }">
-                <span v-if="value" class="text-sm tabular-nums" v-text="formatDuration(value)" />
+            <template #cell-duration="{ row }">
+                <span v-if="row.duration_formatted" class="text-sm tabular-nums" v-text="row.duration_formatted" />
                 <span v-else class="text-gray-400">—</span>
             </template>
 

@@ -11,6 +11,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Statamic\Assets\Asset;
 use Statamic\Facades\User;
+use Statamic\Support\Str;
 
 class ListingReconciler
 {
@@ -176,6 +177,7 @@ class ListingReconciler
             $row['is_stale'] = $row['has_mux_data'] && ! $existsRemotely;
             $row['status'] = $this->getLocalMuxStatus($row['mux_asset'], $remote);
             $row['duration'] = $this->getLocalDuration($row['mux_asset'], $remote);
+            $row['duration_formatted'] = $row['duration'] ? Str::durationForHumans($row['duration']) : null;
             $row['created_at'] = $this->getLocalMuxCreatedAt($remote);
 
             if ($remote && empty($row['playback_ids'])) {
@@ -242,6 +244,7 @@ class ListingReconciler
                 'status' => $muxAsset->exists() ? null : 'waiting',
                 'is_stale' => false,
                 'duration' => $muxAsset->duration(),
+                'duration_formatted' => $muxAsset->duration() ? Str::durationForHumans($muxAsset->duration()) : null,
                 'playback_policy' => $this->getLocalPlaybackPolicy($muxAsset),
                 'playback_id' => $this->getPrimaryPlaybackId($playbackIds),
                 'playback_ids' => $playbackIds,
@@ -286,6 +289,7 @@ class ListingReconciler
                 'local_matches' => $localCount,
                 'status' => $muxAsset->getStatus(),
                 'duration' => $muxAsset->getDuration(),
+                'duration_formatted' => $muxAsset->getDuration() ? Str::durationForHumans($muxAsset->getDuration()) : null,
                 'playback_policy' => $this->getRemotePlaybackPolicy($muxAsset),
                 'playback_id' => $playbackId,
                 'playback_ids' => $playbackIds,
