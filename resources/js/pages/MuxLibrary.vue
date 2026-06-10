@@ -17,6 +17,7 @@
                         </DropdownItem>
                     </DropdownMenu>
                 </Dropdown>
+                <SyncButton :endpoint="commandEndpoint" />
                 <Button
                     v-if="dashboardUrl"
                     :href="dashboardUrl"

@@ -12,8 +12,10 @@ import {
     Listing,
 } from '@statamic/cms/ui';
 
+import SyncButton from '../components/SyncButton.vue';
+
 export default {
-    components: { Badge, Button, ButtonGroup, Dropdown, DropdownItem, DropdownLabel, DropdownMenu, DropdownSeparator, Header, Icon, Listing },
+    components: { Badge, Button, ButtonGroup, Dropdown, DropdownItem, DropdownLabel, DropdownMenu, DropdownSeparator, Header, Icon, Listing, SyncButton },
 
     props: {
         refreshEndpoint: { type: String, default: null },
@@ -21,34 +23,7 @@ export default {
         dashboardUrl: { type: String, default: null },
     },
 
-    data() {
-        return {
-            runningCommand: null,
-        };
-    },
-
     methods: {
-        async runCommand(command) {
-            if (this.runningCommand) return;
-
-            if (command === 'prune' && !window.confirm(__('Prune orphaned videos from Mux? This queues deletion jobs for remote videos with no local asset.'))) {
-                return;
-            }
-
-            if (!this.commandEndpoint) return;
-
-            this.runningCommand = command;
-            try {
-                const response = await this.$axios.post(this.commandEndpoint, { command });
-                Statamic.$toast.success(response.data.message || __('Mux command queued. Refresh later to see updates.'));
-            } catch (e) {
-                console.error(e);
-                Statamic.$toast.error(e.response?.data?.message || __('Failed to queue Mux command'));
-            } finally {
-                this.runningCommand = null;
-            }
-        },
-
         hasMuxActions(row) {
             return Boolean(row?.mux_id);
         },

@@ -2,39 +2,7 @@
     <div>
         <Header icon="mux::video-playlist" :title="__('Mirrored Assets')">
             <div v-if="can('manage mux')" class="flex items-center gap-2 sm:gap-3">
-                <ButtonGroup>
-                    <Dropdown align="end">
-                        <template #trigger>
-                            <Button
-                                icon="mux::reload"
-                                :text="__('Sync')"
-                                :loading="runningCommand"
-                                :disabled="runningCommand !== null"
-                            />
-                        </template>
-                        <DropdownMenu>
-                            <DropdownItem icon="mux::cloud-transfer" @click="runCommand('mirror')">
-                                <span class="flex items-baseline gap-2">
-                                    <span class="font-medium">{{ __('Mirror') }}</span>
-                                    <span class="text-sm text-gray-400 dark:text-gray-500">{{ __('Upload and prune') }}</span>
-                                </span>
-                            </DropdownItem>
-                            <DropdownSeparator />
-                            <DropdownItem icon="mux::cloud-upload" @click="runCommand('upload')">
-                                <span class="flex items-baseline gap-2">
-                                    <span class="font-medium">{{ __('Upload') }}</span>
-                                    <span class="text-sm text-gray-400 dark:text-gray-500">{{ __('Upload new videos to Mux') }}</span>
-                                </span>
-                            </DropdownItem>
-                            <DropdownItem icon="mux::cloud-spark" @click="runCommand('prune')">
-                                <span class="flex items-baseline gap-2">
-                                    <span class="font-medium">{{ __('Prune') }}</span>
-                                    <span class="text-sm text-gray-400 dark:text-gray-500">{{ __('Delete orphaned Mux videos') }}</span>
-                                </span>
-                            </DropdownItem>
-                        </DropdownMenu>
-                    </Dropdown>
-                </ButtonGroup>
+                <SyncButton :endpoint="commandEndpoint" />
             </div>
         </Header>
 
