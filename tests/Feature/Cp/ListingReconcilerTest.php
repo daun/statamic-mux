@@ -92,6 +92,7 @@ function makeRemoteAsset(string $id, string $status = 'ready', float $duration =
     $playbackId->shouldReceive('getId')->andReturn("playback-{$id}");
     $playbackId->shouldReceive('getPolicy')->andReturn('public');
     $asset->shouldReceive('getPlaybackIds')->andReturn([$playbackId]);
+    $asset->shouldReceive('getPassthrough')->andReturn(null);
 
     return $asset;
 }

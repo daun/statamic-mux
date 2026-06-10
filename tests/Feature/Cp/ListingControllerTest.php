@@ -57,6 +57,7 @@ beforeEach(function () {
     $playbackId->shouldReceive('getId')->andReturn('playback-mux-asset-001');
     $playbackId->shouldReceive('getPolicy')->andReturn('public');
     $remoteAsset->shouldReceive('getPlaybackIds')->andReturn([$playbackId]);
+    $remoteAsset->shouldReceive('getPassthrough')->andReturn(null);
 
     $assetsApi = Mockery::mock(AssetsApi::class);
     $assetsApi->shouldReceive('getAsset')->andReturnUsing(function (string $id) use ($remoteAsset) {
