@@ -73,11 +73,7 @@ class MuxMirrorFieldtype extends Fieldtype
 
         // (Re)upload asset if checkbox was checked by editor
         if ($reupload && $asset && $asset->isVideo()) {
-            if (Queue::isSync()) {
-                CreateMuxAssetJob::dispatchAfterResponse($asset, true);
-            } else {
-                CreateMuxAssetJob::dispatch($asset, true);
-            }
+            CreateMuxAssetJob::dispatchAsync($asset, true);
         }
 
         return $data;
