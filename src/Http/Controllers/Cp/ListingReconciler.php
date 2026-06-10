@@ -15,7 +15,9 @@ class ListingReconciler
 {
     protected const CACHE_KEY = 'mux.remote_assets';
 
-    protected const CACHE_TTL = 600; // 10 minutes
+    protected const CACHE_VALIDITY_KEY = 'mux.remote_assets.valid';
+
+    protected const CACHE_TTL = 6000; // 1 hour
 
     public function __construct(
         protected MuxApi $api,
@@ -60,7 +62,7 @@ class ListingReconciler
      */
     public function refreshRemoteAssets(): Collection
     {
-        Cache::forget(self::CACHE_KEY);
+        Cache::forget(self::CACHE_VALIDITY_KEY);
 
         return $this->getCachedRemoteAssets();
     }
@@ -79,18 +81,34 @@ class ListingReconciler
         $filtered = $cached->reject(fn ($asset) => $asset->getId() === $muxId);
 
         if ($filtered->count() < $cached->count()) {
-            Cache::put(self::CACHE_KEY, $filtered, self::CACHE_TTL);
+            Cache::forever(self::CACHE_KEY, $filtered);
         }
     }
 
     /**
-     * Get all remote Mux assets, cached for 10 minutes.
+     * Get remote Mux assets, fetching from API if stale.
+     * Data is cached forever; a separate freshness key controls when to refetch.
      */
     public function getCachedRemoteAssets(): Collection
     {
-        return Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
-            return $this->fetchAllRemoteAssets();
-        });
+        if (! Cache::has(self::CACHE_VALIDITY_KEY)) {
+            $assets = $this->fetchAllRemoteAssets();
+            Cache::forever(self::CACHE_KEY, $assets);
+            Cache::put(self::CACHE_VALIDITY_KEY, true, self::CACHE_TTL);
+
+            return $assets;
+        }
+
+        return Cache::get(self::CACHE_KEY) ?? $this->fetchAllRemoteAssets();
+    }
+
+    /**
+     * Get cached remote assets without triggering a fetch.
+     * Returns whatever is in cache, even if stale. Empty collection if cache is cold.
+     */
+    public function getCachedRemoteAssetsIfAvailable(): Collection
+    {
+        return Cache::get(self::CACHE_KEY) ?? collect();
     }
 
     /**

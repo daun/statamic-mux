@@ -32,9 +32,10 @@
             ref="listing"
             :url="endpoint"
             :columns="columns"
+            :action-url="actionUrl"
             sort-column="created_at"
             sort-direction="desc"
-            :allow-bulk-actions="false"
+            :allow-bulk-actions="true"
             :allow-presets="false"
             :allow-customizing-columns="false"
         >
@@ -88,35 +89,16 @@
                 <span v-else class="text-gray-400">—</span>
             </template>
 
-            <template #cell-_actions="{ row }">
-                <div class="flex justify-end">
-                    <Dropdown v-if="hasMuxActions(row)" align="end">
-                        <DropdownMenu>
-                            <DropdownItem v-if="row.dashboard_url" icon="external-link-original" :text="__('Open in Mux dashboard')" :href="row.dashboard_url" target="_blank" />
-                            <DropdownItem v-if="playerUrl(row)" icon="external-link-original" :text="__('Open playback page')" :href="playerUrl(row)" target="_blank" />
-                            <DropdownSeparator />
-                            <DropdownItem icon="taxonomies" :text="__('Copy asset ID')" @click="copyAssetId(row)" />
-                            <DropdownItem v-if="primaryPlaybackId(row)" icon="taxonomies" :text="__('Copy playback ID')" @click="copyPlaybackId(row)" />
-                            <DropdownItem v-if="primaryPlaybackId(row)" icon="web" :text="__('Copy playback URL')" @click="copyPlaybackUrl(row)" />
-                            <DropdownItem v-if="primaryPlaybackId(row)" icon="programming-code-block" :text="__('Copy embed code')" @click="copyEmbedCode(row)" />
-                            <DropdownSeparator v-if="can('manage mux')" />
-                            <DropdownItem v-if="can('manage mux')" icon="trash" variant="destructive" :text="__('Delete from Mux')" @click="confirmDelete(row)" />
-                        </DropdownMenu>
-                    </Dropdown>
-                </div>
+            <template #prepended-row-actions="{ row }">
+                <DropdownItem v-if="row.dashboard_url" icon="external-link-original" :text="__('Open in Mux dashboard')" :href="row.dashboard_url" target="_blank" />
+                <DropdownItem v-if="playerUrl(row)" icon="external-link-original" :text="__('Open playback page')" :href="playerUrl(row)" target="_blank" />
+                <DropdownSeparator v-if="row.dashboard_url || playerUrl(row)" />
+                <DropdownItem icon="taxonomies" :text="__('Copy asset ID')" @click="copyAssetId(row)" />
+                <DropdownItem v-if="primaryPlaybackId(row)" icon="taxonomies" :text="__('Copy playback ID')" @click="copyPlaybackId(row)" />
+                <DropdownItem v-if="primaryPlaybackId(row)" icon="web" :text="__('Copy playback URL')" @click="copyPlaybackUrl(row)" />
+                <DropdownItem v-if="primaryPlaybackId(row)" icon="programming-code-block" :text="__('Copy embed code')" @click="copyEmbedCode(row)" />
             </template>
         </Listing>
-        <ConfirmationModal
-            :open="showDeleteModal"
-            :title="__('Delete Mux Asset')"
-            :body-text="__('Are you sure you want to permanently delete this video from Mux? This action cannot be undone.')"
-            :button-text="__('Delete')"
-            :danger="true"
-            :busy="deleting"
-            @confirm="performDelete"
-            @cancel="cancelDelete"
-            @update:open="(open) => { if (!open) cancelDelete() }"
-        />
     </div>
 </template>
 
@@ -129,17 +111,13 @@ export default {
     props: {
         endpoint: { type: String, default: null },
         refreshEndpoint: { type: String, default: null },
-        commandEndpoint: { type: String, default: null },
-        deleteEndpoint: { type: String, default: null },
+        actionUrl: { type: String, default: null },
         dashboardUrl: { type: String, default: null },
     },
 
     data() {
         return {
             refreshing: false,
-            showDeleteModal: false,
-            deletingRow: null,
-            deleting: false,
             columns: [
                 { field: 'thumbnail_url', label: __('Thumbnail'), sortable: false },
                 { field: 'title', label: __('Title'), sortable: true },
@@ -148,42 +126,11 @@ export default {
                 { field: 'duration', label: __('Duration'), sortable: true },
                 { field: 'playback_policy', label: __('Policy'), sortable: true },
                 { field: 'created_at', label: __('Created'), sortable: true },
-                { field: '_actions', label: '', sortable: false, width: '1%' },
             ],
         };
     },
 
     methods: {
-        confirmDelete(row) {
-            this.deletingRow = row;
-            this.showDeleteModal = true;
-        },
-
-        cancelDelete() {
-            if (this.deleting) return;
-            this.showDeleteModal = false;
-            this.deletingRow = null;
-        },
-
-        async performDelete() {
-            if (!this.deletingRow || !this.deleteEndpoint) return;
-
-            this.deleting = true;
-            try {
-                const url = this.deleteEndpoint.replace('__MUX_ID__', this.deletingRow.mux_id);
-                await this.$axios.delete(url);
-                Statamic.$toast.success(__('Mux asset deleted'));
-                this.showDeleteModal = false;
-                this.deletingRow = null;
-                this.$refs.listing?.refresh();
-            } catch (e) {
-                console.error(e);
-                Statamic.$toast.error(e.response?.data?.message || __('Failed to delete Mux asset'));
-            } finally {
-                this.deleting = false;
-            }
-        },
-
         async refresh() {
             if (!this.refreshEndpoint) return;
 

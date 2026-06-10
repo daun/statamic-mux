@@ -1,5 +1,6 @@
 <?php
 
+use Daun\StatamicMux\Http\Controllers\Cp\ActionsController;
 use Daun\StatamicMux\Http\Controllers\Cp\CommandController;
 use Daun\StatamicMux\Http\Controllers\Cp\ListingController;
 use Daun\StatamicMux\Http\Controllers\Cp\ThumbnailController;
@@ -18,5 +19,6 @@ Route::prefix('mux')->name('mux.')->group(function () {
 
     Route::get('/thumbnail/{id}', [ThumbnailController::class, 'thumbnail'])->where('id', '.*')->name('thumbnail');
     Route::post('/command', [CommandController::class, 'run'])->name('command');
-    Route::delete('/asset/{muxId}', [ListingController::class, 'destroy'])->where('muxId', '.*')->name('asset.destroy');
+    Route::post('/actions', [ActionsController::class, 'run'])->name('actions.run');
+    Route::post('/actions/list', [ActionsController::class, 'bulkActions'])->name('actions.bulk');
 });
