@@ -86,7 +86,7 @@
             </template>
 
             <template #cell-created_at="{ value }">
-                <date-time v-if="value" :of="value" />
+                <date-time v-if="value" :of="value" date-only />
                 <ui-text v-else variant="subtle" class="text-gray-400">—</ui-text>
             </template>
 
