@@ -5,6 +5,7 @@ namespace Daun\StatamicMux\Http\Controllers\Cp;
 use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Support\MirrorField;
+use Daun\StatamicMux\Support\Attribution;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -253,7 +254,10 @@ class ListingReconciler
             $localMatches = $localIndex->get($muxId, collect());
             $localCount = $localMatches->count();
 
+            $passthrough = $muxAsset->getPassthrough();
+
             $state = match (true) {
+                Attribution::isProxy($passthrough) => 'proxy',
                 $localCount === 0 => 'orphaned',
                 $localCount > 1 => 'duplicated',
                 default => 'mirrored',

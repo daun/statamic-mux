@@ -9,7 +9,7 @@ use Daun\StatamicMux\Facades\Log;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Support\MirrorField;
-use Illuminate\Support\Str;
+use Daun\StatamicMux\Support\Attribution;
 use Statamic\Assets\Asset;
 
 class DeleteMuxAsset
@@ -134,14 +134,13 @@ class DeleteMuxAsset
     protected function wasAssetCreatedByAddon(string $muxId): bool
     {
         $asset = $this->api->assets()->getAsset($muxId)->getData();
-        $identifier = $asset?->getPassthrough() ?? null;
-        $expected = ['statamic::', 'statamic-proxy::'];
+        $passthrough = $asset?->getPassthrough() ?? null;
 
         Log::debug(
             'Checking Mux asset ownership by passthrough identifier',
-            ['passthrough' => $identifier, 'expected' => $expected],
+            ['passthrough' => $passthrough],
         );
 
-        return is_string($identifier) && Str::startsWith($identifier, $expected);
+        return Attribution::createdByAddon($passthrough);
     }
 }

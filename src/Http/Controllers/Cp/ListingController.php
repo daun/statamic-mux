@@ -147,7 +147,6 @@ class ListingController extends CpController
             ['field' => 'duration', 'label' => __('Duration'), 'sortable' => true],
             ['field' => 'playback_policy', 'label' => __('Policy'), 'sortable' => true],
             ['field' => 'created_at', 'label' => __('Created'), 'sortable' => true],
-            ['field' => '_actions', 'label' => '', 'sortable' => false, 'width' => '1%'],
         ];
     }
 
@@ -170,6 +169,7 @@ class ListingController extends CpController
                 'type' => 'select',
                 'options' => [
                     'mirrored' => __('Mirrored'),
+                    'proxy' => __('Proxy'),
                     'orphaned' => __('Orphaned'),
                     'duplicated' => __('Duplicated'),
                 ],

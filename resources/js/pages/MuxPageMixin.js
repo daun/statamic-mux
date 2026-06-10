@@ -121,6 +121,7 @@ export default {
         stateColor(state) {
             return {
                 mirrored: 'green',
+                proxy: 'gray',
                 orphaned: 'amber',
                 duplicated: 'red',
             }[state] || 'gray';
