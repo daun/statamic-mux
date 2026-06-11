@@ -3,8 +3,10 @@
 namespace Daun\StatamicMux\Http\Controllers\Cp;
 
 use Daun\StatamicMux\Data\MuxAsset;
+use Daun\StatamicMux\Data\MuxPlaybackId;
 use Daun\StatamicMux\Http\Controllers\Cp\Listing\RemoteVideoSource;
 use Daun\StatamicMux\Mux\MuxApi;
+use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Support\MirrorField;
 use Daun\StatamicMux\Thumbnails\ThumbnailService;
 use Illuminate\Support\Arr;
@@ -25,6 +27,7 @@ class ListingReconciler
 
     public function __construct(
         protected MuxApi $api,
+        protected MuxService $service,
         protected ThumbnailService $thumbnails,
     ) {}
 
@@ -189,6 +192,11 @@ class ListingReconciler
                     'playback_ids',
                     'playback_id',
                     'playback_policy',
+                    'thumbnail_url',
+                    'player_url',
+                    'embed_url',
+                    'embed_code',
+                    'playback_url',
                     'created_at',
                 ]));
             }
@@ -254,6 +262,10 @@ class ListingReconciler
                     'mux_id' => $muxId,
                     'dashboard_url' => $this->dashboardAssetUrl($muxId, $dashboardUrl),
                     'thumbnail_url' => $this->getLocalThumbnailUrl($asset),
+                    'player_url' => null,
+                    'embed_url' => null,
+                    'embed_code' => null,
+                    'playback_url' => null,
                     'has_mux_data' => $hasMuxData,
                     'exists_remotely' => null,
                     'mirror_status' => $hasMuxData ? 'uploaded' : 'not_uploaded',
@@ -304,9 +316,7 @@ class ListingReconciler
                     'resolution_tier' => $muxAsset->getResolutionTier(),
                     'max_resolution_tier' => $muxAsset->getMaxResolutionTier(),
                     'is_test' => (bool) $muxAsset->getTest(),
-                    'thumbnail_url' => $playbackId
-                        ? "https://image.mux.com/{$playbackId}/thumbnail.webp?width=120"
-                        : $localAsset?->thumbnailUrl('small'),
+                    'thumbnail_url' => $row['thumbnail_url'] ?? $localAsset?->thumbnailUrl('small'),
                     'aspect_ratio' => $muxAsset->getAspectRatio(),
                 ];
             });
@@ -332,6 +342,9 @@ class ListingReconciler
     {
         $duration = $source->duration();
         $playbackIds = $source->playbackIds();
+        $playbackId = $this->getPrimaryPlaybackId($playbackIds);
+        $playback = $this->getPrimaryPlayback($playbackIds);
+        $playerUrl = $playback ? $this->service->getPlayerUrl($playback) : null;
 
         return [
             'mux_id' => $source->id(),
@@ -339,8 +352,13 @@ class ListingReconciler
             'duration' => $duration,
             'duration_formatted' => $this->formatDuration($duration),
             'playback_ids' => $playbackIds,
-            'playback_id' => $this->getPrimaryPlaybackId($playbackIds),
+            'playback_id' => $playbackId,
             'playback_policy' => $this->aggregatePlaybackPolicy($playbackIds),
+            'thumbnail_url' => $playback ? $this->getMuxThumbnailUrl($playback) : null,
+            'player_url' => $playerUrl,
+            'embed_url' => $playerUrl,
+            'embed_code' => $playback ? $this->service->getEmbedCode($playback) : null,
+            'playback_url' => $playerUrl,
             'created_at' => $source->createdAt(),
             'is_proxy' => $source->isProxy(),
         ];
@@ -372,10 +390,23 @@ class ListingReconciler
 
     protected function getPrimaryPlaybackId(array $playbackIds): ?string
     {
+        return $this->getPrimaryPlayback($playbackIds)?->id();
+    }
+
+    protected function getPrimaryPlayback(array $playbackIds): ?MuxPlaybackId
+    {
         $playbackIds = collect($playbackIds);
         $playbackId = $playbackIds->firstWhere('policy', 'public') ?? $playbackIds->first();
 
-        return $playbackId['id'] ?? null;
+        return MuxPlaybackId::make($playbackId['id'] ?? '', $playbackId['policy'] ?? '');
+    }
+
+    protected function getMuxThumbnailUrl(MuxPlaybackId $playbackId): string
+    {
+        return $this->service->getThumbnailUrl($playbackId, [
+            'format' => 'webp',
+            'width' => 120,
+        ]);
     }
 
     /**

@@ -40,27 +40,19 @@ export default {
         },
 
         playerUrl(row) {
-            const playbackId = this.primaryPlaybackId(row);
+            return row?.player_url || row?.embed_url || null;
+        },
 
-            return playbackId
-                ? `https://player.mux.com/${playbackId}`
-                : null;
+        playbackUrl(row) {
+            return row?.playback_url || null;
         },
 
         thumbnailUrl(row) {
-            const playbackId = this.primaryPlaybackId(row);
-
-            return playbackId
-                ? `https://image.mux.com/${playbackId}/animated.webp`
-                : null;
+            return row?.thumbnail_url || null;
         },
 
         embedCode(row) {
-            const url = this.playerUrl(row);
-
-            return url
-                ? `<iframe src="${url}" style="width: 100%; border: none; aspect-ratio: 16/9;" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen ></iframe>`
-                : null;
+            return row?.embed_code || null;
         },
 
         async copyToClipboard(value) {
@@ -78,7 +70,7 @@ export default {
         },
 
         copyPlaybackUrl(row) {
-            return this.copyToClipboard(this.playerUrl(row));
+            return this.copyToClipboard(this.playbackUrl(row));
         },
 
         copyEmbedCode(row) {

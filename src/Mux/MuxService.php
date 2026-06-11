@@ -197,6 +197,26 @@ class MuxService
         return $this->signUrl($this->urls->animated($playbackId->id(), $format), $playbackId, MuxAudience::Gif, $params);
     }
 
+    public function getPlayerUrl(MuxPlaybackId $playbackId, array $params = []): string
+    {
+        if ($playbackId->isSigned()) {
+            $params = array_filter([
+                'playback-token' => $this->getPlaybackToken($playbackId),
+                'thumbnail-token' => $this->getThumbnailToken($playbackId),
+                'storyboard-token' => $this->getStoryboardToken($playbackId),
+            ] + $params);
+        }
+
+        return $this->urls->player($playbackId->id(), $params);
+    }
+
+    public function getEmbedCode(MuxPlaybackId $playbackId, array $params = []): string
+    {
+        $url = e($this->getPlayerUrl($playbackId, $params));
+
+        return "<iframe src=\"{$url}\" style=\"width: 100%; border: none; aspect-ratio: 16/9;\" allow=\"accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;\" allowfullscreen></iframe>";
+    }
+
     public function getPlaceholderDataUri(MuxPlaybackId $playbackId, array $params = []): ?string
     {
         $fallback = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';

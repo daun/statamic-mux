@@ -27,6 +27,14 @@ class MuxUrls
     }
 
     /**
+     * Create a URL for the hosted Mux Player page.
+     */
+    public function player(string $playbackId, array $params = []): string
+    {
+        return URL::withQuery("https://player.mux.com/{$playbackId}", $params);
+    }
+
+    /**
      * Create a URL for generating a thumbnail
      */
     public function thumbnail(string $playbackId, string $format = 'jpg'): string
