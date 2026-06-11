@@ -3,9 +3,12 @@
 namespace Daun\StatamicMux\Actions;
 
 use Daun\StatamicMux\Data\Actions\MuxLibraryItem;
+use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Http\Controllers\Cp\ListingReconciler;
 use Daun\StatamicMux\Mux\MuxService;
+use Daun\StatamicMux\Support\MirrorField;
 use Statamic\Actions\Action;
+use Statamic\Assets\Asset;
 
 use function Statamic\trans as __;
 use function Statamic\trans_choice;
@@ -23,12 +26,7 @@ class DeleteFromMux extends Action
 
     public function visibleTo($item)
     {
-        return $item instanceof MuxLibraryItem;
-    }
-
-    public function visibleToBulk($items)
-    {
-        return $items->every(fn ($item) => $item instanceof MuxLibraryItem);
+        return $item instanceof MuxLibraryItem || ($item instanceof MuxAsset && $item->exists());
     }
 
     public function authorize($user, $item)
@@ -55,7 +53,10 @@ class DeleteFromMux extends Action
         $failures = collect();
 
         foreach ($items as $item) {
-            $muxId = $item->id();
+            $muxId = $this->getMuxId($item);
+            if (! $muxId) {
+                continue;
+            }
 
             try {
                 $deleted = $service->deleteMuxAsset($muxId);
@@ -93,5 +94,22 @@ class DeleteFromMux extends Action
         }
 
         return trans_choice('Mux asset deleted|:count Mux assets deleted', $total, ['count' => $total]);
+    }
+
+    protected function getMuxId(mixed $item): ?string
+    {
+        if ($item instanceof Asset && MirrorField::shouldMirror($item)) {
+            $item = MuxAsset::fromAsset($item);
+        }
+
+        if ($item instanceof MuxAsset) {
+            return $item->id();
+        }
+
+        if ($item instanceof MuxLibraryItem) {
+            return $item->id();
+        }
+
+        return null;
     }
 }
