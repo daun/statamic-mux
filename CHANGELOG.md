@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.3.1] - 2026-06-11
+
+- Fix render timeout in structured collections (@danielreales7)
+
 ## [3.3.0] - 2026-05-27
 
 - Delete the previous Mux asset after requesting a re-upload
@@ -162,6 +166,7 @@
 
 - Beta release
 
+[3.3.1]: https://github.com/daun/statamic-mux/releases/tag/3.3.1
 [3.3.0]: https://github.com/daun/statamic-mux/releases/tag/3.3.0
 [3.2.1]: https://github.com/daun/statamic-mux/releases/tag/3.2.1
 [3.2.0]: https://github.com/daun/statamic-mux/releases/tag/3.2.0

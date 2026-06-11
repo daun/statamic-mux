@@ -168,8 +168,7 @@ class MuxTags extends Tags
                 fn ($attr) => $attr->merge(['autoplay' => true, 'loop' => true, 'muted' => true])
             );
 
-        $viewData = $this->context
-            ->merge($data)
+        $viewData = collect($data)
             ->merge(['script' => $this->params->bool('script', false)])
             ->merge(['lazyload' => $this->params->bool('lazyload', false)])
             ->merge(['attributes' => $this->toHtmlAttributes($htmlAttributes)])
