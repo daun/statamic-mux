@@ -1,8 +1,8 @@
 <template>
     <div>
         <Header icon="mux::cloud-video" :title="__('Mux Library')">
-            <div v-if="can('manage mux')" class="flex items-center gap-2 sm:gap-3">
-                <Dropdown align="end">
+            <template v-if="can('manage mux')">
+                <Dropdown>
                     <template #trigger>
                         <Button
                             icon="dots"
@@ -12,7 +12,7 @@
                         />
                     </template>
                     <DropdownMenu>
-                        <DropdownItem icon="mux::reload" @click="refresh">
+                        <DropdownItem icon="mux::history-delete" @click="refresh">
                             {{ __('Clear cache and reload') }}
                         </DropdownItem>
                     </DropdownMenu>
@@ -26,7 +26,7 @@
                     icon-append="external-link"
                     :text="__('Mux Dashboard')"
                 />
-            </div>
+            </template>
         </Header>
 
         <Listing
