@@ -93,10 +93,10 @@ class BulkUploadToMux extends Action
             ]));
         }
 
-        $message = trans_choice(':count video queued for upload to Mux|:count videos queued for upload to Mux', $queued, ['count' => $queued]);
+        $message = trans_choice(':count video queued for upload|:count videos queued for upload', $queued, ['count' => $queued]);
 
         if ($skipped > 0) {
-            $message .= ' '.trans_choice('(:count already mirrored asset skipped)|(:count already mirrored assets skipped)', $skipped, ['count' => $skipped]);
+            $message .= ' '.trans_choice('(:count already uploaded)|(:count already uploaded)', $skipped, ['count' => $skipped]);
         }
 
         return $message;

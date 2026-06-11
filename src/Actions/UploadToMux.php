@@ -51,7 +51,7 @@ class UploadToMux extends Action
             ->filter()
             ->each(fn ($muxAsset) => CreateMuxAssetJob::dispatchAsync($muxAsset));
 
-        return trans_choice('Video queued for upload to Mux|:count videos queued for upload to Mux', $items->count(), ['count' => $items->count()]);
+        return trans_choice('Video queued for upload|:count videos queued for upload', $items->count(), ['count' => $items->count()]);
     }
 
     protected function getMuxAsset(mixed $item): ?MuxAsset

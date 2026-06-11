@@ -51,7 +51,7 @@ class ReUploadToMux extends Action
             ->filter()
             ->each(fn ($muxAsset) => CreateMuxAssetJob::dispatchAsync($muxAsset, true));
 
-        return trans_choice('Video queued for reupload to Mux|:count videos queued for reupload to Mux', $items->count(), ['count' => $items->count()]);
+        return trans_choice('Video queued for reupload|:count videos queued for reupload', $items->count(), ['count' => $items->count()]);
     }
 
     protected function getMuxAsset(mixed $item): ?MuxAsset

@@ -78,22 +78,22 @@ class DeleteFromMux extends Action
 
         if ($failed === $total) {
             throw new \Exception($total === 1
-                ? __('Mux asset could not be deleted. It may not have been created by this addon.')
-                : __('None of the :count Mux assets could be deleted.', ['count' => $total])
+                ? __('Mux video cannot be deleted. It may not have been created by this addon.')
+                : __('None of the :count Mux videos can be deleted.', ['count' => $total])
             );
         }
 
         if ($failed > 0) {
             $success = $total - $failed;
 
-            return __(':success of :total Mux assets deleted. :failed could not be deleted.', [
+            return __(':success of :total Mux videos queued for deletion. :failed cannot be deleted.', [
                 'success' => $success,
                 'total' => $total,
                 'failed' => $failed,
             ]);
         }
 
-        return trans_choice('Mux asset deleted|:count Mux assets deleted', $total, ['count' => $total]);
+        return trans_choice('Mux video queued for deletion|:count Mux videos queued for deletion', $total, ['count' => $total]);
     }
 
     protected function getMuxId(mixed $item): ?string
