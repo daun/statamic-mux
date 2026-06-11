@@ -163,16 +163,16 @@ test('local api data has expected fields', function () {
     expect($json['data'])->not->toBeEmpty();
     $row = collect($json['data'])->firstWhere('mux_id', 'mux-asset-001');
     expect($row)->not->toBeNull();
-    expect($row)->toHaveKeys(['id', 'title', 'path', 'edit_url', 'can_edit', 'mux_id', 'dashboard_url', 'has_mux_data', 'mirror_status', 'processing_status', 'duration', 'duration_formatted', 'playback_policy', 'playback_id', 'playback_ids', 'thumbnail_url', 'player_url', 'embed_url', 'embed_code', 'playback_url']);
+    expect($row)->toHaveKeys(['id', 'title', 'path', 'edit_url', 'can_edit', 'mux_id', 'dashboard_url', 'has_mux_data', 'mirror_status', 'processing_status', 'duration', 'duration_formatted', 'playback_policy', 'playback_id', 'playback_ids', 'thumbnail_url', 'player_url', 'stream_url', 'embed_code']);
+    expect($row)->not->toHaveKeys(['embed_url', 'playback_url']);
     expect($row['edit_url'])->toContain('/assets/');
     expect($row['can_edit'])->toBeTrue();
     expect($row['dashboard_url'])->toBe('https://dashboard.mux.com/environments/env-001/video/assets/mux-asset-001');
     expect($row['playback_id'])->toBe('playback-mux-asset-001');
     expect($row['thumbnail_url'])->toBe('https://image.mux.com/playback-mux-asset-001/thumbnail.webp?width=120');
     expect($row['player_url'])->toBe('https://player.mux.com/playback-mux-asset-001');
-    expect($row['embed_url'])->toBe('https://player.mux.com/playback-mux-asset-001');
     expect($row['embed_code'])->toContain('src="https://player.mux.com/playback-mux-asset-001"');
-    expect($row['playback_url'])->toBe('https://stream.mux.com/playback-mux-asset-001.m3u8');
+    expect($row['stream_url'])->toBe('https://stream.mux.com/playback-mux-asset-001.m3u8');
 });
 
 test('remote api returns json with data and meta', function () {
@@ -195,14 +195,14 @@ test('remote api data has expected fields', function () {
 
     expect($json['data'])->not->toBeEmpty();
     $row = $json['data'][0];
-    expect($row)->toHaveKeys(['id', 'title', 'mux_id', 'dashboard_url', 'match_status', 'processing_status', 'duration', 'duration_formatted', 'playback_policy', 'playback_id', 'playback_ids', 'thumbnail_url', 'player_url', 'embed_url', 'embed_code', 'playback_url']);
+    expect($row)->toHaveKeys(['id', 'title', 'mux_id', 'dashboard_url', 'match_status', 'processing_status', 'duration', 'duration_formatted', 'playback_policy', 'playback_id', 'playback_ids', 'thumbnail_url', 'player_url', 'stream_url', 'embed_code']);
+    expect($row)->not->toHaveKeys(['embed_url', 'playback_url']);
     expect($row['dashboard_url'])->toBe('https://dashboard.mux.com/environments/env-001/video/assets/mux-asset-001');
     expect($row['playback_id'])->toBe('playback-mux-asset-001');
     expect($row['thumbnail_url'])->toBe('https://image.mux.com/playback-mux-asset-001/thumbnail.webp?width=120');
     expect($row['player_url'])->toBe('https://player.mux.com/playback-mux-asset-001');
-    expect($row['embed_url'])->toBe('https://player.mux.com/playback-mux-asset-001');
     expect($row['embed_code'])->toContain('src="https://player.mux.com/playback-mux-asset-001"');
-    expect($row['playback_url'])->toBe('https://stream.mux.com/playback-mux-asset-001.m3u8');
+    expect($row['stream_url'])->toBe('https://stream.mux.com/playback-mux-asset-001.m3u8');
 });
 
 test('refresh endpoint returns success', function () {

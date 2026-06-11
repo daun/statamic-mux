@@ -194,9 +194,8 @@ class ListingReconciler
                     'playback_policy',
                     'thumbnail_url',
                     'player_url',
-                    'embed_url',
+                    'stream_url',
                     'embed_code',
-                    'playback_url',
                     'created_at',
                 ]));
             }
@@ -263,9 +262,8 @@ class ListingReconciler
                     'dashboard_url' => $this->dashboardAssetUrl($muxId, $dashboardUrl),
                     'thumbnail_url' => $this->getLocalThumbnailUrl($asset),
                     'player_url' => null,
-                    'embed_url' => null,
+                    'stream_url' => null,
                     'embed_code' => null,
-                    'playback_url' => null,
                     'has_mux_data' => $hasMuxData,
                     'exists_remotely' => null,
                     'mirror_status' => $hasMuxData ? 'uploaded' : 'not_uploaded',
@@ -356,9 +354,8 @@ class ListingReconciler
             'playback_policy' => $this->aggregatePlaybackPolicy($playbackIds),
             'thumbnail_url' => $playback ? $this->getMuxThumbnailUrl($playback) : null,
             'player_url' => $playerUrl,
-            'embed_url' => $playerUrl,
+            'stream_url' => $playback ? $this->service->getPlaybackUrl($playback) : null,
             'embed_code' => $playback ? $this->service->getEmbedCode($playback) : null,
-            'playback_url' => $playerUrl,
             'created_at' => $source->createdAt(),
             'is_proxy' => $source->isProxy(),
         ];

@@ -40,11 +40,11 @@ export default {
         },
 
         playerUrl(row) {
-            return row?.player_url || row?.embed_url || null;
+            return row?.player_url || null;
         },
 
-        playbackUrl(row) {
-            return row?.playback_url || null;
+        streamUrl(row) {
+            return row?.stream_url || null;
         },
 
         thumbnailUrl(row) {
@@ -69,8 +69,8 @@ export default {
             return this.copyToClipboard(this.primaryPlaybackId(row));
         },
 
-        copyPlaybackUrl(row) {
-            return this.copyToClipboard(this.playbackUrl(row));
+        copyPlayerUrl(row) {
+            return this.copyToClipboard(this.playerUrl(row));
         },
 
         copyEmbedCode(row) {
