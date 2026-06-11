@@ -39,7 +39,7 @@ class DeleteFromMux extends Action
     public function confirmationText()
     {
         /** @translation */
-        return 'Are you sure you want to permanently delete this video from Mux?|Are you sure you want to permanently delete these :count videos from Mux?';
+        return 'Permanently delete this video from Mux?|Permanently delete these :count videos from Mux?';
     }
 
     public function buttonText()

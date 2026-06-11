@@ -35,7 +35,7 @@ class UploadToMux extends Action
     public function confirmationText()
     {
         /** @translation */
-        return 'Are you sure you want to upload this video to Mux?|Are you sure you want to upload these :count videos to Mux?';
+        return 'Upload this video to Mux?|Upload these :count videos to Mux?';
     }
 
     public function buttonText()

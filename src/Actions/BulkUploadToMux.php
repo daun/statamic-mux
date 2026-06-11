@@ -53,7 +53,7 @@ class BulkUploadToMux extends Action
     {
         return [
             'force_reupload' => [
-                'display' => __('Re-upload already mirrored assets'),
+                'display' => __('Reupload already mirrored assets?'),
                 'instructions' => __('Assets already on Mux will be re-uploaded. Their playback IDs will change.'),
                 'type' => 'toggle',
                 'default' => false,
@@ -89,7 +89,7 @@ class BulkUploadToMux extends Action
 
         if ($queued === 0) {
             throw new \Exception(__('No videos were queued. Enable ":toggle" to include already mirrored assets.', [
-                'toggle' => __('Re-upload already mirrored assets'),
+                'toggle' => __('Reupload already mirrored assets'),
             ]));
         }
 

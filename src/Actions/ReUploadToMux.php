@@ -35,7 +35,7 @@ class ReUploadToMux extends Action
     public function confirmationText()
     {
         /** @translation */
-        return 'Are you sure you want to reupload this video to Mux?|Are you sure you want to reupload these :count videos to Mux?';
+        return 'Are you sure you want to reupload this video to Mux? Existing playback ids and urls will change.|Are you sure you want to reupload these :count videos to Mux? Existing playback ids and urls will change.';
     }
 
     public function buttonText()
