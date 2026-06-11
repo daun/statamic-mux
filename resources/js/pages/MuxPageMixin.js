@@ -1,3 +1,4 @@
+import { Head } from '@statamic/cms/inertia';
 import {
     Badge,
     Button,
@@ -15,7 +16,7 @@ import {
 import SyncButton from '../components/SyncButton.vue';
 
 export default {
-    components: { Badge, Button, ButtonGroup, Dropdown, DropdownItem, DropdownLabel, DropdownMenu, DropdownSeparator, Header, Icon, Listing, SyncButton },
+    components: { Badge, Button, ButtonGroup, Dropdown, DropdownItem, DropdownLabel, DropdownMenu, DropdownSeparator, Head, Header, Icon, Listing, SyncButton },
 
     props: {
         refreshEndpoint: { type: String, default: null },

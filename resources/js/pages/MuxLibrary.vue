@@ -1,4 +1,6 @@
 <template>
+    <Head :title="[__('Mux'), __('Mux Library')]" />
+
     <div>
         <Header icon="mux::cloud-video" :title="__('Mux Library')">
             <template v-if="can('manage mux')">

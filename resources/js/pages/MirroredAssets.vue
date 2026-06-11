@@ -1,4 +1,6 @@
 <template>
+    <Head :title="[__('Mux'), __('Mirrored Assets')]" />
+
     <div>
         <Header icon="mux::video-playlist" :title="__('Mirrored Assets')">
             <template v-if="can('manage mux')">
