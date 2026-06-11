@@ -171,14 +171,15 @@ class ServiceProvider extends AddonServiceProvider
     protected function bootNav(): self
     {
         Nav::extend(function (\Statamic\CP\Navigation\Nav $nav) {
+            $service = app(MuxService::class);
             $nav->findOrCreate('Tools', 'Mux')
                 ->route('mux.index')
                 ->icon('mux::video-player')
                 ->can('view mux')
-                ->children([
-                    $nav->item(__('Mirrored Assets'))->route('mux.index')->can('view mux'),
+                ->children($service->configured() ? [
+                    $nav->item(__('Mirrored Assets'))->route('mux.assets')->can('view mux'),
                     $nav->item(__('Mux Library'))->route('mux.library')->can('view mux'),
-                ]);
+                ] : []);
         });
 
         return $this;

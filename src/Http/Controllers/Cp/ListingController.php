@@ -3,6 +3,7 @@
 namespace Daun\StatamicMux\Http\Controllers\Cp;
 
 use Daun\StatamicMux\Mux\MuxApi;
+use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Support\CpAssets;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,17 +14,26 @@ class ListingController extends CpController
 {
     public function __construct(
         protected ListingReconciler $listing,
-        protected MuxApi $mux,
+        protected MuxService $service,
+        protected MuxApi $api,
     ) {}
 
     public function index()
     {
-        return $this->mirrored();
+        if (! $this->service->configured()) {
+            return Inertia::render('EmptyPage');
+        }
+
+        return redirect()->route('statamic.cp.mux.assets');
     }
 
-    public function mirrored()
+    public function assets()
     {
         $this->authorize('view mux');
+
+        if (! $this->service->configured()) {
+            return redirect()->route('statamic.cp.mux.index');
+        }
 
         return Inertia::render('MuxAssetsPage', [
             'endpoint' => cp_route('mux.listing.local'),
@@ -37,17 +47,30 @@ class ListingController extends CpController
     {
         $this->authorize('view mux');
 
+        if (! $this->service->configured()) {
+            return redirect()->route('statamic.cp.mux.index');
+        }
+
         return Inertia::render('MuxLibraryPage', [
             'endpoint' => cp_route('mux.listing.remote'),
             'refreshEndpoint' => cp_route('mux.listing.refresh'),
             'actionUrl' => cp_route('mux.actions.remote.run'),
-            'dashboardUrl' => $this->mux->dashboardUrl(),
+            'dashboardUrl' => $this->api->dashboardUrl(),
         ]);
     }
 
     public function local(Request $request): JsonResponse
     {
         $this->authorize('view mux');
+
+        if (! $this->service->configured()) {
+            return response()->json([
+                'data' => [],
+                'meta' => [
+                    'columns' => $this->localColumns(),
+                ],
+            ]);
+        }
 
         $result = $this->listing->getLocalVideos(
             $this->extractParams($request),
@@ -65,6 +88,15 @@ class ListingController extends CpController
     public function remote(Request $request): JsonResponse
     {
         $this->authorize('view mux');
+
+        if (! $this->service->configured()) {
+            return response()->json([
+                'data' => [],
+                'meta' => [
+                    'columns' => $this->localColumns(),
+                ],
+            ]);
+        }
 
         $result = $this->listing->getRemoteVideos(
             $this->extractParams($request),

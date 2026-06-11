@@ -347,7 +347,7 @@ test('remote api includes filter definitions', function () {
 
 test('routes are registered', function () {
     expect(cp_route('mux.index'))->toContain('/mux');
-    expect(cp_route('mux.mirrored'))->toContain('/mux/mirrored');
+    expect(cp_route('mux.assets'))->toContain('/mux/assets');
     expect(cp_route('mux.library'))->toContain('/mux/library');
     expect(cp_route('mux.listing.local'))->toContain('/mux/listing/local');
     expect(cp_route('mux.listing.remote'))->toContain('/mux/listing/remote');
