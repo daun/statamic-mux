@@ -4,6 +4,7 @@ use Daun\StatamicMux\Events\AssetUploadedToMux;
 use Daun\StatamicMux\Http\Controllers\Cp\ListingReconciler;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Subscribers\ListingCacheSubscriber;
+use Daun\StatamicMux\Thumbnails\ThumbnailService;
 use Illuminate\Support\Facades\Cache;
 use MuxPhp\Models\Asset;
 use MuxPhp\Models\PlaybackID;
@@ -45,10 +46,13 @@ beforeEach(function () {
     $muxApi->shouldReceive('getAssets')->andReturn(collect());
     $muxApi->shouldReceive('dashboardUrl')->andReturn(null);
 
+    $thumbnails = Mockery::mock(ThumbnailService::class);
+    $thumbnails->shouldReceive('forAsset')->andReturn('https://image.mux.com/playback-001/animated.gif');
+
     $this->app->instance(MuxApi::class, $muxApi);
     $this->app->instance('mux.api', $muxApi);
 
-    $this->reconciler = new ListingReconciler($muxApi);
+    $this->reconciler = new ListingReconciler($muxApi, $thumbnails);
 });
 
 test('subscriber listens to AssetUploadedToMux', function () {

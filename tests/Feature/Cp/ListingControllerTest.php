@@ -15,6 +15,7 @@ use MuxPhp\Api\AssetsApi;
 use MuxPhp\ApiException;
 use MuxPhp\Models\Asset;
 use MuxPhp\Models\PlaybackID;
+use Statamic\Exceptions\AuthorizationException;
 use Statamic\Facades\CP\Nav;
 use Statamic\Facades\Role;
 use Statamic\Facades\Stache;
@@ -90,6 +91,8 @@ beforeEach(function () {
     $muxService = Mockery::mock(MuxService::class);
     $muxService->shouldReceive('listMuxAssets')->with(0)->andReturn(collect([$remoteAsset]));
     $muxService->shouldReceive('api')->andReturn($muxApi);
+    $muxService->shouldReceive('getMuxId')->andReturn('mux-asset-001');
+    $muxService->shouldReceive('getPlaybackId')->andReturnNull();
     $this->app->instance(MuxApi::class, $muxApi);
     $this->app->instance('mux.api', $muxApi);
     $this->app->instance(MuxService::class, $muxService);
@@ -361,4 +364,48 @@ test('control panel nav builds mux children', function () {
     expect($children)->toHaveCount(2);
     expect($children->map->display()->all())->toBe(['Mirrored Assets', 'Mux Library']);
     expect($children->map->url()->all())->toBe([cp_route('mux.index'), cp_route('mux.library')]);
+});
+
+test('local api requires view mux permission', function () {
+    $user = User::make()->email('no-view@test.com')->password('secret');
+    $user->save();
+    Auth::guard()->login($user);
+
+    $controller = $this->app->make(ApiListingController::class);
+    $request = Request::create('/mux/listing/local', 'GET');
+
+    expect(fn () => $controller->local($request))->toThrow(AuthorizationException::class);
+});
+
+test('remote api requires view mux permission', function () {
+    $user = User::make()->email('no-remote-view@test.com')->password('secret');
+    $user->save();
+    Auth::guard()->login($user);
+
+    $controller = $this->app->make(ApiListingController::class);
+    $request = Request::create('/mux/listing/remote', 'GET');
+
+    expect(fn () => $controller->remote($request))->toThrow(AuthorizationException::class);
+});
+
+test('local api ignores malformed filters parameter', function () {
+    $controller = $this->app->make(ApiListingController::class);
+    $request = Request::create('/mux/listing/local', 'GET', ['filters' => 'not-base64-json']);
+    $response = $controller->local($request);
+
+    expect($response->getStatusCode())->toBe(200);
+    expect($response->getData(true)['data'])->not->toBeEmpty();
+});
+
+test('remote api parses filters parameter', function () {
+    $filters = base64_encode(json_encode(['match_status' => 'mirrored', 'is_test' => '0'], JSON_THROW_ON_ERROR));
+
+    $controller = $this->app->make(ApiListingController::class);
+    $request = Request::create('/mux/listing/remote', 'GET', ['filters' => $filters]);
+    $response = $controller->remote($request);
+    $json = $response->getData(true);
+
+    expect($response->getStatusCode())->toBe(200);
+    expect($json['data'])->toHaveCount(1);
+    expect($json['data'][0]['match_status'])->toBe('mirrored');
 });

@@ -2,6 +2,7 @@
 
 use Daun\StatamicMux\Http\Controllers\Cp\ListingReconciler;
 use Daun\StatamicMux\Mux\MuxApi;
+use Daun\StatamicMux\Thumbnails\ThumbnailService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use MuxPhp\Api\AssetsApi;
@@ -60,10 +61,13 @@ beforeEach(function () {
     $muxApi->shouldReceive('listAllAssets')->andReturn($this->remoteAssets);
     $muxApi->shouldReceive('dashboardUrl')->andReturn('https://dashboard.mux.com/environments/env-001/');
 
+    $thumbnails = Mockery::mock(ThumbnailService::class);
+    $thumbnails->shouldReceive('forAsset')->andReturn('https://image.mux.com/playback-001/animated.gif');
+
     $this->app->instance(MuxApi::class, $muxApi);
     $this->app->instance('mux.api', $muxApi);
 
-    $this->reconciler = new ListingReconciler($muxApi);
+    $this->reconciler = new ListingReconciler($muxApi, $thumbnails);
 });
 
 function makeRemoteAsset(string $id, string $status = 'ready', float $duration = 60.0, ?string $title = null): Asset

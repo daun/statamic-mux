@@ -221,3 +221,44 @@ test('ignores missing assets when getting multiple assets', function () {
     expect($assets)->toHaveKey('mux-asset-001');
     expect($assets)->not->toHaveKey('mux-missing');
 });
+
+test('get asset returns null when mux responds with not found', function () {
+    $this->guzzler->expects($this->once())
+        ->get('https://api.mux.com/video/v1/assets/mux-missing')
+        ->willRespond(Http::response(['error' => ['messages' => ['Not found']]], 404));
+
+    expect($this->api->getAsset('mux-missing'))->toBeNull();
+
+    $this->guzzler->assertHistoryCount(1);
+});
+
+test('get assets returns empty collection for empty ids without requests', function () {
+    expect($this->api->getAssets(['', null, ''])->all())->toBe([]);
+
+    $this->guzzler->assertHistoryCount(0);
+});
+
+test('whoami returns null when mux response has no data object', function () {
+    Cache::forget('statamic-mux.whoami.'.sha1('token-id'));
+
+    $api = new MuxApi($this->guzzler->getClient(), 'token-id', 'token-secret');
+
+    $this->guzzler->expects($this->once())
+        ->get('https://api.mux.com/system/v1/whoami')
+        ->willRespondJson(['data' => null]);
+
+    expect($api->whoami())->toBeNull();
+
+    $this->guzzler->assertHistoryCount(1);
+});
+
+test('whoami returns cached environment details without another request', function () {
+    Cache::put('statamic-mux.whoami.'.sha1('token-id'), ['environment_id' => 'env-cached'], now()->addMonth());
+
+    $api = new MuxApi($this->guzzler->getClient(), 'token-id', 'token-secret');
+
+    expect($api->whoami())->toBe(['environment_id' => 'env-cached']);
+    expect($api->dashboardUrl())->toBe('https://dashboard.mux.com/environments/env-cached/');
+
+    $this->guzzler->assertHistoryCount(0);
+});
