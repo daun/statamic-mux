@@ -47,6 +47,14 @@ export default {
                 : null;
         },
 
+        thumbnailUrl(row) {
+            const playbackId = this.primaryPlaybackId(row);
+
+            return playbackId
+                ? `https://image.mux.com/${playbackId}/animated.webp`
+                : null;
+        },
+
         embedCode(row) {
             const url = this.playerUrl(row);
 
@@ -75,6 +83,10 @@ export default {
 
         copyEmbedCode(row) {
             return this.copyToClipboard(this.embedCode(row));
+        },
+
+        copyThumbnailUrl(row) {
+            return this.copyToClipboard(this.thumbnailUrl(row));
         },
 
         // Mux processing pipeline state (remote-derived).

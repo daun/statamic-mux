@@ -94,8 +94,9 @@
                 <DropdownSeparator v-if="row.dashboard_url || playerUrl(row)" />
                 <DropdownItem icon="taxonomies" :text="__('Copy asset ID')" @click="copyAssetId(row)" />
                 <DropdownItem v-if="primaryPlaybackId(row)" icon="taxonomies" :text="__('Copy playback ID')" @click="copyPlaybackId(row)" />
-                <DropdownItem v-if="primaryPlaybackId(row)" icon="web" :text="__('Copy playback URL')" @click="copyPlaybackUrl(row)" />
+                <DropdownItem v-if="primaryPlaybackId(row)" icon="mux::video-square" :text="__('Copy playback URL')" @click="copyPlaybackUrl(row)" />
                 <DropdownItem v-if="primaryPlaybackId(row)" icon="programming-code-block" :text="__('Copy embed code')" @click="copyEmbedCode(row)" />
+                <DropdownItem v-if="primaryPlaybackId(row)" icon="mux::thumbnail" :text="__('Copy thumbnail URL')" @click="copyThumbnailUrl(row)" />
             </template>
         </Listing>
     </div>
