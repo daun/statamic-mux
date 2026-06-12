@@ -19,31 +19,30 @@
                 <ui-badge pill v-if="isProxy" icon="page-ghost" v-tooltip="t('proxy_tooltip')">
                     {{ t('proxy') }}
                 </ui-badge>
-                <ui-badge pill v-if="showDetails" icon="info-square" as="button" v-tooltip="t('details_tooltip')" @click="detailsExpanded = !detailsExpanded">
-                    {{ t('details') }}
-                </ui-badge>
+                <ui-dropdown v-if="showDetails && infoItems.length" align="start">
+                    <template #trigger>
+                        <ui-badge pill as="button" icon="info-square" v-tooltip="t('details_tooltip')">
+                            {{ t('info') }}
+                        </ui-badge>
+                    </template>
+                    <ui-dropdown-menu class="w-120 max-w-full">
+                        <ui-dropdown-item
+                            v-for="item in infoItems"
+                            :key="item.key"
+                            :icon="item.icon"
+                            @click="copy(item)"
+                        >
+                            <span class="flex min-w-0 max-w-full items-baseline gap-3">
+                                <span class="shrink-0 font-medium">{{ item.label }}</span>
+                                <span class="min-w-0 flex-1 truncate font-mono text-xs text-gray-400 dark:text-gray-500">
+                                    <span class="text-[0.9em]">{{ item.value }}</span>
+                                </span>
+                            </span>
+                        </ui-dropdown-item>
+                    </ui-dropdown-menu>
+                </ui-dropdown>
             </div>
-            <ui-card inset variant="flat" class="w-full overflow-auto bg-gray-50! dark:bg-gray-800!" v-if="showDetails && detailsExpanded">
-                <table class="w-full text-xs text-gray-600 dark:text-gray-300">
-                    <tbody class="divide-y divide-gray-800/10 dark:divide-white/10 [&_td]:px-1.5! [&_td]:py-2! [&_td:first-child]:pl-3! [&_td:last-child]:pr-3! [&_td]:text-left [&_svg]:opacity-60">
-                        <tr key="id">
-                            <td>
-                                <ui-icon name="mux::fingerprint" v-tooltip="'Mux ID'"></ui-icon>
-                            </td>
-                            <td>{{ value.id }}</td>
-                        </tr>
-                        <tr v-for="[policy, id] in playbackIds" :key="id">
-                            <td v-if="policy === 'signed'">
-                                <ui-icon name="mux::padlock" v-tooltip="'Signed Playback ID'"></ui-icon>
-                            </td>
-                            <td v-else>
-                                <ui-icon name="mux::play-button" v-tooltip="'Public Playback ID'"></ui-icon>
-                            </td>
-                            <td>{{ id }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </ui-card>
+
             <ui-checkbox v-if="showReuploadToggle" v-model="value.reupload" name="reupload" :label="t('reupload_on_save')" />
         </template>
     </div>
@@ -54,14 +53,9 @@ import { FieldtypeMixin as Fieldtype } from '@statamic/cms';
 
 export default {
     mixins: [Fieldtype],
-    data() {
-        return {
-            detailsExpanded: false
-        };
-    },
     computed: {
         showReuploadToggle() {
-            return this.allowReuploads && ! this.isProxy;
+            return this.allowReuploads && !this.isProxy;
         },
         allowReuploads() {
             return this.config?.allow_reupload;
@@ -76,19 +70,38 @@ export default {
             return this.meta?.is_video || false;
         },
         isUploaded() {
-            return !! this.value.id;
+            return !!this.value.id;
         },
         isProxy() {
             return this.meta?.is_proxy || false;
         },
-        playbackIds() {
-            return Object.entries(this.value.playback_ids || {});
-        }
+        infoItems() {
+            const info = this.meta?.mux || {};
+
+            const items = [
+                { key: 'asset_id', icon: 'taxonomies' },
+                { key: 'playback_id', icon: 'taxonomies' },
+                { key: 'player_url', icon: 'mux::video-square' },
+                // { key: 'stream_url', icon: 'mux::streaming' },
+                { key: 'embed_code', icon: 'programming-code-block' },
+                // { key: 'thumbnail_url', icon: 'mux::thumbnail' },
+                { key: 'gif_url', icon: 'mux::thumbnail' },
+            ];
+
+            return items
+                .filter((item) => info[item.key])
+                .map((item) => ({ ...item, label: this.t(`copy.${item.key}`), value: info[item.key] }));
+        },
     },
     methods: {
+        copy(item) {
+            if (item?.value) {
+                Statamic.$callbacks.call('copyToClipboard', item.value);
+            }
+        },
         t(key, replacements = {}) {
             return __(`statamic-mux::messages.fieldtype.${key}`, replacements);
-        }
+        },
     },
 };
 </script>
