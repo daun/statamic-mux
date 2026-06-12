@@ -85,15 +85,30 @@ class DeleteFromMux extends Action
 
         if ($failed > 0) {
             $success = $total - $failed;
-
-            return __(':success of :total Mux videos queued for deletion. :failed cannot be deleted.', [
+            $message = __(':success of :total Mux videos queued for deletion. :failed cannot be deleted.', [
                 'success' => $success,
                 'total' => $total,
                 'failed' => $failed,
             ]);
+        } else {
+            $message = trans_choice('Mux video queued for deletion|:count Mux videos queued for deletion', $total, ['count' => $total]);
         }
 
-        return trans_choice('Mux video queued for deletion|:count Mux videos queued for deletion', $total, ['count' => $total]);
+        $rows = $this->localRowIds($items);
+
+        return $rows ? [
+            'message' => $message,
+            'callback' => ['pollMuxMirroredAssetRows', $rows, 'delete'],
+        ] : $message;
+    }
+
+    protected function localRowIds($items): array
+    {
+        return collect($items)
+            ->filter(fn ($item) => $item instanceof MuxAsset && $item->asset)
+            ->map(fn (MuxAsset $item) => $item->asset->id())
+            ->values()
+            ->all();
     }
 
     protected function getMuxId(mixed $item): ?string

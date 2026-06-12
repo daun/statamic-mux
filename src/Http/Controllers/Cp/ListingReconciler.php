@@ -22,6 +22,7 @@ class ListingReconciler
     protected const ListingThumbnailSize = 100;
 
     protected const CopyThumbnailSize = 400;
+
     protected const CACHE_KEY = 'mux.remote_assets';
 
     protected const CACHE_VALIDITY_KEY = 'mux.remote_assets.valid';
@@ -44,6 +45,7 @@ class ListingReconciler
     {
         $items = $this->buildLocalRows();
 
+        $items = $this->applyRowsFilter($items, $params['rows'] ?? []);
         $items = $this->applySearch($items, $params['search'] ?? null);
         $items = $this->applySort($items, $params['sort'] ?? 'title', $params['order'] ?? 'asc');
         $result = $this->paginate($items, $params['page'] ?? 1, $params['perPage'] ?? 25);
@@ -51,6 +53,16 @@ class ListingReconciler
         $result['data'] = $this->enrichLocalRowsWithRemoteData($result['data']);
 
         return $result;
+    }
+
+    protected function applyRowsFilter(Collection $items, array $rows): Collection
+    {
+        if (empty($rows)) {
+            return $items;
+        }
+
+        return $items->filter(fn (array $item) => in_array($item['id'], $rows, true)
+            || in_array($item['path'], $rows, true));
     }
 
     /**

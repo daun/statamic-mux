@@ -177,6 +177,35 @@ test('local api data has expected fields', function () {
     expect($row['stream_url'])->toBe('https://stream.mux.com/playback-mux-asset-001.m3u8');
 });
 
+test('local api can filter rows by asset id or path', function () {
+    $other = $this->uploadTestFileToTestContainer('test.webm');
+    $other->set('mux', ['id' => 'missing-mux-asset']);
+    $other->save();
+
+    Stache::clear();
+
+    $controller = $this->app->make(ApiListingController::class);
+    $request = Request::create('/mux/listing/local', 'GET', [
+        'rows' => [$this->mp4->id()],
+    ]);
+    $response = $controller->local($request);
+    $json = $response->getData(true);
+
+    expect($json['meta']['total'])->toBe(1);
+    expect($json['data'])->toHaveCount(1);
+    expect($json['data'][0]['id'])->toBe($this->mp4->id());
+
+    $request = Request::create('/mux/listing/local', 'GET', [
+        'rows' => $this->mp4->path(),
+    ]);
+    $response = $controller->local($request);
+    $json = $response->getData(true);
+
+    expect($json['meta']['total'])->toBe(1);
+    expect($json['data'])->toHaveCount(1);
+    expect($json['data'][0]['path'])->toBe($this->mp4->path());
+});
+
 test('local api marks rows with stale mux ids as missing', function () {
     $missing = $this->uploadTestFileToTestContainer('short.mp4');
     $missing->set('mux', ['id' => 'missing-mux-asset']);

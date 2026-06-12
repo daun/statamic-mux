@@ -51,7 +51,19 @@ class ReUploadToMux extends Action
             ->filter()
             ->each(fn ($muxAsset) => CreateMuxAssetJob::dispatchAsync($muxAsset, true));
 
-        return trans_choice('Video queued for reupload|:count videos queued for reupload', $items->count(), ['count' => $items->count()]);
+        return [
+            'message' => trans_choice('Video queued for reupload|:count videos queued for reupload', $items->count(), ['count' => $items->count()]),
+            'callback' => ['pollMuxMirroredAssetRows', $this->localRowIds($items), 'reupload'],
+        ];
+    }
+
+    protected function localRowIds($items): array
+    {
+        return collect($items)
+            ->map(fn ($item) => $this->getMuxAsset($item)?->asset?->id())
+            ->filter()
+            ->values()
+            ->all();
     }
 
     protected function getMuxAsset(mixed $item): ?MuxAsset

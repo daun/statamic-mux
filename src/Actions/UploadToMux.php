@@ -51,7 +51,19 @@ class UploadToMux extends Action
             ->filter()
             ->each(fn ($muxAsset) => CreateMuxAssetJob::dispatchAsync($muxAsset));
 
-        return trans_choice('Video queued for upload|:count videos queued for upload', $items->count(), ['count' => $items->count()]);
+        return [
+            'message' => trans_choice('Video queued for upload|:count videos queued for upload', $items->count(), ['count' => $items->count()]),
+            'callback' => ['pollMuxMirroredAssetRows', $this->localRowIds($items), 'upload'],
+        ];
+    }
+
+    protected function localRowIds($items): array
+    {
+        return collect($items)
+            ->map(fn ($item) => $this->getMuxAsset($item)?->asset?->id())
+            ->filter()
+            ->values()
+            ->all();
     }
 
     protected function getMuxAsset(mixed $item): ?MuxAsset

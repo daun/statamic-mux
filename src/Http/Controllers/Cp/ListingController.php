@@ -133,7 +133,30 @@ class ListingController extends CpController
             'page' => (int) $request->input('page', 1),
             'perPage' => (int) $request->input('perPage', 25),
             'filters' => $this->parseFilters($request->input('filters', '')),
+            'rows' => $this->parseRows($request->input('rows')),
         ];
+    }
+
+    protected function parseRows(mixed $rows): array
+    {
+        if (is_array($rows)) {
+            return collect($rows)
+                ->flatten()
+                ->map(fn ($row) => trim((string) $row))
+                ->filter()
+                ->values()
+                ->all();
+        }
+
+        if (! $rows) {
+            return [];
+        }
+
+        return collect(preg_split('/[,|]/', (string) $rows))
+            ->map(fn ($row) => trim($row))
+            ->filter()
+            ->values()
+            ->all();
     }
 
     protected function parseFilters(string $filters): array

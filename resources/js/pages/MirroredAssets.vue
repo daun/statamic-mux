@@ -18,6 +18,7 @@
             :allow-bulk-actions="true"
             :allow-presets="false"
             :allow-customizing-columns="false"
+            @request-completed="listingRequestCompleted"
         >
             <template #cell-thumbnail_url="{ row, value }">
                 <button
@@ -125,6 +126,10 @@ export default {
         return {
             assetEditor: null,
             editingAssetId: null,
+            visibleRows: {},
+            pollingRows: {},
+            pollingTimer: null,
+            pollingBusy: false,
             columns: [
                 { field: 'thumbnail_url', label: __('Thumbnail'), sortable: false },
                 { field: 'title', label: __('Title'), sortable: true },
@@ -139,6 +144,12 @@ export default {
 
     mounted() {
         this.loadAssetEditor();
+        Statamic.$callbacks.add('pollMuxMirroredAssetRows', this.startPollingRows);
+    },
+
+    beforeUnmount() {
+        this.stopPollingRows();
+        Statamic.$callbacks.add('pollMuxMirroredAssetRows', () => {});
     },
 
     methods: {
@@ -171,6 +182,8 @@ export default {
         openAssetEditor(row) {
             if (!this.canEditAsset(row)) return;
 
+            this.editingAssetId = row.id;
+
             // If the inline editor couldn't be loaded, open the asset's edit
             // page in a new tab instead.
             if (!this.assetEditor) {
@@ -179,8 +192,6 @@ export default {
                 }
                 return;
             }
-
-            this.editingAssetId = row.id;
         },
 
         closeAssetEditor() {
@@ -202,7 +213,118 @@ export default {
         },
 
         assetEditorActionCompleted() {
+            if (this.editingAssetId) {
+                this.startPollingRows([this.editingAssetId]);
+            }
+
             this.$refs.listing?.refresh();
+        },
+
+        listingRequestCompleted({ items }) {
+            this.visibleRows = items.reduce((rows, row) => {
+                if (row.id) rows[row.id] = row;
+                if (row.path) rows[row.path] = row;
+
+                return rows;
+            }, {});
+        },
+
+        startPollingRows(rows, mode = 'sync') {
+            const keys = (Array.isArray(rows) ? rows : [rows]).filter(Boolean);
+
+            keys.forEach((key) => {
+                this.pollingRows[key] = this.pollingRows[key] || { mode, attempts: 0 };
+            });
+
+            if (!keys.length) return;
+
+            this.pollRows();
+
+            if (!this.pollingTimer) {
+                this.pollingTimer = setInterval(() => this.pollRows(), 3000);
+            }
+        },
+
+        stopPollingRows() {
+            if (this.pollingTimer) {
+                clearInterval(this.pollingTimer);
+                this.pollingTimer = null;
+            }
+
+            this.pollingRows = {};
+            this.pollingBusy = false;
+        },
+
+        async pollRows() {
+            if (this.pollingBusy) return;
+
+            const rows = Object.keys(this.pollingRows);
+            if (!rows.length) {
+                this.stopPollingRows();
+                return;
+            }
+
+            this.pollingBusy = true;
+            rows.forEach((row) => this.pollingRows[row].attempts++);
+
+            const params = new URLSearchParams();
+            rows.forEach((row) => params.append('rows[]', row));
+            params.set('page', 1);
+            params.set('perPage', Math.max(rows.length, 1));
+
+            try {
+                const response = await this.$axios.get(this.endpoint, { params });
+                const updatedRows = response.data?.data || [];
+
+                updatedRows.forEach((updatedRow) => this.patchPolledRow(updatedRow));
+                this.clearExpiredPollingRows();
+            } catch (e) {
+                console.warn('Failed to poll Mux asset rows.', e);
+                this.clearExpiredPollingRows();
+            } finally {
+                this.pollingBusy = false;
+
+                if (!Object.keys(this.pollingRows).length) {
+                    this.stopPollingRows();
+                }
+            }
+        },
+
+        patchPolledRow(updatedRow) {
+            const key = this.pollingKeyForRow(updatedRow);
+            const visibleRow = this.visibleRows[updatedRow.id] || this.visibleRows[updatedRow.path];
+
+            if (visibleRow) {
+                Object.assign(visibleRow, updatedRow);
+            }
+
+            if (key && this.isPollingComplete(updatedRow, this.pollingRows[key]?.mode)) {
+                delete this.pollingRows[key];
+            }
+        },
+
+        pollingKeyForRow(row) {
+            return Object.keys(this.pollingRows).find((key) => key === row.id || key === row.path);
+        },
+
+        isPollingComplete(row, mode) {
+            if (mode === 'delete') {
+                return !row.mux_id || ['missing', 'not_uploaded'].includes(row.mirror_status);
+            }
+
+            if (['upload', 'reupload'].includes(mode)) {
+                return row.mirror_status === 'uploaded' && ['ready', 'errored'].includes(row.processing_status);
+            }
+
+            return ['ready', 'errored'].includes(row.processing_status) || row.mirror_status === 'missing';
+        },
+
+        clearExpiredPollingRows() {
+            Object.entries(this.pollingRows).forEach(([key, state]) => {
+                if (state.attempts >= 120) {
+                    delete this.pollingRows[key];
+                }
+            });
         },
     },
 };
