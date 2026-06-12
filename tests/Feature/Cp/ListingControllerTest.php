@@ -108,9 +108,9 @@ beforeEach(function () {
     Auth::guard()->login($this->superUser);
 });
 
-test('page controller returns mirrored assets view by default', function () {
+test('page controller returns mirrored assets view', function () {
     $controller = $this->app->make(ListingController::class);
-    $response = $controller->index();
+    $response = $controller->assets();
 
     $component = (fn () => $this->component)->call($response);
     $props = (fn () => $this->props)->call($response);
@@ -134,7 +134,7 @@ test('page controller returns mux library view', function () {
 
 test('page controller passes correct endpoints', function () {
     $controller = $this->app->make(ListingController::class);
-    $mirrored = (fn () => $this->props)->call($controller->index());
+    $mirrored = (fn () => $this->props)->call($controller->assets());
     $library = (fn () => $this->props)->call($controller->library());
 
     expect($mirrored['endpoint'])->toContain('/mux/listing/local');
@@ -434,7 +434,7 @@ test('control panel nav builds mux children', function () {
     expect($mux->url())->toBe(cp_route('mux.index'));
     expect($children)->toHaveCount(2);
     expect($children->map->display()->all())->toBe(['Mirrored Assets', 'Mux Library']);
-    expect($children->map->url()->all())->toBe([cp_route('mux.index'), cp_route('mux.library')]);
+    expect($children->map->url()->all())->toBe([cp_route('mux.assets'), cp_route('mux.library')]);
 });
 
 test('local api requires view mux permission', function () {

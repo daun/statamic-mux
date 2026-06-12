@@ -1,7 +1,9 @@
 <?php
 
 use Daun\StatamicMux\Http\Controllers\Cp\ListingReconciler;
+use Daun\StatamicMux\Data\MuxPlaybackId;
 use Daun\StatamicMux\Mux\MuxApi;
+use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Thumbnails\ThumbnailService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -61,13 +63,21 @@ beforeEach(function () {
     $muxApi->shouldReceive('listAllAssets')->andReturn($this->remoteAssets);
     $muxApi->shouldReceive('dashboardUrl')->andReturn('https://dashboard.mux.com/environments/env-001/');
 
+    $muxService = Mockery::mock(MuxService::class);
+    $muxService->shouldReceive('getPlayerUrl')->andReturnUsing(fn (MuxPlaybackId $playbackId, array $params = []) => "https://player.mux.com/{$playbackId->id()}");
+    $muxService->shouldReceive('getEmbedCode')->andReturnUsing(fn (MuxPlaybackId $playbackId, array $params = []) => "<iframe src=\"https://player.mux.com/{$playbackId->id()}\"></iframe>");
+    $muxService->shouldReceive('getPlaybackUrl')->andReturnUsing(fn (MuxPlaybackId $playbackId, array $params = []) => "https://stream.mux.com/{$playbackId->id()}.m3u8");
+
     $thumbnails = Mockery::mock(ThumbnailService::class);
     $thumbnails->shouldReceive('forAsset')->andReturn('https://image.mux.com/playback-001/animated.gif');
+    $thumbnails->shouldReceive('forPlaybackId')->andReturnUsing(fn (MuxPlaybackId $playbackId, string $orientation = 'landscape', ?int $size = null) => "https://image.mux.com/{$playbackId->id()}/thumbnail.webp".($size ? "?width={$size}" : ''));
 
     $this->app->instance(MuxApi::class, $muxApi);
     $this->app->instance('mux.api', $muxApi);
+    $this->app->instance(MuxService::class, $muxService);
+    $this->app->instance('mux.service', $muxService);
 
-    $this->reconciler = new ListingReconciler($muxApi, $thumbnails);
+    $this->reconciler = new ListingReconciler($muxApi, $muxService, $thumbnails);
 });
 
 function makeRemoteAsset(string $id, string $status = 'ready', float $duration = 60.0, ?string $title = null): Asset
@@ -141,8 +151,8 @@ test('falls back to local data when asset is gone from Mux', function () {
     $stale = $rows->firstWhere('mux_id', 'mux-asset-gone');
     expect($stale)->not->toBeNull();
 
-    // Still counts as uploaded (it has a Mux ID); status is binary.
-    expect($stale['mirror_status'])->toBe('uploaded');
+    // Mux ID exists locally, but remote asset is gone.
+    expect($stale['mirror_status'])->toBe('missing');
     expect($stale['exists_remotely'])->toBeFalse();
 
     // Remote-only fields are empty, not em-dashed.

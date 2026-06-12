@@ -1,8 +1,10 @@
 <?php
 
+use Daun\StatamicMux\Data\MuxPlaybackId;
 use Daun\StatamicMux\Events\AssetUploadedToMux;
 use Daun\StatamicMux\Http\Controllers\Cp\ListingReconciler;
 use Daun\StatamicMux\Mux\MuxApi;
+use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Subscribers\ListingCacheSubscriber;
 use Daun\StatamicMux\Thumbnails\ThumbnailService;
 use Illuminate\Support\Facades\Cache;
@@ -46,13 +48,21 @@ beforeEach(function () {
     $muxApi->shouldReceive('getAssets')->andReturn(collect());
     $muxApi->shouldReceive('dashboardUrl')->andReturn(null);
 
+    $muxService = Mockery::mock(MuxService::class);
+    $muxService->shouldReceive('getPlayerUrl')->andReturnUsing(fn (MuxPlaybackId $playbackId, array $params = []) => "https://player.mux.com/{$playbackId->id()}");
+    $muxService->shouldReceive('getEmbedCode')->andReturnUsing(fn (MuxPlaybackId $playbackId, array $params = []) => "<iframe src=\"https://player.mux.com/{$playbackId->id()}\"></iframe>");
+    $muxService->shouldReceive('getPlaybackUrl')->andReturnUsing(fn (MuxPlaybackId $playbackId, array $params = []) => "https://stream.mux.com/{$playbackId->id()}.m3u8");
+
     $thumbnails = Mockery::mock(ThumbnailService::class);
     $thumbnails->shouldReceive('forAsset')->andReturn('https://image.mux.com/playback-001/animated.gif');
+    $thumbnails->shouldReceive('forPlaybackId')->andReturnUsing(fn (MuxPlaybackId $playbackId, string $orientation = 'landscape', ?int $size = null) => "https://image.mux.com/{$playbackId->id()}/thumbnail.webp".($size ? "?width={$size}" : ''));
 
     $this->app->instance(MuxApi::class, $muxApi);
     $this->app->instance('mux.api', $muxApi);
+    $this->app->instance(MuxService::class, $muxService);
+    $this->app->instance('mux.service', $muxService);
 
-    $this->reconciler = new ListingReconciler($muxApi, $thumbnails);
+    $this->reconciler = new ListingReconciler($muxApi, $muxService, $thumbnails);
 });
 
 test('subscriber listens to AssetUploadedToMux', function () {
