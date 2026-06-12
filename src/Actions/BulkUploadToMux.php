@@ -72,9 +72,7 @@ class BulkUploadToMux extends Action
         $queued = 0;
         $skipped = 0;
 
-        foreach ($items as $item) {
-            $asset = $item->asset();
-            $muxAsset = MuxAsset::fromAsset($asset);
+        foreach ($items as $muxAsset) {
             if ($muxAsset->isProxy()) {
                 $skipped++;
                 continue;
@@ -88,7 +86,7 @@ class BulkUploadToMux extends Action
                 continue;
             }
 
-            CreateMuxAssetJob::dispatch($asset, $isOnMux);
+            CreateMuxAssetJob::dispatch($muxAsset->asset, $isOnMux);
             $queued++;
         }
 
