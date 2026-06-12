@@ -1,6 +1,6 @@
 {
   "resources/css/addon.css": {
-    "file": "assets/addon-BGkA8-kq.css",
+    "file": "assets/addon-BNv7da6H.css",
     "name": "addon",
     "names": [
       "addon.css"
@@ -9,7 +9,7 @@
     "isEntry": true
   },
   "resources/js/addon.js": {
-    "file": "assets/addon-BMexBtde.js",
+    "file": "assets/addon-D2cJ2QL5.js",
     "name": "addon",
     "src": "resources/js/addon.js",
     "isEntry": true,
@@ -18,11 +18,14 @@
       "resources/svg/icons/cloud-transfer.svg?raw",
       "resources/svg/icons/cloud-upload.svg?raw",
       "resources/svg/icons/cloud-video.svg?raw",
+      "resources/svg/icons/connect.svg?raw",
       "resources/svg/icons/fingerprint.svg?raw",
+      "resources/svg/icons/history-delete.svg?raw",
       "resources/svg/icons/padlock.svg?raw",
       "resources/svg/icons/play-button.svg?raw",
       "resources/svg/icons/reload-vertical.svg?raw",
       "resources/svg/icons/reload.svg?raw",
+      "resources/svg/icons/thumbnail.svg?raw",
       "resources/svg/icons/video-card.svg?raw",
       "resources/svg/icons/video-folder.svg?raw",
       "resources/svg/icons/video-live.svg?raw",
@@ -58,14 +61,26 @@
     "src": "resources/svg/icons/cloud-video.svg?raw",
     "isDynamicEntry": true
   },
+  "resources/svg/icons/connect.svg?raw": {
+    "file": "assets/connect-DJveyQWF.js",
+    "name": "connect",
+    "src": "resources/svg/icons/connect.svg?raw",
+    "isDynamicEntry": true
+  },
   "resources/svg/icons/fingerprint.svg?raw": {
     "file": "assets/fingerprint-CbbpOU1i.js",
     "name": "fingerprint",
     "src": "resources/svg/icons/fingerprint.svg?raw",
     "isDynamicEntry": true
   },
+  "resources/svg/icons/history-delete.svg?raw": {
+    "file": "assets/history-delete-CvA9sPkY.js",
+    "name": "history-delete",
+    "src": "resources/svg/icons/history-delete.svg?raw",
+    "isDynamicEntry": true
+  },
   "resources/svg/icons/padlock.svg?raw": {
-    "file": "assets/padlock-BqQWo3Rg.js",
+    "file": "assets/padlock-C4OTPUDz.js",
     "name": "padlock",
     "src": "resources/svg/icons/padlock.svg?raw",
     "isDynamicEntry": true
@@ -86,6 +101,12 @@
     "file": "assets/reload-Bq8qVQgE.js",
     "name": "reload",
     "src": "resources/svg/icons/reload.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/icons/thumbnail.svg?raw": {
+    "file": "assets/thumbnail-iB5XWDPH.js",
+    "name": "thumbnail",
+    "src": "resources/svg/icons/thumbnail.svg?raw",
     "isDynamicEntry": true
   },
   "resources/svg/icons/video-card.svg?raw": {
