@@ -190,10 +190,25 @@ class ServiceProvider extends AddonServiceProvider
         Permission::group('mux', 'Mux', function () {
             Permission::register('view mux', function ($permission) {
                 $permission
-                    ->label('View Mux Assets')
+                    ->label('View Mux assets')
+                    ->description('Grants access to a control panel listing of Mux assets')
                     ->children([
-                        Permission::make('manage mux')->label('Manage Mux Assets'),
+                        Permission::make('view mux assets')
+                            ->label('Local assets mirrored to Mux'),
+                        Permission::make('view mux library')
+                            ->label('All videos in the Mux library'),
                     ]);
+            Permission::register('manage mux', function ($permission) {
+                $permission
+                    ->label('Manage Mux assets')
+                    ->description('Allows editing of existing Mux assets')
+                    ->children([
+                        Permission::make('delete mux assets')
+                            ->label('Delete videos from Mux'),
+                        Permission::make('trigger mux sync')
+                            ->label('Trigger full sync'),
+                    ]);
+                });
             });
         });
     }
