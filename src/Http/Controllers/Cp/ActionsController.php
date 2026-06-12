@@ -6,6 +6,7 @@ use Daun\StatamicMux\Data\Actions\MuxLibraryItem;
 use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Mux\MuxApi;
 use Statamic\Facades\Asset;
+use Statamic\Facades\User;
 use Statamic\Http\Controllers\CP\ActionController;
 
 class ActionsController extends ActionController
@@ -42,7 +43,8 @@ class ActionsController extends ActionController
     protected function getRemoteItems($items)
     {
         $cached = $this->reconciler->getCachedRemoteAssetsIfAvailable()->keyBy(fn ($asset) => $asset->getId());
-        $dashboardBaseUrl = $this->mux->dashboardUrl();
+        $user = User::current();
+        $dashboardBaseUrl = $user?->can('view mux dashboard') ? $this->mux->dashboardUrl() : null; // @phpstan-ignore method.notFound
 
         return $items->map(fn ($muxId) => new MuxLibraryItem(
             $muxId,

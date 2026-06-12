@@ -16,6 +16,8 @@ class ThumbnailController extends CpController
 
     public function thumbnail(string $id): RedirectResponse
     {
+        $this->authorize('manage mux');
+
         if (($asset = Assets::findById(base64_decode($id))) instanceof Asset) {
             if ($thumbnail = $this->service->generateForAsset($asset)) {
                 return redirect($thumbnail);

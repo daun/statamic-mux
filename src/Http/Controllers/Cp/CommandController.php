@@ -31,7 +31,7 @@ class CommandController extends Controller
     public function run(): JsonResponse
     {
         $user = User::current();
-        abort_unless($user && $user->can('manage mux'), 403); // @phpstan-ignore method.notFound
+        abort_unless($user && $user->can('trigger mux sync'), 403); // @phpstan-ignore method.notFound
 
         $command = request()->input('command');
         abort_unless(array_key_exists($command, self::COMMANDS), 404);

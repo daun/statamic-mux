@@ -3,32 +3,30 @@
 
     <div>
         <Header icon="mux::cloud-video" :title="__('Mux Library')">
-            <template v-if="can('manage mux')">
-                <Dropdown>
-                    <template #trigger>
-                        <Button
-                            icon="dots"
-                            variant="ghost"
-                            size="sm"
-                            :aria-label="__('Open dropdown menu')"
-                        />
-                    </template>
-                    <DropdownMenu>
-                        <DropdownItem icon="mux::history-delete" @click="refresh">
-                            {{ __('Clear cache and reload') }}
-                        </DropdownItem>
-                    </DropdownMenu>
-                </Dropdown>
-                <SyncButton :endpoint="commandEndpoint" />
-                <Button
-                    v-if="dashboardUrl"
-                    :href="dashboardUrl"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    icon-append="external-link"
-                    :text="__('Mux Dashboard')"
-                />
-            </template>
+            <Dropdown v-if="can('trigger mux sync')">
+                <template #trigger>
+                    <Button
+                        icon="dots"
+                        variant="ghost"
+                        size="sm"
+                        :aria-label="__('Open dropdown menu')"
+                    />
+                </template>
+                <DropdownMenu>
+                    <DropdownItem icon="mux::history-delete" @click="refresh">
+                        {{ __('Clear cache and reload') }}
+                    </DropdownItem>
+                </DropdownMenu>
+            </Dropdown>
+            <SyncButton :endpoint="commandEndpoint" />
+            <Button
+                v-if="dashboardUrl"
+                :href="dashboardUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                icon-append="external-link"
+                :text="__('Mux Dashboard')"
+            />
         </Header>
 
         <Listing
@@ -111,6 +109,7 @@ export default {
     props: {
         endpoint: { type: String, default: null },
         refreshEndpoint: { type: String, default: null },
+        commandEndpoint: { type: String, default: null },
         dashboardUrl: { type: String, default: null },
     },
 

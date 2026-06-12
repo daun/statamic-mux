@@ -128,8 +128,8 @@ test('page controller returns mux library view', function () {
     $props = (fn () => $this->props)->call($response);
 
     expect($component)->toBe('MuxLibraryPage');
-    expect($props)->toHaveKeys(['endpoint', 'refreshEndpoint', 'dashboardUrl']);
-    expect($props)->not->toHaveKeys(['commandEndpoint', 'assetEditorChunks']);
+    expect($props)->toHaveKeys(['endpoint', 'refreshEndpoint', 'commandEndpoint', 'dashboardUrl']);
+    expect($props)->not->toHaveKeys(['assetEditorChunks']);
 });
 
 test('page controller passes correct endpoints', function () {
@@ -314,11 +314,11 @@ test('command endpoint queues prune command', function () {
     Queue::assertPushed(QueuedCommand::class, fn (QueuedCommand $job) => $job->displayName() === 'mux:prune');
 });
 
-test('command endpoint requires manage mux permission', function () {
+test('command endpoint requires trigger mux sync permission', function () {
     $user = User::make()->email('viewer@test.com')->password('secret');
     $user->save();
 
-    $role = Role::make('mux-viewer')->title('Mux Viewer')->addPermission('view mux');
+    $role = Role::make('mux-viewer')->title('Mux Viewer')->addPermission('manage mux');
     $role->save();
 
     $user->assignRole('mux-viewer')->save();
@@ -437,7 +437,7 @@ test('control panel nav builds mux children', function () {
     expect($children->map->url()->all())->toBe([cp_route('mux.assets'), cp_route('mux.library')]);
 });
 
-test('local api requires view mux permission', function () {
+test('local api requires manage mux permission', function () {
     $user = User::make()->email('no-view@test.com')->password('secret');
     $user->save();
     Auth::guard()->login($user);
@@ -448,7 +448,24 @@ test('local api requires view mux permission', function () {
     expect(fn () => $controller->local($request))->toThrow(AuthorizationException::class);
 });
 
-test('remote api requires view mux permission', function () {
+test('dashboard urls require view mux dashboard permission', function () {
+    $user = User::make()->email('no-dashboard@test.com')->password('secret');
+    $user->save();
+
+    $role = Role::make('mux-manager-no-dashboard')->title('Mux Manager')->addPermission('manage mux');
+    $role->save();
+
+    $user->assignRole('mux-manager-no-dashboard')->save();
+    Auth::guard()->login($user);
+
+    $controller = $this->app->make(ApiListingController::class);
+    $request = Request::create('/mux/listing/local', 'GET');
+    $response = $controller->local($request);
+
+    expect($response->getData(true)['data'][0]['dashboard_url'])->toBeNull();
+});
+
+test('remote api requires view mux library permission', function () {
     $user = User::make()->email('no-remote-view@test.com')->password('secret');
     $user->save();
     Auth::guard()->login($user);

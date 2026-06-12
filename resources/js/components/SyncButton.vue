@@ -1,5 +1,5 @@
 <template>
-    <ButtonGroup v-if="can('manage mux')">
+    <ButtonGroup v-if="can('trigger mux sync')">
         <Dropdown align="end">
             <template #trigger>
                 <Button

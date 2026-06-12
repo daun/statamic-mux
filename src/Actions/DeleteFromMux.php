@@ -31,7 +31,7 @@ class DeleteFromMux extends Action
 
     public function authorize($user, $item)
     {
-        return $user->can('manage mux');
+        return $user->can('delete mux assets');
     }
 
     public function confirmationText()

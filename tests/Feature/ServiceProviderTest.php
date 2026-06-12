@@ -39,11 +39,15 @@ test('binds url service', function () {
     expect($this->app['mux.urls'])->toBeInstanceOf(MuxUrls::class);
 });
 
-test('registers mux permission', function () {
+test('registers mux permissions', function () {
     Permission::boot();
 
-    expect(Permission::get('view mux'))->not->toBeNull();
     expect(Permission::get('manage mux'))->not->toBeNull();
+    expect(Permission::get('view mux library'))->not->toBeNull();
+    expect(Permission::get('view mux dashboard'))->not->toBeNull();
+    expect(Permission::get('delete mux assets'))->not->toBeNull();
+    expect(Permission::get('trigger mux sync'))->not->toBeNull();
+    expect(Permission::get('view mux'))->toBeNull();
 });
 
 test('registers commands when artisan starts outside console', function () {

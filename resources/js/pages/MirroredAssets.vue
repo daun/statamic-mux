@@ -3,9 +3,7 @@
 
     <div>
         <Header icon="mux::video-playlist" :title="__('Mirrored Assets')">
-            <template v-if="can('manage mux')">
-                <SyncButton :endpoint="commandEndpoint" @completed="syncCommandCompleted" />
-            </template>
+            <SyncButton :endpoint="commandEndpoint" @completed="syncCommandCompleted" />
         </Header>
 
         <Listing

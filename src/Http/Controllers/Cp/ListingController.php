@@ -8,6 +8,7 @@ use Daun\StatamicMux\Support\CpAssets;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Statamic\Facades\User;
 use Statamic\Http\Controllers\CP\CpController;
 
 class ListingController extends CpController
@@ -20,6 +21,8 @@ class ListingController extends CpController
 
     public function index()
     {
+        $this->authorize('manage mux');
+
         if (! $this->service->configured()) {
             return Inertia::render('EmptyPage');
         }
@@ -29,7 +32,7 @@ class ListingController extends CpController
 
     public function assets()
     {
-        $this->authorize('view mux');
+        $this->authorize('manage mux');
 
         if (! $this->service->configured()) {
             return redirect()->route('statamic.cp.mux.index');
@@ -45,23 +48,26 @@ class ListingController extends CpController
 
     public function library()
     {
-        $this->authorize('view mux');
+        $this->authorize('view mux library');
 
         if (! $this->service->configured()) {
             return redirect()->route('statamic.cp.mux.index');
         }
 
+        $user = User::current();
+
         return Inertia::render('MuxLibraryPage', [
             'endpoint' => cp_route('mux.listing.remote'),
             'refreshEndpoint' => cp_route('mux.listing.refresh'),
+            'commandEndpoint' => cp_route('mux.command'),
             'actionUrl' => cp_route('mux.actions.remote.run'),
-            'dashboardUrl' => $this->api->dashboardUrl(),
+            'dashboardUrl' => $user?->can('view mux dashboard') ? $this->api->dashboardUrl() : null, // @phpstan-ignore method.notFound
         ]);
     }
 
     public function local(Request $request): JsonResponse
     {
-        $this->authorize('view mux');
+        $this->authorize('manage mux');
 
         if (! $this->service->configured()) {
             return response()->json([
@@ -87,7 +93,7 @@ class ListingController extends CpController
 
     public function remote(Request $request): JsonResponse
     {
-        $this->authorize('view mux');
+        $this->authorize('view mux library');
 
         if (! $this->service->configured()) {
             return response()->json([
@@ -114,7 +120,7 @@ class ListingController extends CpController
 
     public function refresh(): JsonResponse
     {
-        $this->authorize('view mux');
+        $this->authorize('trigger mux sync');
 
         $assets = $this->listing->refreshRemoteAssets();
 

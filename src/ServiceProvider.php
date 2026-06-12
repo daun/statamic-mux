@@ -175,10 +175,10 @@ class ServiceProvider extends AddonServiceProvider
             $nav->findOrCreate('Tools', 'Mux')
                 ->route('mux.index')
                 ->icon('mux::video-player')
-                ->can('view mux')
+                ->can('manage mux')
                 ->children($service->configured() ? [
-                    $nav->item(__('Mirrored Assets'))->route('mux.assets')->can('view mux'),
-                    $nav->item(__('Mux Library'))->route('mux.library')->can('view mux'),
+                    $nav->item(__('Mirrored Assets'))->route('mux.assets'),
+                    $nav->item(__('Mux Library'))->route('mux.library')->can('view mux library'),
                 ] : []);
         });
 
@@ -188,27 +188,24 @@ class ServiceProvider extends AddonServiceProvider
     protected function bootPermissions()
     {
         Permission::group('mux', 'Mux', function () {
-            Permission::register('view mux', function ($permission) {
-                $permission
-                    ->label('View Mux assets')
-                    ->description('Grants access to a control panel listing of Mux assets')
-                    ->children([
-                        Permission::make('view mux assets')
-                            ->label('Local assets mirrored to Mux'),
-                        Permission::make('view mux library')
-                            ->label('All videos in the Mux library'),
-                    ]);
             Permission::register('manage mux', function ($permission) {
                 $permission
-                    ->label('Manage Mux assets')
-                    ->description('Allows editing of existing Mux assets')
+                    ->label('Manage Mux')
+                    ->description('Grants access to Mux control panel listings and management')
                     ->children([
+                        Permission::make('view mux library')
+                            ->label('View Mux library')
+                            ->description('Allows viewing all videos in the connected Mux library'),
+                        Permission::make('view mux dashboard')
+                            ->label('View Mux dashboard')
+                            ->description('Allows opening links to the external Mux dashboard'),
                         Permission::make('delete mux assets')
-                            ->label('Delete videos from Mux'),
+                            ->label('Delete Mux assets')
+                            ->description('Allows removing Mux assets from the library'),
                         Permission::make('trigger mux sync')
-                            ->label('Trigger full sync'),
+                            ->label('Trigger sync')
+                            ->description('Allows triggering a manual sync from the control panel'),
                     ]);
-                });
             });
         });
     }
