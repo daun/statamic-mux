@@ -99,7 +99,7 @@ class ListingController extends CpController
             return response()->json([
                 'data' => [],
                 'meta' => [
-                    'columns' => $this->localColumns(),
+                    'columns' => $this->remoteColumns(),
                 ],
             ]);
         }
