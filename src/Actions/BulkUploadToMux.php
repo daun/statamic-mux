@@ -71,6 +71,7 @@ class BulkUploadToMux extends Action
 
         $queued = 0;
         $skipped = 0;
+        $queuedRows = [];
 
         foreach ($items as $muxAsset) {
             if ($muxAsset->isProxy()) {
@@ -88,6 +89,10 @@ class BulkUploadToMux extends Action
 
             CreateMuxAssetJob::dispatch($muxAsset->asset, $isOnMux);
             $queued++;
+
+            if ($id = $muxAsset->asset?->id()) {
+                $queuedRows[] = $id;
+            }
         }
 
         if ($queued === 0) {
@@ -102,6 +107,9 @@ class BulkUploadToMux extends Action
             $message .= ' '.trans_choice('(:count already uploaded)|(:count already uploaded)', $skipped, ['count' => $skipped]);
         }
 
-        return $message;
+        return [
+            'message' => $message,
+            'callback' => ['pollMuxMirroredAssetRows', $queuedRows, 'upload'],
+        ];
     }
 }
