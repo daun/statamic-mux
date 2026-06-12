@@ -73,7 +73,7 @@ test('returns a configured DeliveryUsageApi instance', function () {
 });
 
 test('builds dashboard url from the whoami endpoint', function () {
-    Cache::forget('statamic-mux.whoami.'.sha1('token-id'));
+    Cache::forget('statamic-mux.whoami.'.sha1('token-idtoken-secret'));
 
     $api = new MuxApi($this->guzzler->getClient(), 'token-id', 'token-secret');
 
@@ -239,7 +239,7 @@ test('get assets returns empty collection for empty ids without requests', funct
 });
 
 test('whoami returns null when mux response has no data object', function () {
-    Cache::forget('statamic-mux.whoami.'.sha1('token-id'));
+    Cache::forget('statamic-mux.whoami.'.sha1('token-idtoken-secret'));
 
     $api = new MuxApi($this->guzzler->getClient(), 'token-id', 'token-secret');
 
@@ -253,7 +253,7 @@ test('whoami returns null when mux response has no data object', function () {
 });
 
 test('whoami returns cached environment details without another request', function () {
-    Cache::put('statamic-mux.whoami.'.sha1('token-id'), ['environment_id' => 'env-cached'], now()->addMonth());
+    Cache::put('statamic-mux.whoami.'.sha1('token-idtoken-secret'), ['environment_id' => 'env-cached'], now()->addMonth());
 
     $api = new MuxApi($this->guzzler->getClient(), 'token-id', 'token-secret');
 
