@@ -77,11 +77,13 @@ class ThumbnailService
         });
     }
 
-    public function forPlaybackId(MuxPlaybackId $playbackId, string $orientation = 'landscape'): string
+    public function forPlaybackId(MuxPlaybackId $playbackId, string $orientation = 'landscape', ?int $size = null): string
     {
+        $size ??= $this->size;
+
         $params = $orientation === 'landscape'
-            ? ['width' => $this->size, 'format' => 'webp']
-            : ['height' => $this->size, 'format' => 'webp'];
+            ? ['width' => $size, 'format' => 'webp']
+            : ['height' => $size, 'format' => 'webp'];
 
         return $this->animated()
             ? $this->service->getGifUrl($playbackId, $params)
