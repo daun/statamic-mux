@@ -39,7 +39,7 @@
                 <div class="text-sm">
                     <a v-if="row.can_edit && row.edit_url" :href="row.edit_url" @click.prevent="openAssetEditor(row)">{{ value }}</a>
                     <span v-else>{{ value }}</span>
-                    <span v-if="row.path" class="block text-2xs text-gray-400 dark:text-gray-700">{{ row.path }}</span>
+                    <span v-if="row.path && row.path !== value" class="block text-2xs text-gray-400 dark:text-gray-700">{{ row.path }}</span>
                 </div>
             </template>
 
@@ -56,7 +56,7 @@
             </template>
 
             <template #cell-playback_policy="{ value }">
-                <ui-badge v-if="value" pill size="sm" class="capitalize">{{ value }}</ui-badge>
+                <PlaybackPolicyBadge :value="value" />
             </template>
 
             <template #cell-created_at="{ value }">

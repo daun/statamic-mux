@@ -15,6 +15,7 @@ import {
 
 import MatchStatusBadge from '../components/MatchStatusBadge.vue';
 import MirrorStatusBadge from '../components/MirrorStatusBadge.vue';
+import PlaybackPolicyBadge from '../components/PlaybackPolicyBadge.vue';
 import ProcessingStatusBadge from '../components/ProcessingStatusBadge.vue';
 import SyncButton from '../components/SyncButton.vue';
 
@@ -34,6 +35,7 @@ export default {
         Listing,
         MatchStatusBadge,
         MirrorStatusBadge,
+        PlaybackPolicyBadge,
         ProcessingStatusBadge,
         SyncButton,
     },

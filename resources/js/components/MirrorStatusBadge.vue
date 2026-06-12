@@ -25,7 +25,7 @@ export default {
                 not_uploaded: {
                     color: 'amber',
                     label: __('Not uploaded'),
-                    tooltip: __('Not been mirrored to Mux yet'),
+                    tooltip: __('Not mirrored to Mux yet'),
                 },
                 missing: {
                     color: 'red',

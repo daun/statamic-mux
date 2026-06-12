@@ -81,7 +81,7 @@
             </template>
 
             <template #cell-playback_policy="{ value }">
-                <ui-badge v-if="value" pill size="sm" class="capitalize">{{ value }}</ui-badge>
+                <PlaybackPolicyBadge :value="value" />
             </template>
 
             <template #cell-created_at="{ value }">
