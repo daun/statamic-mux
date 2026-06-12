@@ -35,14 +35,14 @@ class ThumbnailService
         // If playback id already exists, generate gif url immediately
         // Otherwise, delegate generation to custom route in the background
         return ($playbackId = $this->service->getPlaybackId($asset, requestIfMissing: false))
-            ? $this->getThumbnailUrl($playbackId, $asset->orientation())
+            ? $this->forPlaybackId($playbackId, $asset->orientation())
             : cp_route('mux.thumbnail', base64_encode($asset->id()));
     }
 
     public function generateForAsset(Asset $asset): ?string
     {
         return ($playbackId = $this->service->getPlaybackId($asset))
-            ? $this->getThumbnailUrl($playbackId, $asset->orientation())
+            ? $this->forPlaybackId($playbackId, $asset->orientation())
             : null;
     }
 
@@ -77,7 +77,7 @@ class ThumbnailService
         });
     }
 
-    protected function getThumbnailUrl(MuxPlaybackId $playbackId, string $orientation = 'landscape'): string
+    public function forPlaybackId(MuxPlaybackId $playbackId, string $orientation = 'landscape'): string
     {
         $params = $orientation === 'landscape'
             ? ['width' => $this->size, 'format' => 'webp']

@@ -201,6 +201,11 @@ class ListingReconciler
             }
 
             $row['exists_remotely'] = $remote !== null;
+            $row['mirror_status'] = match (true) {
+                $remote !== null => 'uploaded',
+                $muxId !== null => 'missing',
+                default => 'not_uploaded',
+            };
 
             return $row;
         })->all();
@@ -249,6 +254,7 @@ class ListingReconciler
                 $muxId = $mux->id();
                 $hasMuxData = $muxId !== null;
                 $duration = $mux->duration() ?? $this->assetDuration($asset);
+                $playback = $mux->playbackId();
                 $canEdit = $user?->can('edit', $asset) ?? false; // @phpstan-ignore method.notFound
 
                 return [
@@ -260,7 +266,7 @@ class ListingReconciler
                     'can_edit' => $canEdit,
                     'mux_id' => $muxId,
                     'dashboard_url' => $this->dashboardAssetUrl($muxId, $dashboardUrl),
-                    'thumbnail_url' => $this->getLocalThumbnailUrl($asset),
+                    'thumbnail_url' => $playback ? $this->getMuxThumbnailUrl($playback, $asset->orientation()) : null,
                     'player_url' => null,
                     'stream_url' => null,
                     'embed_code' => null,
@@ -314,7 +320,7 @@ class ListingReconciler
                     'resolution_tier' => $muxAsset->getResolutionTier(),
                     'max_resolution_tier' => $muxAsset->getMaxResolutionTier(),
                     'is_test' => (bool) $muxAsset->getTest(),
-                    'thumbnail_url' => $row['thumbnail_url'] ?? $localAsset?->thumbnailUrl('small'),
+                    'thumbnail_url' => $row['thumbnail_url'],
                     'aspect_ratio' => $muxAsset->getAspectRatio(),
                 ];
             });
@@ -343,6 +349,7 @@ class ListingReconciler
         $playbackId = $this->getPrimaryPlaybackId($playbackIds);
         $playback = $this->getPrimaryPlayback($playbackIds);
         $playerUrl = $playback ? $this->service->getPlayerUrl($playback) : null;
+        $thumbnailUrl = $playback ? $this->getMuxThumbnailUrl($playback) : null;
 
         return [
             'mux_id' => $source->id(),
@@ -352,7 +359,7 @@ class ListingReconciler
             'playback_ids' => $playbackIds,
             'playback_id' => $playbackId,
             'playback_policy' => $this->aggregatePlaybackPolicy($playbackIds),
-            'thumbnail_url' => $playback ? $this->getMuxThumbnailUrl($playback) : null,
+            'thumbnail_url' => $thumbnailUrl,
             'player_url' => $playerUrl,
             'stream_url' => $playback ? $this->service->getPlaybackUrl($playback) : null,
             'embed_code' => $playback ? $this->service->getEmbedCode($playback) : null,
@@ -398,12 +405,9 @@ class ListingReconciler
         return MuxPlaybackId::make($playbackId['id'] ?? '', $playbackId['policy'] ?? '');
     }
 
-    protected function getMuxThumbnailUrl(MuxPlaybackId $playbackId): string
+    protected function getMuxThumbnailUrl(MuxPlaybackId $playbackId, string $orientation = 'landscape'): string
     {
-        return $this->service->getThumbnailUrl($playbackId, [
-            'format' => 'webp',
-            'width' => 120,
-        ]);
+        return $this->thumbnails->forPlaybackId($playbackId, $orientation);
     }
 
     /**
@@ -420,11 +424,6 @@ class ListingReconciler
             ->values();
 
         return $policies->isEmpty() ? null : $policies->implode(', ');
-    }
-
-    protected function getLocalThumbnailUrl(Asset $asset): ?string
-    {
-        return $this->thumbnails->forAsset($asset);
     }
 
     /**

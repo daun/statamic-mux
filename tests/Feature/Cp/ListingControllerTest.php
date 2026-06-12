@@ -95,7 +95,8 @@ beforeEach(function () {
     $muxService->shouldReceive('api')->andReturn($muxApi);
     $muxService->shouldReceive('getMuxId')->andReturn('mux-asset-001');
     $muxService->shouldReceive('getPlaybackId')->andReturnNull();
-    $muxService->shouldReceive('getThumbnailUrl')->andReturnUsing(fn (MuxPlaybackId $playbackId, array $params = []) => "https://image.mux.com/{$playbackId->id()}/thumbnail.webp?width=120");
+    $muxService->shouldReceive('getGifUrl')->andReturnUsing(fn (MuxPlaybackId $playbackId, array $params = []) => "https://image.mux.com/{$playbackId->id()}/animated.webp?width=400");
+    $muxService->shouldReceive('getThumbnailUrl')->andReturnUsing(fn (MuxPlaybackId $playbackId, array $params = []) => "https://image.mux.com/{$playbackId->id()}/thumbnail.webp?width=400");
     $muxService->shouldReceive('getPlayerUrl')->andReturnUsing(fn (MuxPlaybackId $playbackId, array $params = []) => "https://player.mux.com/{$playbackId->id()}");
     $muxService->shouldReceive('getEmbedCode')->andReturnUsing(fn (MuxPlaybackId $playbackId, array $params = []) => "<iframe src=\"https://player.mux.com/{$playbackId->id()}\" style=\"width: 100%; border: none; aspect-ratio: 16/9;\" allow=\"accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;\" allowfullscreen></iframe>");
     $muxService->shouldReceive('getPlaybackUrl')->andReturnUsing(fn (MuxPlaybackId $playbackId, array $params = []) => "https://stream.mux.com/{$playbackId->id()}.m3u8");
@@ -164,15 +165,37 @@ test('local api data has expected fields', function () {
     $row = collect($json['data'])->firstWhere('mux_id', 'mux-asset-001');
     expect($row)->not->toBeNull();
     expect($row)->toHaveKeys(['id', 'title', 'path', 'edit_url', 'can_edit', 'mux_id', 'dashboard_url', 'has_mux_data', 'mirror_status', 'processing_status', 'duration', 'duration_formatted', 'playback_policy', 'playback_id', 'playback_ids', 'thumbnail_url', 'player_url', 'stream_url', 'embed_code']);
-    expect($row)->not->toHaveKeys(['embed_url', 'playback_url']);
+    expect($row)->not->toHaveKeys(['embed_url', 'playback_url', 'mux_thumbnail_url']);
     expect($row['edit_url'])->toContain('/assets/');
     expect($row['can_edit'])->toBeTrue();
     expect($row['dashboard_url'])->toBe('https://dashboard.mux.com/environments/env-001/video/assets/mux-asset-001');
     expect($row['playback_id'])->toBe('playback-mux-asset-001');
-    expect($row['thumbnail_url'])->toBe('https://image.mux.com/playback-mux-asset-001/thumbnail.webp?width=120');
+    expect($row['thumbnail_url'])->toBe('https://image.mux.com/playback-mux-asset-001/animated.webp?width=400');
     expect($row['player_url'])->toBe('https://player.mux.com/playback-mux-asset-001');
     expect($row['embed_code'])->toContain('src="https://player.mux.com/playback-mux-asset-001"');
     expect($row['stream_url'])->toBe('https://stream.mux.com/playback-mux-asset-001.m3u8');
+});
+
+test('local api marks rows with stale mux ids as missing', function () {
+    $missing = $this->uploadTestFileToTestContainer('short.mp4');
+    $missing->set('mux', ['id' => 'missing-mux-asset']);
+    $missing->save();
+
+    Stache::clear();
+
+    $controller = $this->app->make(ApiListingController::class);
+    $request = Request::create('/mux/listing/local', 'GET');
+    $response = $controller->local($request);
+    $json = $response->getData(true);
+
+    $row = collect($json['data'])->firstWhere('mux_id', 'missing-mux-asset');
+
+    expect($row)->not->toBeNull();
+    expect($row['exists_remotely'])->toBeFalse();
+    expect($row['mirror_status'])->toBe('missing');
+    expect($row['processing_status'])->toBeNull();
+    expect($row['playback_id'])->toBeNull();
+    expect($row['thumbnail_url'])->toBeNull();
 });
 
 test('remote api returns json with data and meta', function () {
@@ -196,10 +219,10 @@ test('remote api data has expected fields', function () {
     expect($json['data'])->not->toBeEmpty();
     $row = $json['data'][0];
     expect($row)->toHaveKeys(['id', 'title', 'mux_id', 'dashboard_url', 'match_status', 'processing_status', 'duration', 'duration_formatted', 'playback_policy', 'playback_id', 'playback_ids', 'thumbnail_url', 'player_url', 'stream_url', 'embed_code']);
-    expect($row)->not->toHaveKeys(['embed_url', 'playback_url']);
+    expect($row)->not->toHaveKeys(['embed_url', 'playback_url', 'mux_thumbnail_url']);
     expect($row['dashboard_url'])->toBe('https://dashboard.mux.com/environments/env-001/video/assets/mux-asset-001');
     expect($row['playback_id'])->toBe('playback-mux-asset-001');
-    expect($row['thumbnail_url'])->toBe('https://image.mux.com/playback-mux-asset-001/thumbnail.webp?width=120');
+    expect($row['thumbnail_url'])->toBe('https://image.mux.com/playback-mux-asset-001/animated.webp?width=400');
     expect($row['player_url'])->toBe('https://player.mux.com/playback-mux-asset-001');
     expect($row['embed_code'])->toContain('src="https://player.mux.com/playback-mux-asset-001"');
     expect($row['stream_url'])->toBe('https://stream.mux.com/playback-mux-asset-001.m3u8');

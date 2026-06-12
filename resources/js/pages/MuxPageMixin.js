@@ -102,6 +102,7 @@ export default {
         mirrorStatusColor(status) {
             return {
                 uploaded: 'green',
+                missing: 'red',
                 not_uploaded: 'amber',
             }[status] || 'gray';
         },
@@ -109,6 +110,7 @@ export default {
         mirrorStatusLabel(status) {
             return {
                 uploaded: __('Uploaded'),
+                missing: __('Missing'),
                 not_uploaded: __('Not uploaded'),
             }[status] || status;
         },
