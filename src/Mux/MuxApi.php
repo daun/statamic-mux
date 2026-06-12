@@ -148,7 +148,7 @@ class MuxApi
             return null;
         }
 
-        $cacheKey = 'statamic-mux.whoami.'.sha1($this->tokenId . $this->tokenSecret);
+        $cacheKey = 'statamic-mux.whoami.'.sha1($this->tokenId.$this->tokenSecret);
         $cached = Cache::get($cacheKey);
 
         if (is_array($cached)) {
