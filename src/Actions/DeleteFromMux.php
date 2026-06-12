@@ -58,8 +58,11 @@ class DeleteFromMux extends Action
                 continue;
             }
 
+            // Pass the local Asset if available so the mux_id is cleared from local data
+            $target = $this->getLocalAsset($item) ?? $muxId;
+
             try {
-                $deleted = $service->deleteMuxAsset($muxId);
+                $deleted = $service->deleteMuxAsset($target);
             } catch (\Throwable $e) {
                 $failures->push($muxId);
 
@@ -109,6 +112,19 @@ class DeleteFromMux extends Action
             ->map(fn (MuxAsset $item) => $item->asset->id())
             ->values()
             ->all();
+    }
+
+    protected function getLocalAsset(mixed $item): ?Asset
+    {
+        if ($item instanceof Asset && MirrorField::shouldMirror($item)) {
+            return $item;
+        }
+
+        if ($item instanceof MuxAsset) {
+            return $item->asset;
+        }
+
+        return null;
     }
 
     protected function getMuxId(mixed $item): ?string
