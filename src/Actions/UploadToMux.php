@@ -24,7 +24,7 @@ class UploadToMux extends Action
     {
         $asset = $this->getMuxAsset($item);
 
-        return $asset && ! $asset->exists();
+        return $asset && ! $asset->isProxy() && ! $asset->exists();
     }
 
     public function authorize($user, $item)

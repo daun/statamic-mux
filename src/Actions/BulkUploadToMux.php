@@ -28,7 +28,7 @@ class BulkUploadToMux extends Action
     public function visibleToBulk($items)
     {
         // Only show when items have different upload statuses
-        return $items->every(fn ($item) => $item instanceof MuxAsset)
+        return $items->every(fn ($item) => $item instanceof MuxAsset && ! $item->isProxy())
             && $items->map(fn ($item) => $item->exists())->unique()->count() > 1;
     }
 
@@ -75,6 +75,11 @@ class BulkUploadToMux extends Action
         foreach ($items as $item) {
             $asset = $item->asset();
             $muxAsset = MuxAsset::fromAsset($asset);
+            if ($muxAsset->isProxy()) {
+                $skipped++;
+                continue;
+            }
+
             $muxId = $muxAsset->id();
             $isOnMux = $muxId && $cached->has($muxId);
 
