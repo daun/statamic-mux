@@ -1,45 +1,59 @@
 <template>
-    <Badge v-if="value" pill :color="color" class="text-2xs" v-tooltip="tooltip">
+    <ui-badge v-if="value" pill :color="color" size="sm" v-tooltip="tooltip">
         {{ label }}
-    </Badge>
+    </ui-badge>
 </template>
 
 <script>
-import { Badge } from '@statamic/cms/ui';
-
 export default {
-    components: { Badge },
-
     props: {
         value: { type: String, default: null },
     },
 
+    data() {
+        return {
+            states: {
+                mirrored: {
+                    color: 'green',
+                    label: __('Mirrored'),
+                    tooltip: __('Linked to a local asset'),
+                },
+                orphaned: {
+                    color: 'amber',
+                    label: __('Orphaned'),
+                    tooltip: __('Not linked to a local asset'),
+                },
+                duplicated: {
+                    color: 'red',
+                    label: __('Duplicated'),
+                    tooltip: __('Referenced by multiple local assets'),
+                },
+                proxy: {
+                    color: 'blue',
+                    label: __('Placeholder'),
+                    tooltip: __('Temporary placeholder clip for an original asset'),
+                },
+                fallback: {
+                    color: 'gray',
+                    label: this.value,
+                    tooltip: null,
+                },
+            },
+        };
+    },
+
     computed: {
+        state() {
+            return this.states[this.value] || { ...this.states.fallback, label: this.value };
+        },
         color() {
-            return {
-                mirrored: 'green',
-                proxy: 'gray',
-                orphaned: 'amber',
-                duplicated: 'red',
-            }[this.value] || 'gray';
+            return this.state.color;
         },
-
         label() {
-            return {
-                mirrored: __('Mirrored'),
-                proxy: __('Placeholder'),
-                orphaned: __('Orphaned'),
-                duplicated: __('Duplicated'),
-            }[this.value] || this.value;
+            return this.state.label;
         },
-
         tooltip() {
-            return {
-                mirrored: __('Linked to a local asset'),
-                proxy: __('Represented by a local placeholder clip'),
-                orphaned: __('Not linked to a local asset'),
-                duplicated: __('Referenced by multiple local assets'),
-            }[this.value] || null;
+            return this.state.tooltip;
         },
     },
 };

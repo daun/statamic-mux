@@ -1,42 +1,58 @@
 <template>
-    <Badge v-if="value" pill :color="color" class="text-2xs" v-tooltip="tooltip">
-        {{ label }}
-    </Badge>
+    <span class="flex items-center gap-2">
+        <ui-badge v-if="value" pill :color="color" size="sm" v-tooltip="tooltip">
+            {{ label }}
+        </ui-badge>
+        <ui-icon v-if="isProxy" class="size-3! text-green-700 dark:text-green-300" name="page-ghost" v-tooltip="__('Local asset is a short placeholder clip for the original video')"></ui-icon>
+    </span>
 </template>
 
 <script>
-import { Badge } from '@statamic/cms/ui';
-
 export default {
-    components: { Badge },
-
     props: {
         value: { type: String, default: null },
+        isProxy: { type: Boolean, default: false },
+    },
+
+    data() {
+        return {
+            states: {
+                uploaded: {
+                    color: 'green',
+                    label: __('Uploaded'),
+                    tooltip: __('Mirrored to Mux'),
+                },
+                not_uploaded: {
+                    color: 'amber',
+                    label: __('Not uploaded'),
+                    tooltip: __('Not been mirrored to Mux yet'),
+                },
+                missing: {
+                    color: 'red',
+                    label: __('Missing'),
+                    tooltip: __('References a Mux asset that does not exist'),
+                },
+                fallback: {
+                    color: 'gray',
+                    label: this.value,
+                    tooltip: null,
+                },
+            },
+        };
     },
 
     computed: {
+        state() {
+            return this.states[this.value] || { ...this.states.fallback, label: this.value };
+        },
         color() {
-            return {
-                uploaded: 'green',
-                not_uploaded: 'amber',
-                missing: 'red',
-            }[this.value] || 'gray';
+            return this.state.color;
         },
-
         label() {
-            return {
-                uploaded: __('Uploaded'),
-                not_uploaded: __('Not uploaded'),
-                missing: __('Missing'),
-            }[this.value] || this.value;
+            return this.state.label;
         },
-
         tooltip() {
-            return {
-                uploaded: __('Asset has been mirrored to Mux'),
-                not_uploaded: __('Asset has not been mirrored to Mux yet'),
-                missing: __('References a Mux asset that does not exist'),
-            }[this.value] || null;
+            return this.state.tooltip;
         },
     },
 };

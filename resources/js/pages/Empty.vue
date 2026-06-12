@@ -10,7 +10,7 @@ useArchitecturalBackground();
 
     <header class="py-8 mt-8 text-center starting-style-transition" v-cloak>
         <h1 class="text-[25px] font-medium antialiased flex justify-center items-center gap-2 sm:gap-3">
-            <Icon name="mux::video-player" class="size-5 text-gray-500" />
+            <ui-icon name="mux::video-player" class="size-5 text-gray-500" />
             {{ __('Mux Videos') }}
         </h1>
     </header>

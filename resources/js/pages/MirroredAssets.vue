@@ -23,33 +23,28 @@
                 <button
                     v-if="row.can_edit && row.edit_url"
                     type="button"
-                    class="w-16 h-10 rounded overflow-hidden bg-gray-100 dark:bg-dark-800 flex items-center justify-center cursor-pointer"
+                    class="w-16 h-10 rounded overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center cursor-pointer"
                     :title="__('Edit Asset')"
                     :aria-label="__('Edit Asset')"
                     @click="openAssetEditor(row)"
                 >
                     <img v-if="value" :src="value" class="w-full h-full object-cover" loading="lazy" @error="$event.target.style.display='none'" />
                 </button>
-                <div v-else class="w-16 h-10 rounded overflow-hidden bg-gray-100 dark:bg-dark-800 flex items-center justify-center">
+                <div v-else class="w-16 h-10 rounded overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                     <img v-if="value" :src="value" class="w-full h-full object-cover" loading="lazy" @error="$event.target.style.display='none'" />
                 </div>
             </template>
 
             <template #cell-title="{ row, value }">
-                <div>
-                    <a
-                        v-if="row.can_edit && row.edit_url"
-                        :href="row.edit_url"
-                        class="group inline-flex items-center gap-1 text-sm font-medium"
-                        @click.prevent="openAssetEditor(row)"
-                    >{{ value }}</a>
-                    <span v-else class="text-sm font-medium">{{ value }}</span>
-                    <span v-if="row.path" class="block text-2xs text-gray-500 dark:text-dark-175">{{ row.path }}</span>
+                <div class="text-sm">
+                    <a v-if="row.can_edit && row.edit_url" :href="row.edit_url" @click.prevent="openAssetEditor(row)">{{ value }}</a>
+                    <span v-else>{{ value }}</span>
+                    <span v-if="row.path" class="block text-2xs text-gray-400 dark:text-gray-700">{{ row.path }}</span>
                 </div>
             </template>
 
-            <template #cell-mirror_status="{ value }">
-                <MirrorStatusBadge :value="value" />
+            <template #cell-mirror_status="{ row, value }">
+                <MirrorStatusBadge :value="value" :is-proxy="row.is_proxy" />
             </template>
 
             <template #cell-processing_status="{ value }">
@@ -61,7 +56,7 @@
             </template>
 
             <template #cell-playback_policy="{ value }">
-                <Badge v-if="value" pill class="text-2xs capitalize">{{ value }}</Badge>
+                <ui-badge v-if="value" pill size="sm" class="capitalize">{{ value }}</ui-badge>
             </template>
 
             <template #cell-created_at="{ value }">
@@ -73,12 +68,12 @@
                     <DropdownItem icon="edit" :text="__('Edit asset')" @click="openAssetEditor(row)" />
                     <DropdownSeparator v-if="row.mux_id" />
                 </template>
-                <template v-if="row.dashboard_url || playerUrl(row)">
-                    <DropdownItem v-if="row.dashboard_url" icon="external-link" :text="__('Open in Mux dashboard')" :href="row.dashboard_url" target="_blank" />
+                <template v-if="(! missingRemoteAsset(row) && row.dashboard_url) || playerUrl(row)">
+                    <DropdownItem v-if="! missingRemoteAsset(row) && row.dashboard_url" icon="external-link" :text="__('Open in Mux dashboard')" :href="row.dashboard_url" target="_blank" />
                     <DropdownItem v-if="playerUrl(row)" icon="external-link" :text="__('Open playback page')" :href="playerUrl(row)" target="_blank" />
                     <DropdownSeparator v-if="row.mux_id" />
                 </template>
-                <DropdownItem v-if="row.mux_id" icon="taxonomies" :text="__('Copy asset ID')" @click="copyAssetId(row)" />
+                <DropdownItem v-if="! missingRemoteAsset(row) && row.mux_id" icon="taxonomies" :text="__('Copy asset ID')" @click="copyAssetId(row)" />
                 <DropdownItem v-if="primaryPlaybackId(row)" icon="taxonomies" :text="__('Copy playback ID')" @click="copyPlaybackId(row)" />
                 <DropdownItem v-if="playerUrl(row)" icon="mux::video-square" :text="__('Copy player URL')" @click="copyPlayerUrl(row)" />
                 <DropdownItem v-if="embedCode(row)" icon="programming-code-block" :text="__('Copy embed code')" @click="copyEmbedCode(row)" />

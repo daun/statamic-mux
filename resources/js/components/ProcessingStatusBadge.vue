@@ -1,42 +1,54 @@
 <template>
-    <Badge v-if="value" pill :color="color" class="text-2xs" v-tooltip="tooltip">
+    <ui-badge v-if="value" pill :color="color" size="sm" v-tooltip="tooltip">
         {{ label }}
-    </Badge>
+    </ui-badge>
 </template>
 
 <script>
-import { Badge } from '@statamic/cms/ui';
-
 export default {
-    components: { Badge },
-
     props: {
         value: { type: String, default: null },
     },
 
+    data() {
+        return {
+            states: {
+                ready: {
+                    color: 'green',
+                    label: __('Ready'),
+                    tooltip: __('Mux has finished processing this asset'),
+                },
+                preparing: {
+                    color: 'blue',
+                    label: __('Preparing'),
+                    tooltip: __('Mux is processing this asset'),
+                },
+                errored: {
+                    color: 'red',
+                    label: __('Errored'),
+                    tooltip: __('Mux could not process this asset'),
+                },
+                fallback: {
+                    color: 'gray',
+                    label: this.value,
+                    tooltip: null,
+                },
+            },
+        };
+    },
+
     computed: {
+        state() {
+            return this.states[this.value] || { ...this.states.fallback, label: this.value };
+        },
         color() {
-            return {
-                ready: 'green',
-                preparing: 'blue',
-                errored: 'red',
-            }[this.value] || 'gray';
+            return this.state.color;
         },
-
         label() {
-            return {
-                ready: __('Ready'),
-                preparing: __('Preparing'),
-                errored: __('Errored'),
-            }[this.value] || this.value;
+            return this.state.label;
         },
-
         tooltip() {
-            return {
-                ready: __('Mux has finished processing this asset'),
-                preparing: __('Mux is processing this asset'),
-                errored: __('Mux could not process this asset'),
-            }[this.value] || null;
+            return this.state.tooltip;
         },
     },
 };

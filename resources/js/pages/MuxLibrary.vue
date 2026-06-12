@@ -43,28 +43,28 @@
             :allow-customizing-columns="false"
         >
             <template #cell-thumbnail_url="{ row, value }">
-                <div class="w-16 h-10 rounded overflow-hidden bg-gray-100 dark:bg-dark-800 flex items-center justify-center">
+                <div class="w-16 h-10 rounded overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                     <img v-if="value" :src="value" class="w-full h-full object-cover" loading="lazy" @error="$event.target.style.display='none'" />
                 </div>
             </template>
 
             <template #cell-title="{ row, value }">
-                <div>
+                <div class="text-sm">
                     <a
                         v-if="row.dashboard_url"
                         :href="row.dashboard_url"
                         target="_blank"
-                        class="group inline-flex items-center gap-2 text-sm font-medium"
+                        class="group inline-flex items-center gap-2"
                     >
                         <span>{{ value }}</span>
-                        <Icon
+                        <ui-icon
                             name="external-link"
                             class="size-3! text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 group-focus:opacity-100 group-focus-visible:opacity-100"
                             aria-hidden="true"
                         />
                     </a>
-                    <span v-else class="text-sm font-medium">{{ value }}</span>
-                    <span class="block text-2xs text-gray-500 dark:text-dark-175 font-mono">{{ row.mux_id }}</span>
+                    <span v-else>{{ value }}</span>
+                    <span class="block text-2xs text-gray-400 dark:text-gray-700 font-mono">{{ row.mux_id }}</span>
                 </div>
             </template>
 
@@ -81,7 +81,7 @@
             </template>
 
             <template #cell-playback_policy="{ value }">
-                <Badge v-if="value" pill class="text-2xs capitalize">{{ value }}</Badge>
+                <ui-badge v-if="value" pill size="sm" class="capitalize">{{ value }}</ui-badge>
             </template>
 
             <template #cell-created_at="{ value }">

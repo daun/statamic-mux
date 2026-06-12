@@ -67,7 +67,13 @@ export default {
             return row?.stream_url || null;
         },
 
+        missingRemoteAsset(row) {
+            return row?.exists_remotely === false || row?.mirror_status === 'missing';
+        },
+
         thumbnailUrl(row) {
+            if (this.missingRemoteAsset(row)) return null;
+
             return row?.thumbnail_copy_url || row?.thumbnail_url || null;
         },
 
