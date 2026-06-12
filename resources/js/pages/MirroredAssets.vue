@@ -49,11 +49,11 @@
             </template>
 
             <template #cell-mirror_status="{ value }">
-                <Badge pill :color="mirrorStatusColor(value)" class="text-2xs">{{ mirrorStatusLabel(value) }}</Badge>
+                <MirrorStatusBadge :value="value" />
             </template>
 
             <template #cell-processing_status="{ value }">
-                <Badge v-if="value" pill :color="processingStatusColor(value)" class="text-2xs">{{ processingStatusLabel(value) }}</Badge>
+                <ProcessingStatusBadge :value="value" />
             </template>
 
             <template #cell-duration="{ row }">

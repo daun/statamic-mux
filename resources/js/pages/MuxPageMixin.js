@@ -13,10 +13,30 @@ import {
     Listing,
 } from '@statamic/cms/ui';
 
+import MatchStatusBadge from '../components/MatchStatusBadge.vue';
+import MirrorStatusBadge from '../components/MirrorStatusBadge.vue';
+import ProcessingStatusBadge from '../components/ProcessingStatusBadge.vue';
 import SyncButton from '../components/SyncButton.vue';
 
 export default {
-    components: { Badge, Button, ButtonGroup, Dropdown, DropdownItem, DropdownLabel, DropdownMenu, DropdownSeparator, Head, Header, Icon, Listing, SyncButton },
+    components: {
+        Badge,
+        Button,
+        ButtonGroup,
+        Dropdown,
+        DropdownItem,
+        DropdownLabel,
+        DropdownMenu,
+        DropdownSeparator,
+        Head,
+        Header,
+        Icon,
+        Listing,
+        MatchStatusBadge,
+        MirrorStatusBadge,
+        ProcessingStatusBadge,
+        SyncButton,
+    },
 
     props: {
         refreshEndpoint: { type: String, default: null },
@@ -48,7 +68,7 @@ export default {
         },
 
         thumbnailUrl(row) {
-            return row?.thumbnail_url || null;
+            return row?.thumbnail_copy_url || row?.thumbnail_url || null;
         },
 
         embedCode(row) {
@@ -79,50 +99,6 @@ export default {
 
         copyThumbnailUrl(row) {
             return this.copyToClipboard(this.thumbnailUrl(row));
-        },
-
-        // Mux processing pipeline state (remote-derived).
-        processingStatusColor(status) {
-            return {
-                ready: 'green',
-                preparing: 'blue',
-                errored: 'red',
-            }[status] || 'gray';
-        },
-
-        processingStatusLabel(status) {
-            return {
-                ready: __('Ready'),
-                preparing: __('Preparing'),
-                errored: __('Errored'),
-            }[status] || status;
-        },
-
-        // Local tab: has this asset been uploaded to Mux?
-        mirrorStatusColor(status) {
-            return {
-                uploaded: 'green',
-                missing: 'red',
-                not_uploaded: 'amber',
-            }[status] || 'gray';
-        },
-
-        mirrorStatusLabel(status) {
-            return {
-                uploaded: __('Uploaded'),
-                missing: __('Missing'),
-                not_uploaded: __('Not uploaded'),
-            }[status] || status;
-        },
-
-        // Remote tab: how does this Mux asset map to local assets?
-        matchStatusColor(status) {
-            return {
-                mirrored: 'green',
-                proxy: 'gray',
-                orphaned: 'amber',
-                duplicated: 'red',
-            }[status] || 'gray';
         },
 
     },

@@ -69,11 +69,11 @@
             </template>
 
             <template #cell-match_status="{ value }">
-                <Badge pill :color="matchStatusColor(value)" class="text-2xs capitalize">{{ value }}</Badge>
+                <MatchStatusBadge :value="value" />
             </template>
 
             <template #cell-processing_status="{ value }">
-                <Badge v-if="value" pill :color="processingStatusColor(value)" class="text-2xs">{{ processingStatusLabel(value) }}</Badge>
+                <ProcessingStatusBadge :value="value" />
             </template>
 
             <template #cell-duration="{ row }">

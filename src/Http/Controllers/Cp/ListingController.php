@@ -201,7 +201,7 @@ class ListingController extends CpController
                 'type' => 'select',
                 'options' => [
                     'mirrored' => __('Mirrored'),
-                    'proxy' => __('Proxy'),
+                    'proxy' => __('Placeholder'),
                     'orphaned' => __('Orphaned'),
                     'duplicated' => __('Duplicated'),
                 ],
