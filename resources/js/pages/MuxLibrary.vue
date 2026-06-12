@@ -103,7 +103,7 @@
 </template>
 
 <script>
-import MuxPageMixin from './MuxPageMixin';
+import MuxPageMixin from '../mixins/MuxPageMixin';
 
 export default {
     mixins: [MuxPageMixin],

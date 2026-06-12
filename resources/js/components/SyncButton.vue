@@ -48,6 +48,8 @@ import {
 export default {
     components: { Button, ButtonGroup, Dropdown, DropdownItem, DropdownLabel, DropdownMenu, DropdownSeparator },
 
+    emits: ['completed'],
+
     props: {
         endpoint: { type: String, default: null },
     },
@@ -67,6 +69,7 @@ export default {
             try {
                 const response = await this.$axios.post(this.endpoint, { command });
                 Statamic.$toast.success(response.data.message || __('Sync command queued. Refresh later to see updates.'));
+                this.$emit('completed', { command, response: response.data });
             } catch (e) {
                 console.error(e);
                 Statamic.$toast.error(e.response?.data?.message || __('Failed to queue sync command'));

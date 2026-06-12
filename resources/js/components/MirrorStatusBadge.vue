@@ -3,6 +3,7 @@
         <ui-badge v-if="value" pill :color="color" size="sm" v-tooltip="tooltip">
             {{ label }}
         </ui-badge>
+        <ui-icon v-if="showUpdating" class="size-3! animate-spin" name="loading" v-tooltip="__('Checking Mux status')" />
         <ui-icon v-if="isProxy" class="size-3! text-green-700 dark:text-green-300" name="page-ghost" v-tooltip="__('Local asset is a short placeholder clip for the original video')"></ui-icon>
     </span>
 </template>
@@ -12,6 +13,7 @@ export default {
     props: {
         value: { type: String, default: null },
         isProxy: { type: Boolean, default: false },
+        isUpdating: { type: Boolean, default: false },
     },
 
     data() {
@@ -53,6 +55,9 @@ export default {
         },
         tooltip() {
             return this.state.tooltip;
+        },
+        showUpdating() {
+            return this.isUpdating && ['missing', 'not_uploaded'].includes(this.value);
         },
     },
 };
