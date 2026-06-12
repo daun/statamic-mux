@@ -7,6 +7,7 @@ use Daun\StatamicMux\Fieldtypes\MuxMirrorFieldtype;
 use Illuminate\Support\Collection;
 use Statamic\Assets\Asset;
 use Statamic\Assets\AssetContainer;
+use Statamic\Assets\QueryBuilder;
 use Statamic\Facades\Asset as Assets;
 use Statamic\Facades\AssetContainer as AssetContainers;
 use Statamic\Fields\Field;
@@ -87,7 +88,10 @@ class MirrorField
                 return collect();
             }
 
-            return Assets::query()
+            /** @var QueryBuilder $query */
+            $query = Assets::query();
+
+            return $query
                 ->where('container', $container->handle())
                 ->whereJsonOverlaps("{$handle}->id", $muxId)
                 ->get();

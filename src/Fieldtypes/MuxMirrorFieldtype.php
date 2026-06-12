@@ -7,7 +7,6 @@ use Daun\StatamicMux\GraphQL\MuxMirrorType;
 use Daun\StatamicMux\GraphQL\MuxPlaybackIdType;
 use Daun\StatamicMux\Jobs\CreateMuxAssetJob;
 use Daun\StatamicMux\Query\Scopes\Filters\Fields\MuxMirrorFieldtypeFilter;
-use Daun\StatamicMux\Support\Queue;
 use Statamic\Assets\Asset;
 use Statamic\Facades\GraphQL;
 use Statamic\Fields\Fieldtype;
@@ -73,11 +72,7 @@ class MuxMirrorFieldtype extends Fieldtype
 
         // (Re)upload asset if checkbox was checked by editor
         if ($reupload && $asset && $asset->isVideo()) {
-            if (Queue::isSync()) {
-                CreateMuxAssetJob::dispatchAfterResponse($asset, true);
-            } else {
-                CreateMuxAssetJob::dispatch($asset, true);
-            }
+            CreateMuxAssetJob::dispatchAsync($asset, true);
         }
 
         return $data;

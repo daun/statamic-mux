@@ -7,13 +7,23 @@ use Illuminate\Support\Facades\Log;
 use Monolog\Handler\FilterHandler;
 use Monolog\Handler\WhatFailureGroupHandler;
 use Monolog\Level;
+use Monolog\Logger as MonologLogger;
 
 final class ErrorForwarder
 {
     public function __invoke(Logger $logger): void
     {
         // Resolve the app’s default channel’s underlying Monolog handlers
-        $defaultMonolog = Log::channel(config('logging.default'))->getLogger();
+        $defaultLogger = Log::channel(config('logging.default'));
+        if (! $defaultLogger instanceof Logger) {
+            return;
+        }
+
+        $defaultMonolog = $defaultLogger->getLogger();
+        if (! $defaultMonolog instanceof MonologLogger) {
+            return;
+        }
+
         $defaultHandlers = $defaultMonolog->getHandlers();
 
         // Wrap each of its handlers with a filter handler restricting to error+
@@ -23,6 +33,10 @@ final class ErrorForwarder
 
         // Our logger should already have a WhatFailureGroupHandler as its single handler
         $monolog = $logger->getLogger();
+        if (! $monolog instanceof MonologLogger) {
+            return;
+        }
+
         $handlers = $monolog->getHandlers();
         $groupHandlers = array_filter($handlers, function ($handler) {
             return $handler instanceof WhatFailureGroupHandler;

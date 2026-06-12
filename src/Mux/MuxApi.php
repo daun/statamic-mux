@@ -6,6 +6,10 @@ use Daun\StatamicMux\Concerns\ProcessesHooks;
 use Daun\StatamicMux\Facades\Log;
 use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Promise\EachPromise;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use MuxPhp\Api\AssetsApi;
 use MuxPhp\Api\DeliveryUsageApi;
 use MuxPhp\Api\DirectUploadsApi;
@@ -138,6 +142,53 @@ class MuxApi
         return $this->deliveryUsageApi;
     }
 
+    public function whoami(): ?array
+    {
+        if (! $this->configured()) {
+            return null;
+        }
+
+        $cacheKey = 'statamic-mux.whoami.'.sha1($this->tokenId.$this->tokenSecret);
+        $cached = Cache::get($cacheKey);
+
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        try {
+            $response = $this->client->get('https://api.mux.com/system/v1/whoami', [
+                'auth' => [$this->tokenId, $this->tokenSecret],
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'User-Agent' => self::userAgent,
+                ],
+            ]);
+
+            $payload = json_decode((string) $response->getBody(), true);
+            $data = $payload['data'] ?? null;
+
+            if (is_array($data)) {
+                Cache::put($cacheKey, $data, now()->addMonths(12));
+
+                return $data;
+            }
+        } catch (GuzzleException $e) {
+            Log::error("Failed to load Mux environment details: {$e->getMessage()}", ['exception' => $e]);
+        }
+
+        return null;
+    }
+
+    public function dashboardUrl(): ?string
+    {
+        $info = $this->whoami();
+        $environmentId = $info['environment_id'] ?? null;
+
+        return $environmentId
+            ? "https://dashboard.mux.com/environments/{$environmentId}/"
+            : null;
+    }
+
     public function input(array $input): InputSettings
     {
         return new InputSettings($input);
@@ -200,6 +251,150 @@ class MuxApi
 
             throw $th;
         }
+    }
+
+    /**
+     * @return Collection<Asset>
+     */
+    public function listAssets(int $limit = 100, int $page = 1): Collection
+    {
+        return collect($this->assets()->listAssets($limit, $page)->getData());
+    }
+
+    /**
+     * @return Collection<Asset>
+     */
+    public function listAllAssets(int $concurrency = 5): Collection
+    {
+        $assets = collect();
+        $page = 1;
+        $perPage = 100;
+        $concurrency = max(1, $concurrency);
+        $exhausted = false;
+
+        while (! $exhausted) {
+            $responses = [];
+            $pages = range($page, $page + $concurrency - 1);
+            $requests = function () use ($pages, $perPage) {
+                foreach ($pages as $page) {
+                    yield $page => $this->assets()->listAssetsAsync($perPage, $page);
+                }
+            };
+
+            (new EachPromise($requests(), [
+                'concurrency' => $concurrency,
+                'fulfilled' => function ($response, int $page) use (&$responses): void {
+                    $responses[$page] = $response;
+                },
+                'rejected' => function ($reason, int $page): void {
+                    if ($reason instanceof \Throwable) {
+                        Log::error(
+                            "Failed to list Mux assets: {$reason->getMessage()}",
+                            ['page' => $page, 'exception' => $reason],
+                        );
+
+                        throw $reason;
+                    }
+
+                    throw new \RuntimeException("Failed to list Mux assets on page {$page}");
+                },
+            ]))->promise()->wait();
+
+            ksort($responses);
+
+            foreach ($responses as $response) {
+                $data = $response?->getData() ?? [];
+                $count = count($data);
+
+                if ($count === 0) {
+                    $exhausted = true;
+                    break;
+                }
+
+                $assets->push(...$data);
+            }
+
+            $page += $concurrency;
+        }
+
+        return $assets;
+    }
+
+    public function getAsset(string $muxId): ?Asset
+    {
+        try {
+            $response = $this->assets()->getAsset($muxId)->getData();
+            Log::debug('Loading Mux asset', ['mux_id' => $response?->getId()]);
+
+            return $response;
+        } catch (ApiException $e) {
+            if ($e->getCode() === 404) {
+                return null;
+            } else {
+                throw $e;
+            }
+        } catch (\Throwable $th) {
+            Log::error(
+                "Failed to load Mux asset: {$th->getMessage()}",
+                ['mux_id' => $muxId, 'exception' => $th],
+            );
+
+            throw $th;
+        }
+    }
+
+    /**
+     * @param  Collection<int, string>|array<int, string>  $muxIds
+     * @return Collection<string, Asset>
+     */
+    public function getAssets(Collection|array $muxIds, int $concurrency = 5): Collection
+    {
+        $muxIds = collect($muxIds)->filter()->unique()->values();
+
+        if ($muxIds->isEmpty()) {
+            return collect();
+        }
+
+        $assets = collect();
+        $requests = function () use ($muxIds) {
+            foreach ($muxIds as $muxId) {
+                yield $muxId => $this->assets()->getAssetAsync($muxId);
+            }
+        };
+
+        $config = [
+            'fulfilled' => function ($response, string $muxId) use ($assets): void {
+                $asset = $response?->getData();
+
+                if ($asset) {
+                    $assets[$asset->getId() ?? $muxId] = $asset;
+                }
+            },
+            'rejected' => function ($reason, string $muxId): void {
+                if ($reason instanceof ApiException && $reason->getCode() === 404) {
+                    return;
+                }
+
+                if ($reason instanceof \Throwable) {
+                    Log::error(
+                        "Failed to load Mux asset: {$reason->getMessage()}",
+                        ['mux_id' => $muxId, 'exception' => $reason],
+                    );
+
+                    throw $reason;
+                }
+
+                throw new \RuntimeException("Failed to load Mux asset: {$muxId}");
+            },
+        ];
+
+        if ($concurrency > 0) {
+            $config['concurrency'] = $concurrency;
+        }
+
+        (new EachPromise($requests(), $config))->promise()->wait();
+
+        return $assets;
     }
 
     public function assetExists(string $muxId): bool

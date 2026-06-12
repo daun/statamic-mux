@@ -56,7 +56,7 @@ class MuxService
         }
 
         if (is_string($asset)) {
-            if ($instance = Assets::find($asset)) {
+            if (($instance = Assets::find($asset)) instanceof Asset) {
                 $asset = $instance;
             } else {
                 Log::warning('Cannot create Mux asset: local asset not found', [
@@ -80,7 +80,7 @@ class MuxService
         }
 
         if (is_string($asset)) {
-            if ($instance = Assets::find($asset)) {
+            if (($instance = Assets::find($asset)) instanceof Asset) {
                 $asset = $instance;
             } else {
                 Log::warning('Cannot update Mux asset: local asset not found', [
@@ -127,25 +127,15 @@ class MuxService
     }
 
     /**
-     * List existing Mux assets
+     * List existing remote Mux assets
      */
     public function listMuxAssets(int $limit = 100, int $page = 1)
     {
-        if ($limit <= 0) {
-            $assets = collect();
-            $new = null;
-            $page = 1;
-
-            do {
-                $new = $this->api->assets()->listAssets(100, $page)->getData();
-                $assets->push(...$new);
-                $page++;
-            } while (count($new ?? []));
-
-            return $assets;
+        if ($limit === 0) {
+            return $this->api->listAllAssets();
         }
 
-        return collect($this->api->assets()->listAssets($limit, $page)->getData());
+        return $this->api->listAssets($limit, $page);
     }
 
     public function getMuxId(Asset $asset): ?string
@@ -205,6 +195,26 @@ class MuxService
         $params = Arr::except($params, 'format');
 
         return $this->signUrl($this->urls->animated($playbackId->id(), $format), $playbackId, MuxAudience::Gif, $params);
+    }
+
+    public function getPlayerUrl(MuxPlaybackId $playbackId, array $params = []): string
+    {
+        if ($playbackId->isSigned()) {
+            $params = array_filter([
+                'playback-token' => $this->getPlaybackToken($playbackId),
+                'thumbnail-token' => $this->getThumbnailToken($playbackId),
+                'storyboard-token' => $this->getStoryboardToken($playbackId),
+            ] + $params);
+        }
+
+        return $this->urls->player($playbackId->id(), $params);
+    }
+
+    public function getEmbedCode(MuxPlaybackId $playbackId, array $params = []): string
+    {
+        $url = e($this->getPlayerUrl($playbackId, $params));
+
+        return "<iframe src=\"{$url}\" style=\"width: 100%; border: none; aspect-ratio: 16/9;\" allow=\"accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;\" allowfullscreen></iframe>";
     }
 
     public function getPlaceholderDataUri(MuxPlaybackId $playbackId, array $params = []): ?string

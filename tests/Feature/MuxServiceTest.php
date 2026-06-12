@@ -283,21 +283,23 @@ test('paginates API request to list all assets', function () {
             ],
         ]);
 
-    $this->guzzler->expects($this->once())
-        ->ray()
-        ->get('https://api.mux.com/video/v1/assets')
-        ->withQuery([
-            'limit' => 100,
-            'page' => 3,
-        ])
-        ->willRespondJson([
-            'next_cursor' => null,
-            'data' => [],
-        ]);
+    foreach ([3, 4, 5] as $page) {
+        $this->guzzler->expects($this->once())
+            ->ray()
+            ->get('https://api.mux.com/video/v1/assets')
+            ->withQuery([
+                'limit' => 100,
+                'page' => $page,
+            ])
+            ->willRespondJson([
+                'next_cursor' => null,
+                'data' => [],
+            ]);
+    }
 
     $muxAssets = $service->listMuxAssets(limit: 0);
 
-    $this->guzzler->assertHistoryCount(3);
+    $this->guzzler->assertHistoryCount(5);
 
     expect($muxAssets)->toBeInstanceOf(Collection::class);
     expect($muxAssets)->toHaveLength(2);
