@@ -59,12 +59,12 @@
                         <span>{{ value }}</span>
                         <ui-icon
                             name="external-link"
-                            class="size-3! text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 group-focus:opacity-100 group-focus-visible:opacity-100"
+                            class="size-3! text-gray-400 dark:text-gray-600 opacity-0 transition-opacity group-hover:opacity-100 group-focus:opacity-100 group-focus-visible:opacity-100"
                             aria-hidden="true"
                         />
                     </a>
                     <span v-else>{{ value }}</span>
-                    <span class="block text-2xs text-gray-400 dark:text-gray-700 font-mono">{{ row.mux_id }}</span>
+                    <span class="block text-2xs text-gray-400 dark:text-gray-600 font-mono">{{ row.mux_id }}</span>
                 </div>
             </template>
 

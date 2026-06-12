@@ -4,7 +4,7 @@
             {{ label }}
         </ui-badge>
         <ui-icon v-if="showUpdating" class="size-3! animate-spin" name="loading" v-tooltip="__('Checking Mux status')" />
-        <ui-icon v-if="isProxy" class="size-3! text-green-700 dark:text-green-300" name="page-ghost" v-tooltip="__('Local asset is a short placeholder clip for the original video')"></ui-icon>
+        <ui-icon v-if="isProxy" class="size-3! text-green-600" name="page-ghost" v-tooltip="__('Local asset is a short placeholder clip for the original video')"></ui-icon>
     </span>
 </template>
 

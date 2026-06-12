@@ -2,7 +2,7 @@
     <div class="flex flex-wrap items-center gap-2" v-if="isAsset && isVideo">
         <ui-icon v-if="!isUploaded" name="x-square" class="text-gray-400 dark:text-gray-600" v-tooltip="t('not_uploaded')" />
         <ui-icon v-if="isUploaded" name="checkmark" class="text-green-600" v-tooltip="t('uploaded')" />
-        <ui-icon v-if="isUploaded && isProxy" name="page-ghost" class="size-3.5!" v-tooltip="t('proxy')" />
+        <ui-icon v-if="isUploaded && isProxy" name="page-ghost" class="size-3.5! text-green-600" v-tooltip="t('proxy')" />
     </div>
 </template>
 
