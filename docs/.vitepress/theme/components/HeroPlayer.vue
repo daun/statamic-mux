@@ -124,8 +124,8 @@ const props = defineProps({
   idleStyle: { type: String, default: 'blur' },
   // source clip per color scheme; resolved once on mount (not reactive to
   // theme toggling). srcDark falls back to srcLight when omitted.
-  srcLight: { type: String, default: '/blobs-light.mp4' },
-  srcDark:  { type: String, default: '/blobs-dark.mp4' },
+  srcLight: { type: String, default: '/blobs-light-540.mp4' },
+  srcDark:  { type: String, default: '/blobs-dark-540.mp4' },
 })
 
 // pick the clip for the current color scheme
@@ -646,9 +646,9 @@ html:not(.dark) .px-scrim { background: none; }
 /* light mode: lift video brightness a touch (on the canvas only, so it doesn't
    wash out the drop zone's soft-gray background) */
 html:not(.dark) .px-canvas { filter: brightness(1.08); }
-/* light mode: more prominent outer border around the whole hero rect */
+/* light mode: subtle outer border tucked behind the video edge */
 html:not(.dark) .px-window {
-  box-shadow: 0 30px 60px -20px rgba(250, 80, 181, .28), 0 0 0 1px var(--vp-c-border);
+  box-shadow: 0 30px 60px -20px rgba(250, 80, 181, .28), 0 0 0 1px var(--vp-c-divider);
 }
 .px-res {
   position: absolute; top: 12px; right: 12px;
