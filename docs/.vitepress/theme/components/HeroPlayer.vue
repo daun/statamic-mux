@@ -112,7 +112,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useData } from 'vitepress'
+
+// reactive color scheme (VitePress) — lets us hot-swap the clip on theme toggle
+const { isDark } = useData()
 
 const props = defineProps({
   // 'blur'  — processing/ready shows a soft blurred frame (default)
@@ -120,15 +124,13 @@ const props = defineProps({
   idleStyle: { type: String, default: 'blur' },
   // source clip per color scheme; resolved once on mount (not reactive to
   // theme toggling). srcDark falls back to srcLight when omitted.
-  srcLight: { type: String, default: '/blobs.mp4' },
+  srcLight: { type: String, default: '/blobs-light.mp4' },
   srcDark:  { type: String, default: '/blobs-dark.mp4' },
 })
 
-// pick the clip for the current color scheme (VitePress sets `.dark` on <html>)
+// pick the clip for the current color scheme
 function resolveSrc() {
-  const isDark = typeof document !== 'undefined'
-    && document.documentElement.classList.contains('dark')
-  return (isDark && props.srcDark) ? props.srcDark : props.srcLight
+  return (isDark.value && props.srcDark) ? props.srcDark : props.srcLight
 }
 
 const canvas = ref(null)
@@ -248,16 +250,35 @@ onMounted(() => {
     }
   }
 
+  let lastPhase = null
+
   const tryPlay = () => { fitPlayback(); const p = vid.play(); if (p && p.catch) p.catch(() => {}) }
   // load + decode the first frame, but stay paused & rewound until "play"
   vid.addEventListener('loadedmetadata', fitPlayback)
-  vid.addEventListener('loadeddata', () => { vid.pause(); try { vid.currentTime = 0 } catch (e) {} })
-  // resolve the per-scheme clip once, then kick off loading
-  vid.src = resolveSrc()
-  vid.load()
+  // when a clip finishes loading: resume if we're in a playback phase (e.g. a
+  // theme hot-swap mid-play), otherwise stay paused & rewound to the first frame
+  vid.addEventListener('loadeddata', () => {
+    const playing = phase.value === 'pressed' || phase.value === 'playing' || phase.value === 'hold'
+    if (playing) tryPlay()
+    else { vid.pause(); try { vid.currentTime = 0 } catch (e) {} }
+  })
+  // resolve the per-scheme clip, then kick off loading
+  const loadSrc = () => {
+    const next = resolveSrc()
+    if (vid.src.endsWith(next)) return
+    vid.src = next
+    vid.load()
+    // force the phase logic to re-apply play/pause for the current phase once
+    // the new clip is ready (loadeddata pauses + rewinds it)
+    lastPhase = null
+    // repaint the dragged thumbnail from the new clip's first frame
+    thumbPainted = false
+  }
+  loadSrc()
+  // hot-swap on theme toggle; last painted frame stays up while it buffers
+  watch(isDark, loadSrc)
 
   const videoReady = () => vid.readyState >= 2 && vid.videoWidth > 0
-  let lastPhase = null
 
   // paint the video's first frame into the dragged file thumbnail (cover-fit)
   function paintThumb() {
@@ -609,6 +630,26 @@ onBeforeUnmount(() => cancelAnimationFrame(raf))
 .px-bar { position: absolute; left: 14px; right: 14px; bottom: 14px; height: 2.5px; border-radius: 999px; background: rgba(255,255,255,.25); overflow: hidden; }
 .px-fill { display: block; height: 100%; width: 0; background: #fff; border-radius: 999px; }
 .px-fade { position: absolute; inset: 0; background: #000; pointer-events: none; z-index: 5; }
+/* light mode: fade to white (matches the white page background at the seam) */
+html:not(.dark) .px-fade { background: #fff; }
+/* light mode: lighter, frosted-white play button with a dark icon */
+html:not(.dark) .px-btn {
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.22),
+    inset 0 -2px 5px rgba(0, 0, 0, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.12);
+}
+html:not(.dark) .px-btn svg { filter: none; }
+/* light mode: drop the dark bottom gradient behind the progress bar */
+html:not(.dark) .px-scrim { background: none; }
+/* light mode: lift video brightness a touch (on the canvas only, so it doesn't
+   wash out the drop zone's soft-gray background) */
+html:not(.dark) .px-canvas { filter: brightness(1.08); }
+/* light mode: more prominent outer border around the whole hero rect */
+html:not(.dark) .px-window {
+  box-shadow: 0 30px 60px -20px rgba(250, 80, 181, .28), 0 0 0 1px var(--vp-c-border);
+}
 .px-res {
   position: absolute; top: 12px; right: 12px;
   font: 600 11px ui-monospace, monospace; letter-spacing: .04em;
