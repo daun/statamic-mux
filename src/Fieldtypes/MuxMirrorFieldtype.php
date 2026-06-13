@@ -70,7 +70,7 @@ class MuxMirrorFieldtype extends Fieldtype
         $playbackId = $muxAsset?->playbackId();
         if (! $playbackId instanceof MuxPlaybackId) {
             return [
-                'asset_id' => $muxAsset->id()
+                'asset_id' => $muxAsset->id(),
             ];
         }
 
