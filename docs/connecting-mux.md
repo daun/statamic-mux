@@ -4,15 +4,15 @@ Register a Mux account and generate API credentials.
 
 ## Account
 
-If you haven't already, now is a good time to [register a Mux account](https://dashboard.mux.com/signup).
-Once you have an account, you need to [create an environment](https://dashboard.mux.com/environments).
-It's recommended to have separate Mux environments for each Statamic app environment like `development` and `production`.
+[Register a Mux account](https://dashboard.mux.com/signup) if you don't have one, then
+[create an environment](https://dashboard.mux.com/environments). Use a separate Mux environment for each
+Statamic app environment, e.g. `development` and `production`.
 
 ## Credentials
 
-To allow this addon to communicate with the Mux API, you'll need to create an Access Token in the
-[Access Token settings](https://dashboard.mux.com/settings/access-tokens) of your Mux account dashboard.
-Save the generated token and associated secret to your environment variables.
+The addon communicates with the Mux API using an access token. Create one in the
+[Access Token settings](https://dashboard.mux.com/settings/access-tokens) of your Mux dashboard, then save
+the generated token id and secret to your environment variables.
 
 ```env
 MUX_TOKEN_ID=b3b7fa9b-efd6-4723-bed2-032b04e61488

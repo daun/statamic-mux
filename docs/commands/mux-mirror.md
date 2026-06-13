@@ -2,7 +2,7 @@
 
 **Upload local videos to Mux, and remove orphaned Mux videos.**
 
-This basically runs `mux:upload` and `mux:prune` in sequence.
+Runs `mux:upload` and `mux:prune` in sequence.
 
 ```sh
 # Sync local assets to Mux

@@ -1,7 +1,7 @@
 # `mux:player` <Badge type="info">Antlers Tag</Badge>
 
-Render a custom video player using the [`<mux-player>`](https://www.npmjs.com/package/@mux/mux-player) web component,
-which is a highly customizable, themable player for streaming Mux videos. Refer to the official
+Render a video player using the [`<mux-player>`](https://www.npmjs.com/package/@mux/mux-player) web component,
+a customizable, themable player for streaming Mux videos. Refer to the official
 [Mux Player docs](https://docs.mux.com/guides/mux-player-web) for details on customizing the player.
 
 ```antlers
@@ -46,7 +46,7 @@ scripts when the video scrolls into view.
 
 ## Custom attributes
 
-Any other attributes will be passed along to the the web component itself to allow for customization.
+Any other attributes are passed through to the web component for customization.
 Learn more about [customizing the look and feel of Mux Player](https://docs.mux.com/guides/player-customize-look-and-feel).
 
 ```antlers
