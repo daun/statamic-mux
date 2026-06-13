@@ -331,9 +331,9 @@
 }
 
 /**
- * PROTOTYPE — Hero animation stage
- * Give the hero image slot room for the animations and drop the default
- * blurred gradient blob. Remove this block with the prototype.
+ * Component: Home Hero animation
+ * Give the hero image slot room for the animated player and drop the default
+ * blurred gradient blob.
  * -------------------------------------------------------------------------- */
 
 .VPHero .image-bg { display: none; }

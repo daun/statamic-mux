@@ -1,18 +1,20 @@
 <!--
-  PROTOTYPE — Variant A: "Pixelate Reveal"
-  Lifecycle loop: a video frame is heavily pixelated while a spinner shows
-  "Processing" -> a play button appears over the still-pixelated frame -> it is
-  pressed and morphs to pause -> playback begins and the resolution steps up
-  144p->1080p -> the sharp frame holds briefly, then snaps back to processing.
-  Conveys: a little processing, then press play and watch it sharpen as it
-  streams.
-  Throwaway.
+  Hero animation for the docs home page.
+
+  A looping vignette of the Mux workflow: a freshly uploaded video is briefly
+  "processed", becomes ready to play, then streams while its resolution steps
+  up from 144p to 2160p — pixelated at first, sharpening as it loads. The frame
+  fades to black and the loop restarts.
+
+  Implemented as a canvas that samples a hidden <video> each frame and pixelates
+  it via a downscale-then-upscale pass (so any clip works, regardless of aspect).
+  The preview clip lives in docs/public/ and can be swapped freely.
 -->
 <template>
   <div class="px-stage">
     <div class="px-window">
       <!-- hidden source video; canvas samples + pixelates each frame -->
-      <video ref="video" class="px-src" src="/sample-pixelate.mp4"
+      <video ref="video" class="px-src" src="/hero-flamingo.mp4"
              muted loop playsinline preload="auto"></video>
       <canvas ref="canvas" class="px-canvas" width="640" height="400"></canvas>
       <div class="px-scrim"></div>
@@ -73,7 +75,7 @@ const READY = 1000                  // play button shown, frame still pixelated
 const PRESS = 500                   // press -> morph to pause
 const BEAT = 1100                   // each resolution step
 const PLAYING = labels.length * BEAT
-const HOLD = 800                    // dwell on the sharp, paused frame before reset
+const HOLD = 2000                    // dwell on the sharp frame before reset
 const READY_END = PROCESS + READY
 const PRESS_END = READY_END + PRESS
 const PLAY_END = PRESS_END + PLAYING
@@ -92,6 +94,7 @@ onMounted(() => {
   const videoReady = () => vid.readyState >= 2 && vid.videoWidth > 0
   let lastPhase = null
 
+  // draw the video into the canvas with cover-fit (crop to fill, no stretch)
   function paintVideo() {
     const vw = vid.videoWidth, vh = vid.videoHeight
     const targetAR = W / H, videoAR = vw / vh
@@ -101,6 +104,7 @@ onMounted(() => {
     ctx.drawImage(vid, sx, sy, sw, sh, 0, 0, W, H)
   }
 
+  // brand-tinted fallback frame while the clip buffers
   function paintSource(t) {
     const g = ctx.createLinearGradient(0, 0, W, H)
     g.addColorStop(0, '#ff6100'); g.addColorStop(1, '#fa50b5')
@@ -249,9 +253,7 @@ onBeforeUnmount(() => cancelAnimationFrame(raf))
 
 .px-bar { position: absolute; left: 14px; right: 14px; bottom: 14px; height: 3.3px; border-radius: 999px; background: rgba(255,255,255,.25); overflow: hidden; }
 .px-fill { display: block; height: 100%; width: 0; background: #fff; border-radius: 999px; }
-.px-fade {
-  position: absolute; inset: 0; background: #000; pointer-events: none; z-index: 5;
-}
+.px-fade { position: absolute; inset: 0; background: #000; pointer-events: none; z-index: 5; }
 .px-res {
   position: absolute; top: 12px; right: 12px;
   font: 600 11px ui-monospace, monospace; letter-spacing: .04em;
