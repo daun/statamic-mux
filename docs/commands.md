@@ -1,6 +1,10 @@
 # Artisan Commands
 
-The following commands are available for uploading videos manually or in regular intervals.
+The following commands are available for uploading videos manually or at regular intervals.
+
+While the addon automatically uploads [mirrored videos](/upload) in the background, running the
+`⁠mux:mirror` command at regular intervals is a recommended safety measure against misconfigured queues.
+If mirroring is working as expected, the command will be a no-op and simply return a success message.
 
 | Command | Description |
 |-------|-----------|
