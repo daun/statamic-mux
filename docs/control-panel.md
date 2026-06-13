@@ -5,6 +5,8 @@ it can be useful to inspect the list of mirrored assets or browse your full Mux 
 enable dedicated control panel listings under **Tools → Mux** by granting the relevant permissions to
 the applicable roles.
 
+![Control panel listings](/assets/control-panel-listing-mirrored-assets.png)
+
 ## Permissions
 
 The addon registers a permission group named **Mux**. Assign these permissions to roles under
