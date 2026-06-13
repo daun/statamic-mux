@@ -14,15 +14,30 @@
   <div class="px-stage">
     <div class="px-window">
       <!-- hidden source video; canvas samples + pixelates each frame -->
-      <video ref="video" class="px-src" src="/hero-flamingo.mp4"
+      <video ref="video" class="px-src" src="/sponges.mp4"
              muted loop playsinline preload="auto"></video>
-      <canvas ref="canvas" class="px-canvas" width="640" height="400"></canvas>
+      <canvas ref="canvas" class="px-canvas" width="640" height="400"
+             :style="blurAmount > 0 ? { filter: `blur(${blurAmount}px)`, transform: 'scale(1.08)' } : {}"></canvas>
       <div class="px-scrim"></div>
 
-      <!-- center control: spinner while processing, else play/pause button -->
+      <!-- center control: spinner + button share the same grid cell and crossfade -->
       <div class="px-center">
-        <div v-if="phase === 'processing'" class="px-spinner"></div>
-        <button v-else class="px-btn"
+        <div class="px-blockcount" :style="{ opacity: spinnerOpacity }">
+          <div class="px-bc-grid">
+            <div
+              v-for="i in 16"
+              :key="i"
+              class="px-bc-cell"
+              :class="{ active: (blockFrame % 16) === (i - 1) }"
+            ></div>
+          </div>
+          <div class="px-bc-stats">
+            <div class="px-bc-row"><span class="px-bc-dim">frame</span><span>{{ String(blockFrame).padStart(5, '0') }}</span></div>
+            <div class="px-bc-row"><span class="px-bc-dim">fps</span><span>24</span></div>
+            <div class="px-bc-row"><span class="px-bc-dim">kbps</span><span>{{ blockKbps }}</span></div>
+          </div>
+        </div>
+        <button class="px-btn"
                 :class="{ ready: phase === 'ready', pressing: phase === 'pressed', paused: showPause }"
                 :style="{ opacity: btnOpacity }"
                 aria-hidden="true">
@@ -48,6 +63,12 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 
+const props = defineProps({
+  // 'blur'  — processing/ready shows a soft blurred frame (default)
+  // 'pixel' — processing/ready shows the classic heavy pixelation
+  idleStyle: { type: String, default: 'blur' },
+})
+
 const canvas = ref(null)
 const video = ref(null)
 const fill = ref(null)
@@ -56,6 +77,10 @@ const res = ref(null)
 const phase = ref('processing')   // processing | ready | pressed | playing | hold
 const btnOpacity = ref(1)         // pause control auto-hides during playback
 const fadeOpacity = ref(0)        // black overlay at the loop seam
+const blurAmount = ref(12)        // CSS blur on canvas; non-zero = blurry idle state
+const spinnerOpacity = ref(1)     // drives crossfade: spinner out / button in
+const blockFrame = ref(0)         // frame counter shown in processing spinner
+const blockKbps = ref(4800)       // kbps shown in processing spinner
 // pause icon shows from the press onward (through playback + hold)
 const showPause = computed(() =>
   phase.value === 'pressed' || phase.value === 'playing' || phase.value === 'hold')
@@ -69,6 +94,7 @@ const HIDE_AFTER = 1300             // ms into playback before the pause control
 const HIDE_DUR = 600                // fade-out duration of the control
 const FADE_OUT = 450                // fade to black at the very end of the loop
 const FADE_IN = 450                 // fade from black into the pixelated start
+const SPINNER_FADE = 400            // spinner fade-out / button fade-in crossfade duration
 const PROCESS_BLOCKS = 72           // heaviest pixelation while processing
 const PROCESS = 2600                // spinner / "Processing"
 const READY = 1000                  // play button shown, frame still pixelated
@@ -131,24 +157,31 @@ onMounted(() => {
     const t = now % TOTAL
     let blocks, label, barP, ph
 
+    const useBlur = props.idleStyle === 'blur'
     if (t < PROCESS) {
-      ph = 'processing'; blocks = PROCESS_BLOCKS; label = 'Processing'; barP = 0
+      ph = 'processing'; blocks = useBlur ? 0 : PROCESS_BLOCKS; label = 'Processing'; barP = 0; blurAmount.value = useBlur ? 12 : 0
+      blockFrame.value = Math.floor(t * 24 / 1000)
+      blockKbps.value = Math.round(4200 + 600 * (0.5 + 0.5 * Math.sin(t / 200 + 1.3)))
+      spinnerOpacity.value = t < PROCESS - SPINNER_FADE ? 1 : 1 - (t - (PROCESS - SPINNER_FADE)) / SPINNER_FADE
+      btnOpacity.value = 0
     } else if (t < READY_END) {
-      // play button up, badge flips to "Ready"; frame unchanged (still pixelated)
-      ph = 'ready'; blocks = PROCESS_BLOCKS; label = 'Ready'; barP = 0
+      ph = 'ready'; blocks = useBlur ? 0 : PROCESS_BLOCKS; label = 'Ready'; barP = 0; blurAmount.value = useBlur ? 12 : 0
+      spinnerOpacity.value = 0
+      btnOpacity.value = Math.min(1, (t - PROCESS) / SPINNER_FADE)
     } else if (t < PRESS_END) {
-      ph = 'pressed'; blocks = PROCESS_BLOCKS; label = 'Ready'; barP = 0
+      ph = 'pressed'; blocks = PROCESS_BLOCKS; label = 'Ready'; barP = 0; blurAmount.value = 0
+      spinnerOpacity.value = 0; btnOpacity.value = 1
     } else if (t < PLAY_END) {
       ph = 'playing'
       const rt = t - PRESS_END
       const step = Math.min(labels.length - 1, Math.floor(rt / BEAT))
       blocks = BLOCKS[step]; label = labels[step]; barP = rt / PLAYING
       btnOpacity.value = rt < HIDE_AFTER ? 1 : Math.max(0, 1 - (rt - HIDE_AFTER) / HIDE_DUR)
+      blurAmount.value = 0; spinnerOpacity.value = 0
     } else {
       ph = 'hold'; blocks = 0; label = labels[labels.length - 1]; barP = 1
-      btnOpacity.value = 0
+      btnOpacity.value = 0; blurAmount.value = 0; spinnerOpacity.value = 0
     }
-    if (ph === 'ready' || ph === 'pressed') btnOpacity.value = 1
 
     // paused on frame 0 until playback starts; keeps playing through the hold
     // right up to the reset, then rewinds when we loop back to processing
@@ -209,13 +242,27 @@ onBeforeUnmount(() => cancelAnimationFrame(raf))
   display: grid; place-items: center;
 }
 
-/* spinner shown while processing */
-.px-spinner {
-  width: 56px; height: 56px; border-radius: 999px;
-  border: 4px solid rgba(255,255,255,.3); border-top-color: #fff;
-  animation: px-spin .8s linear infinite;
+/* block+counter and play button share one grid cell so they can crossfade */
+.px-center { grid-template-areas: 's'; }
+.px-blockcount, .px-btn { grid-area: s; }
+
+.px-blockcount { display: flex; align-items: center; gap: 10px; pointer-events: none; }
+.px-bc-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 3px; width: 52px; height: 52px; flex-shrink: 0;
 }
-@keyframes px-spin { to { transform: rotate(360deg); } }
+.px-bc-cell {
+  border-radius: 0;
+  background: rgba(255,255,255,.15);
+  transition: background .35s ease-out;
+}
+.px-bc-cell.active { background: rgba(255,255,255,.95); transition: none; }
+.px-bc-stats {
+  font: 600 10px ui-monospace, monospace; letter-spacing: .03em;
+  color: #fff; display: flex; flex-direction: column; gap: 4px;
+}
+.px-bc-row { display: flex; justify-content: space-between; gap: 10px; }
+.px-bc-dim { color: rgba(255,255,255,.45); }
 
 .px-btn {
   position: relative;
