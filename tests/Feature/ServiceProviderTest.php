@@ -44,7 +44,7 @@ test('registers mux permissions', function () {
 
     expect(Permission::get('manage mux'))->not->toBeNull();
     expect(Permission::get('view mux library'))->not->toBeNull();
-    expect(Permission::get('view mux dashboard'))->not->toBeNull();
+    expect(Permission::get('open mux dashboard'))->not->toBeNull();
     expect(Permission::get('delete mux assets'))->not->toBeNull();
     expect(Permission::get('trigger mux sync'))->not->toBeNull();
     expect(Permission::get('view mux'))->toBeNull();

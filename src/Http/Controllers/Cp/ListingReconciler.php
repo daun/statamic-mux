@@ -262,7 +262,7 @@ class ListingReconciler
     protected function buildLocalRows(): Collection
     {
         $user = User::current();
-        $dashboardUrl = $user?->can('view mux dashboard') ? $this->api->dashboardUrl() : null; // @phpstan-ignore method.notFound
+        $dashboardUrl = $user?->can('open mux dashboard') ? $this->api->dashboardUrl() : null; // @phpstan-ignore method.notFound
 
         return MirrorField::assets()
             ->map(function (Asset $asset) use ($user, $dashboardUrl) {
@@ -310,7 +310,7 @@ class ListingReconciler
     protected function buildRemoteRows(Collection $localIndex): Collection
     {
         $user = User::current();
-        $dashboardUrl = $user?->can('view mux dashboard') ? $this->api->dashboardUrl() : null; // @phpstan-ignore method.notFound
+        $dashboardUrl = $user?->can('open mux dashboard') ? $this->api->dashboardUrl() : null; // @phpstan-ignore method.notFound
 
         return $this->getCachedRemoteAssets()
             ->map(function ($muxAsset) use ($localIndex, $dashboardUrl) {

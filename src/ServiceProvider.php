@@ -196,8 +196,8 @@ class ServiceProvider extends AddonServiceProvider
                         Permission::make('view mux library')
                             ->label('View Mux library')
                             ->description('Allows viewing all videos in the connected Mux library'),
-                        Permission::make('view mux dashboard')
-                            ->label('View Mux dashboard')
+                        Permission::make('open mux dashboard')
+                            ->label('Open Mux dashboard')
                             ->description('Allows opening links to the external Mux dashboard'),
                         Permission::make('delete mux assets')
                             ->label('Delete Mux assets')
