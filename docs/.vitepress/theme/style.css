@@ -329,3 +329,31 @@
   line-height: 18px;
   font-size: 12px;
 }
+
+/**
+ * PROTOTYPE — Hero animation stage
+ * Give the hero image slot room for the animations and drop the default
+ * blurred gradient blob. Remove this block with the prototype.
+ * -------------------------------------------------------------------------- */
+
+.VPHero .image-bg { display: none; }
+
+.VPHero .image-container {
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto;
+  padding: 0;
+  transform: none;
+  overflow: visible;
+}
+
+.VPHero .image {
+  width: 100%;
+  max-width: 480px;
+}
+
+@media (min-width: 960px) {
+  .VPHero.has-image .container { gap: 32px; }
+  .VPHero .image { flex: 0 0 460px; max-width: 460px; }
+  .VPHero .image-container { margin-right: 8px; }
+}
