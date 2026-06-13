@@ -44,7 +44,7 @@ one of the available [Artisan Commands](/commands), e.g.:
 
 ```sh
 # Upload existing videos to Mux
-php please mux:upload
+php artisan mux:upload
 ```
 
 ## Troubleshooting
