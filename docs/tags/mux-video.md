@@ -63,7 +63,7 @@ to allow using the video as a background element:
 
 ## Custom attributes
 
-Any other attributes will be passed along to the the web component itself:
+Any other attributes are passed through to the web component:
 
 ```antlers
 {{ mux:video src="assets::video.mp4" class="mt-3" }}

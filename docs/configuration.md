@@ -1,7 +1,7 @@
 # Configuration
 
-The addon config will be published to `config/mux.php` on installation. Read on
-for details on each available config option.
+The addon's config file is published to `config/mux.php` on installation. Each available option is
+described below.
 
 ## Credentials
 
@@ -81,10 +81,10 @@ return [
 
 ## Control Panel Thumbnails
 
-Configure the behavior of video thumbnails in the control panel. By default, the addon will render
-animated GIF previews of the first five seconds. This is great for editors to identify and work with
-videos, but uses more bandwidth than static images. You can disable this behavior entirely or switch
-to static images to save on bandwidth.
+Configure how video thumbnails are rendered in the control panel. By default, the addon renders
+animated GIF previews of the first five seconds, which helps editors identify videos but uses more
+bandwidth than static images. Set `animated` to `false` to use static images, or `enabled` to `false`
+to disable thumbnails entirely.
 
 ```php
 return [
@@ -129,9 +129,9 @@ return [
 Mux offers three quality levels. Learn more at
 [Choosing Video Quality](https://docs.mux.com/guides/use-video-quality-levels).
 
-- `basic` for apps with simpler needs that need to save on bandwidth & cost
-- `plus` for conistently high quality output, but incurs encoding cost
-- `premium` for premium high-detail content like sports broadcasts
+- `basic`: lower bandwidth and cost, lower quality
+- `plus`: consistently high quality, higher encoding cost
+- `premium`: highest quality, for high-detail content such as sports broadcasts
 
 ```php
 return [
@@ -172,6 +172,7 @@ return [
 
 Change the default playback behavior of video streams received from Mux.
 Applies to any videos or players rendered using the built-in Antlers tags.
+No modifiers are set by default; the entries below are examples.
 Learn more in the Mux docs on [Modifying Playback Behavior](https://docs.mux.com/guides/modify-playback-behavior).
 
 ```php
@@ -195,19 +196,18 @@ return [
 
 ## Storage Optimization
 
-Define how the addon handles original video files. In most cases, you'll want to
-stick with the default behavior and keep the original video files around to ensure
-long-term independence from any one video provider.
+Define how the addon handles original video files. By default, the original files are kept on your asset
+disk, which avoids depending solely on Mux for storage and lets you stream or download from your origin
+server as a fallback.
 
-If you need to save storage space on the server, you can configure the addon to
-replace video files with a smaller placeholder version. This will store a short
-10s clip of the video for previewing in the backend, but will require Mux for
-streaming and downloading the full video.
+To save storage space, set `store_placeholders` to `true` to replace each video file with a short clip
+(default 10 seconds, set by `placeholder_length`). The clip is used for previewing in the control panel;
+streaming and downloading the full video then requires Mux.
 
-Any videos shorter than the defined placeholder length will keep the original.
+Videos shorter than `placeholder_length` keep their original file.
 
-Note that this feature requires a [queue worker](https://laravel.com/docs/queues#running-the-queue-worker)
-to be running, as the video processing can take some time depending on the file size.
+This feature requires a running [queue worker](https://laravel.com/docs/queues#running-the-queue-worker),
+as processing can take time depending on file size.
 
 ```php
     /*
@@ -227,8 +227,8 @@ to be running, as the video processing can take some time depending on the file 
 
 ## Queue Driver
 
-Define the queue driver to be used for uploads and other long-running requests to Mux.
-Leave it empty to use the default queue settings of your app.
+Define the queue connection and queue name used for uploads and other long-running requests to Mux.
+Leave `connection` empty to use your app's default queue connection.
 
 ```php
 return [
@@ -252,14 +252,12 @@ return [
 
 Configure the output and verbosity of the addon's logs.
 
-For troubleshooting uploads and getting insight into the processing of video files,
-you can increase the log level to `debug` temporarily. Make sure to set it back to
-`notice` or `warning` in production to avoid excessive log output.
+To troubleshoot uploads and see how video files are processed, increase the log level to `debug`
+temporarily. Set it back to `warning` in production to avoid excessive log output.
 
-The addon creates its own log channel, writing to `storage/logs/mux.log` and
-rotating biweekly. You can customize the log channel by either defining a `mux`
-channel of your own in `config/logging.php` or telling the addon to use a
-different channel entirely.
+The addon creates its own log channel, writing to `storage/logs/mux.log`. To customize it, either define
+your own `mux` channel in `config/logging.php`, or point the addon at a different channel via
+`MUX_LOG_CHANNEL`.
 
 ```php
 return [
