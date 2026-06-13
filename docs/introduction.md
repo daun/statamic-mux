@@ -19,8 +19,8 @@ Mirror locally uploaded videos to your Mux account
 **Standard upload workflow**  
 Upload original video files into the control panel like any other asset
 
-**No custom fieldtype required**  
-Handle and display videos like any other asset in Statamic
+**No separate fieldtype required**  
+Manage videos using the built-in assets fieldtype, freely mixing images and videos
 
 **Instant playback**  
 Videos can be streamed within seconds of upload, before full encoding completes
