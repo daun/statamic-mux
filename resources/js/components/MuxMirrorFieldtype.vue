@@ -19,30 +19,31 @@
                 <ui-badge pill v-if="isProxy" icon="page-ghost" v-tooltip="t('proxy_tooltip')">
                     {{ t('proxy') }}
                 </ui-badge>
-                <ui-dropdown v-if="showDetails && infoItems.length" align="start">
-                    <template #trigger>
-                        <ui-badge pill as="button" icon="info-square" v-tooltip="t('details_tooltip')">
-                            {{ t('info') }}
-                        </ui-badge>
-                    </template>
-                    <ui-dropdown-menu class="w-120 max-w-full">
-                        <ui-dropdown-item
-                            v-for="item in infoItems"
-                            :key="item.key"
-                            :icon="item.icon"
-                            @click="copy(item)"
-                        >
-                            <span class="flex min-w-0 max-w-full items-baseline gap-3">
-                                <span class="shrink-0 font-medium">{{ item.label }}</span>
-                                <span class="min-w-0 flex-1 truncate font-mono text-xs text-gray-400 dark:text-gray-500">
-                                    <span class="text-[0.9em]">{{ item.value }}</span>
-                                </span>
-                            </span>
-                        </ui-dropdown-item>
-                    </ui-dropdown-menu>
-                </ui-dropdown>
+                <ui-badge pill as="button" :icon="isInfoExpanded ? 'x-square' : 'info-square'" class="shadow-none!" v-tooltip="t('details_tooltip')" @click="toggleInfo">
+                    {{ t('info') }}
+                </ui-badge>
             </div>
-
+            <ul v-if="isInfoExpanded" class="max-w-full grid p-1.5 border border-gray-150 dark:border-gray-700 rounded-lg overflow-hidden">
+                <li
+                    v-for="{ key, icon, label, value } in infoItems"
+                    :key="key"
+                    class="group flex min-w-0 max-w-full rounded-lg px-1 py-1.5 text-sm text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 outline-hidden"
+                    @click="copy(value, key)"
+                >
+                    <div class="flex-shrink-0 flex size-5 items-center justify-center p-1">
+                        <ui-icon v-if="icon" :name="icon" class="size-3.5! text-gray-400 dark:text-gray-500" />
+                    </div>
+                    <div class="flex-1 flex items-baseline gap-3 px-2 overflow-hidden">
+                        <span class="shrink-0 font-medium">{{ label }}</span>
+                        <span class="flex-1 truncate font-mono text-xs text-gray-400 dark:text-gray-500">
+                            <span class="text-[0.9em]">{{ value }}</span>
+                        </span>
+                    </div>
+                    <div class="flex-shrink-0 size-5 items-center justify-center p-1 hidden group-focus-within:flex! group-hover:flex!" :class="{ 'flex!': itemCopied === key }">
+                        <ui-icon :name="itemCopied === key ? 'clipboard-check' : 'clipboard'" class="size-3.5! text-gray-400 dark:text-gray-500" :class="{ 'text-gray-800! dark:text-gray-200!': itemCopied === key }" />
+                    </div>
+                </li>
+            </ul>
             <ui-checkbox v-if="showReuploadToggle" v-model="value.reupload" name="reupload" :label="t('reupload_on_save')" />
         </template>
     </div>
@@ -53,6 +54,13 @@ import { FieldtypeMixin as Fieldtype } from '@statamic/cms';
 
 export default {
     mixins: [Fieldtype],
+    data() {
+        return {
+            isInfoExpanded: false,
+            itemCopied: null,
+            itemCopiedTimeout: null,
+        }
+    },
     computed: {
         showReuploadToggle() {
             return this.allowReuploads && !this.isProxy;
@@ -94,10 +102,21 @@ export default {
         },
     },
     methods: {
-        copy(item) {
-            if (item?.value) {
-                Statamic.$callbacks.call('copyToClipboard', item.value);
+        toggleInfo() {
+            this.isInfoExpanded = !this.isInfoExpanded;
+        },
+        copy(value, key) {
+            if (! value) {
+                return;
             }
+
+            Statamic.$callbacks.call('copyToClipboard', value);
+
+            clearTimeout(this.itemCopiedTimeout);
+            this.itemCopied = key;
+            this.itemCopiedTimeout = setTimeout(() => {
+                this.itemCopied = null;
+            }, 4000);
         },
         t(key, replacements = {}) {
             return __(`statamic-mux::messages.fieldtype.${key}`, replacements);
