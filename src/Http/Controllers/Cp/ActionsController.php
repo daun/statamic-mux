@@ -44,7 +44,7 @@ class ActionsController extends ActionController
     {
         $cached = $this->reconciler->getCachedRemoteAssetsIfAvailable()->keyBy(fn ($asset) => $asset->getId());
         $user = User::current();
-        $dashboardBaseUrl = $user?->can('view mux dashboard') ? $this->mux->dashboardUrl() : null; // @phpstan-ignore method.notFound
+        $dashboardBaseUrl = $user?->can('open mux dashboard') ? $this->mux->dashboardUrl() : null; // @phpstan-ignore method.notFound
 
         return $items->map(fn ($muxId) => new MuxLibraryItem(
             $muxId,

@@ -448,7 +448,7 @@ test('local api requires manage mux permission', function () {
     expect(fn () => $controller->local($request))->toThrow(AuthorizationException::class);
 });
 
-test('dashboard urls require view mux dashboard permission', function () {
+test('dashboard urls require open mux dashboard permission', function () {
     $user = User::make()->email('no-dashboard@test.com')->password('secret');
     $user->save();
 

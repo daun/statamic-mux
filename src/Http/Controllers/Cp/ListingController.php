@@ -61,7 +61,7 @@ class ListingController extends CpController
             'refreshEndpoint' => cp_route('mux.listing.refresh'),
             'commandEndpoint' => cp_route('mux.command'),
             'actionUrl' => cp_route('mux.actions.remote.run'),
-            'dashboardUrl' => $user?->can('view mux dashboard') ? $this->api->dashboardUrl() : null, // @phpstan-ignore method.notFound
+            'dashboardUrl' => $user?->can('open mux dashboard') ? $this->api->dashboardUrl() : null, // @phpstan-ignore method.notFound
         ]);
     }
 
