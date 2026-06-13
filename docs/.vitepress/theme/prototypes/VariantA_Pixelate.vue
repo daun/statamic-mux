@@ -22,6 +22,7 @@
         <div v-if="phase === 'processing'" class="px-spinner"></div>
         <button v-else class="px-btn"
                 :class="{ ready: phase === 'ready', pressing: phase === 'pressed', paused: showPause }"
+                :style="{ opacity: btnOpacity }"
                 aria-hidden="true">
           <svg v-if="!showPause" viewBox="0 0 24 24" width="34" height="34">
             <polygon points="6 4 20 12 6 20" />
@@ -35,6 +36,9 @@
 
       <div class="px-bar"><span ref="fill" class="px-fill"></span></div>
       <div ref="res" class="px-res">Processing</div>
+
+      <!-- black fade across the loop seam -->
+      <div class="px-fade" :style="{ opacity: fadeOpacity }"></div>
     </div>
   </div>
 </template>
@@ -48,6 +52,8 @@ const fill = ref(null)
 const res = ref(null)
 
 const phase = ref('processing')   // processing | ready | pressed | playing | hold
+const btnOpacity = ref(1)         // pause control auto-hides during playback
+const fadeOpacity = ref(0)        // black overlay at the loop seam
 // pause icon shows from the press onward (through playback + hold)
 const showPause = computed(() =>
   phase.value === 'pressed' || phase.value === 'playing' || phase.value === 'hold')
@@ -55,8 +61,12 @@ const showPause = computed(() =>
 let raf = null
 
 // --- timeline (ms) ---
-const labels = ['144p', '240p', '480p', '720p', '1080p']
-const BLOCKS = [56, 32, 18, 9, 0]   // pixelation factor per resolution (higher = chunkier)
+const labels = ['144p', '240p', '480p', '720p', '1080p', '2160p']
+const BLOCKS = [56, 32, 18, 9, 3, 0] // pixelation factor per resolution (higher = chunkier)
+const HIDE_AFTER = 1300             // ms into playback before the pause control hides
+const HIDE_DUR = 600                // fade-out duration of the control
+const FADE_OUT = 450                // fade to black at the very end of the loop
+const FADE_IN = 450                 // fade from black into the pixelated start
 const PROCESS_BLOCKS = 72           // heaviest pixelation while processing
 const PROCESS = 2600                // spinner / "Processing"
 const READY = 1000                  // play button shown, frame still pixelated
@@ -129,18 +139,28 @@ onMounted(() => {
       const rt = t - PRESS_END
       const step = Math.min(labels.length - 1, Math.floor(rt / BEAT))
       blocks = BLOCKS[step]; label = labels[step]; barP = rt / PLAYING
+      btnOpacity.value = rt < HIDE_AFTER ? 1 : Math.max(0, 1 - (rt - HIDE_AFTER) / HIDE_DUR)
     } else {
-      ph = 'hold'; blocks = 0; label = '1080p'; barP = 1
+      ph = 'hold'; blocks = 0; label = labels[labels.length - 1]; barP = 1
+      btnOpacity.value = 0
     }
+    if (ph === 'ready' || ph === 'pressed') btnOpacity.value = 1
 
-    // video stays paused on frame 0 until playback starts; rewinds on loop
+    // paused on frame 0 until playback starts; keeps playing through the hold
+    // right up to the reset, then rewinds when we loop back to processing
     if (ph !== lastPhase) {
-      if (ph === 'playing') tryPlay()
+      if (ph === 'playing' || ph === 'hold') tryPlay()
       else { vid.pause(); if (ph === 'processing') { try { vid.currentTime = 0 } catch (e) {} } }
       lastPhase = ph
     }
 
     phase.value = ph
+
+    // black fade across the loop seam: out at the tail, in at the head
+    fadeOpacity.value =
+      t > TOTAL - FADE_OUT ? (t - (TOTAL - FADE_OUT)) / FADE_OUT
+      : t < FADE_IN ? 1 - t / FADE_IN
+      : 0
 
     if (videoReady()) paintVideo()
     else paintSource(now)
@@ -196,26 +216,26 @@ onBeforeUnmount(() => cancelAnimationFrame(raf))
 .px-btn {
   position: relative;
   width: 76px; height: 76px; border-radius: 999px; border: 0; cursor: default;
-  /* liquid glass: transparent frosted fill + white icon */
-  background: rgba(255, 255, 255, 0.12);
+  /* liquid glass: dark frosted fill (darker than bg) + white icon */
+  background: rgba(0, 0, 0, 0.3);
   -webkit-backdrop-filter: blur(10px) saturate(1.3);
   backdrop-filter: blur(10px) saturate(1.3);
   color: #fff;
   display: grid; place-items: center;
   box-shadow:
-    inset 0 1px 2px rgba(255, 255, 255, 0.55),
-    inset 0 -3px 6px rgba(255, 255, 255, 0.08),
-    0 10px 30px rgba(0, 0, 0, 0.25);
+    inset 0 1px 1px rgba(255, 255, 255, 0.22),
+    inset 0 -2px 5px rgba(0, 0, 0, 0.18),
+    0 10px 30px rgba(0, 0, 0, 0.28);
 }
 /* offset gradient rim / shimmer on the edge */
 .px-btn::before {
   content: ''; position: absolute; inset: 0; border-radius: inherit;
-  padding: 1.4px; pointer-events: none;
+  padding: 1px; pointer-events: none;
   background: linear-gradient(135deg,
-    rgba(255,255,255,0.9) 0%,
-    rgba(255,255,255,0.15) 38%,
-    rgba(255,255,255,0) 55%,
-    rgba(255,255,255,0.5) 100%);
+    rgba(255,255,255,0.45) 0%,
+    rgba(255,255,255,0.08) 40%,
+    rgba(255,255,255,0) 58%,
+    rgba(255,255,255,0.25) 100%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
           mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor; mask-composite: exclude;
@@ -229,6 +249,9 @@ onBeforeUnmount(() => cancelAnimationFrame(raf))
 
 .px-bar { position: absolute; left: 14px; right: 14px; bottom: 14px; height: 3.3px; border-radius: 999px; background: rgba(255,255,255,.25); overflow: hidden; }
 .px-fill { display: block; height: 100%; width: 0; background: #fff; border-radius: 999px; }
+.px-fade {
+  position: absolute; inset: 0; background: #000; pointer-events: none; z-index: 5;
+}
 .px-res {
   position: absolute; top: 12px; right: 12px;
   font: 600 11px ui-monospace, monospace; letter-spacing: .04em;
