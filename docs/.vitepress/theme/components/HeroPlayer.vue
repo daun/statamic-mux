@@ -24,8 +24,11 @@
     <div class="px-drag-wrap">
       <div class="px-window">
         <!-- hidden source video; canvas samples + pixelates each frame -->
-        <video ref="video" class="px-src" src="/blobs.mp4"
-               muted loop playsinline preload="auto"></video>
+        <!-- no `loop`: we rewind to frame 0 manually at idle, so a clip that
+             finishes early holds its last frame instead of jumping back.
+             src is resolved once on mount from the active color scheme. -->
+        <video ref="video" class="px-src"
+               muted playsinline preload="auto"></video>
         <canvas ref="canvas" class="px-canvas" width="640" height="400"
                :style="blurAmount > 0 ? { filter: `blur(${blurAmount}px)`, transform: 'scale(1.08)' } : {}"></canvas>
         <div class="px-scrim"></div>
@@ -53,7 +56,7 @@
                 v-for="i in 16"
                 :key="i"
                 class="px-bc-cell"
-                :class="{ active: (blockFrame % 16) === (i - 1) }"
+                :style="{ background: cellColor(i - 1) }"
               ></div>
             </div>
             <div class="px-bc-stats">
@@ -115,7 +118,18 @@ const props = defineProps({
   // 'blur'  — processing/ready shows a soft blurred frame (default)
   // 'pixel' — processing/ready shows the classic heavy pixelation
   idleStyle: { type: String, default: 'blur' },
+  // source clip per color scheme; resolved once on mount (not reactive to
+  // theme toggling). srcDark falls back to srcLight when omitted.
+  srcLight: { type: String, default: '/blobs.mp4' },
+  srcDark:  { type: String, default: '/blobs-dark.mp4' },
 })
+
+// pick the clip for the current color scheme (VitePress sets `.dark` on <html>)
+function resolveSrc() {
+  const isDark = typeof document !== 'undefined'
+    && document.documentElement.classList.contains('dark')
+  return (isDark && props.srcDark) ? props.srcDark : props.srcLight
+}
 
 const canvas = ref(null)
 const video = ref(null)
@@ -142,6 +156,20 @@ const fieldOpacity = ref(0)        // inner rect: hidden until the file is over 
 const dropActive = ref(false)      // true = drop zone highlight (solid border)
 const hudVisible = ref(false)      // false during intro phases, hides px-res
 const barVisible = ref(false)      // progress bar only visible while the video plays
+
+// macro-block spinner: a comet that snakes through the grid. Brightness is
+// computed per cell from its distance behind the head, so there's no CSS
+// transition toggling (which was skipping fades and looking like flicker).
+const SPIN_TRAIL = 4
+function cellColor(dom) {
+  const row = Math.floor(dom / 4), col = dom % 4
+  // sequence position of this cell along the snake path (reverse on odd rows)
+  const seq = row * 4 + (row % 2 === 0 ? col : 3 - col)
+  const head = ((blockFrame.value % 16) + 16) % 16
+  const d = (head - seq + 16) % 16          // steps behind the head
+  const a = d < SPIN_TRAIL ? 0.95 - (d / SPIN_TRAIL) * 0.8 : 0.15
+  return `rgba(255,255,255,${a.toFixed(3)})`
+}
 
 // pause icon shows from the press onward (through playback + hold)
 const showPause = computed(() =>
@@ -204,9 +232,29 @@ onMounted(() => {
   let thumbPainted = false
   let everPainted = false
 
-  const tryPlay = () => { const p = vid.play(); if (p && p.catch) p.catch(() => {}) }
+  // the clip must cover the playback window (pressed → end of hold). If it's
+  // shorter, slow it down (playbackRate < 1) so it stretches to fill the window
+  // instead of looping; if it's long enough, leave it at normal speed.
+  // +4% so a stretched clip ends just past the loop seam — still in motion when
+  // the fade covers it, never freezing/looping a hair early
+  const PLAYBACK_WINDOW = ((TOTAL - PRESS_END) / 1000) * 1.04   // seconds to fill
+  const fitPlayback = () => {
+    const d = vid.duration
+    if (d && isFinite(d) && d < PLAYBACK_WINDOW) {
+      // browsers clamp playbackRate to ~0.0625 minimum
+      vid.playbackRate = Math.max(0.0625, d / PLAYBACK_WINDOW)
+    } else {
+      vid.playbackRate = 1
+    }
+  }
+
+  const tryPlay = () => { fitPlayback(); const p = vid.play(); if (p && p.catch) p.catch(() => {}) }
   // load + decode the first frame, but stay paused & rewound until "play"
+  vid.addEventListener('loadedmetadata', fitPlayback)
   vid.addEventListener('loadeddata', () => { vid.pause(); try { vid.currentTime = 0 } catch (e) {} })
+  // resolve the per-scheme clip once, then kick off loading
+  vid.src = resolveSrc()
+  vid.load()
 
   const videoReady = () => vid.readyState >= 2 && vid.videoWidth > 0
   let lastPhase = null
@@ -327,7 +375,7 @@ onMounted(() => {
         blocks = useBlur ? 0 : PROCESS_BLOCKS
         label = 'Processing'; barP = 0
         blurAmount.value = useBlur ? 12 : 0
-        blockFrame.value = Math.floor(tp * 24 / 1000)
+        blockFrame.value = Math.floor(tp * 11 / 1000)
         blockKbps.value = Math.round(4200 + 600 * (0.5 + 0.5 * Math.sin(tp / 200 + 1.3)))
         spinnerOpacity.value = tp < PROCESS - SPINNER_FADE
           ? 1 : 1 - (tp - (PROCESS - SPINNER_FADE)) / SPINNER_FADE
@@ -483,7 +531,7 @@ onBeforeUnmount(() => cancelAnimationFrame(raf))
   background: #ececec;
 }
 .px-thumb-name {
-  font: 10.5px -apple-system, 'SF Pro Text', ui-sans-serif, sans-serif;
+  font: 12px ui-monospace, 'SF Mono', 'Menlo', monospace;
   color: #1a1a1a;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
@@ -515,9 +563,8 @@ onBeforeUnmount(() => cancelAnimationFrame(raf))
 .px-bc-cell {
   border-radius: 0;
   background: rgba(255,255,255,.15);
-  transition: background .35s ease-out;
+  transition: background 90ms linear;
 }
-.px-bc-cell.active { background: rgba(255,255,255,.95); transition: none; }
 .px-bc-stats {
   font: 600 10px ui-monospace, monospace; letter-spacing: .03em;
   color: #fff; display: flex; flex-direction: column; gap: 4px;
