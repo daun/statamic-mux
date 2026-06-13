@@ -3,9 +3,11 @@
 namespace Daun\StatamicMux\Fieldtypes;
 
 use Daun\StatamicMux\Data\MuxAsset;
+use Daun\StatamicMux\Data\MuxPlaybackId;
 use Daun\StatamicMux\GraphQL\MuxMirrorType;
 use Daun\StatamicMux\GraphQL\MuxPlaybackIdType;
 use Daun\StatamicMux\Jobs\CreateMuxAssetJob;
+use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Query\Scopes\Filters\Fields\MuxMirrorFieldtypeFilter;
 use Statamic\Assets\Asset;
 use Statamic\Facades\GraphQL;
@@ -51,12 +53,40 @@ class MuxMirrorFieldtype extends Fieldtype
     public function preload()
     {
         $asset = $this->asset();
+        $muxAsset = $asset ? MuxAsset::fromAsset($asset) : null;
 
         return [
             'is_asset' => (bool) $asset,
-            'is_video' => $asset && $asset->isVideo(),
-            'is_proxy' => $asset && MuxAsset::fromAsset($asset)->isProxy(),
+            'is_video' => $asset->isVideo(),
+            'is_proxy' => $muxAsset?->isProxy() ?? false,
+            'mux' => $muxAsset && $this->config('show_details')
+                ? $this->muxInfo($muxAsset)
+                : [],
         ];
+    }
+
+    protected function muxInfo(MuxAsset $muxAsset): array
+    {
+        $playbackId = $muxAsset?->playbackId();
+        if (! $playbackId instanceof MuxPlaybackId) {
+            return [
+                'asset_id' => $muxAsset->id(),
+            ];
+        }
+
+        $service = app(MuxService::class);
+        $url = fn (callable $cb) => rescue($cb, null, report: false);
+
+        return array_filter([
+            'asset_id' => $muxAsset->id(),
+            'playback_id' => $playbackId->id(),
+            'signed' => $playbackId->isSigned(),
+            'player_url' => $url(fn () => $service->getPlayerUrl($playbackId)),
+            'stream_url' => $url(fn () => $service->getPlaybackUrl($playbackId)),
+            'thumbnail_url' => $url(fn () => $service->getThumbnailUrl($playbackId)),
+            'gif_url' => $url(fn () => $service->getGifUrl($playbackId)),
+            'embed_code' => $url(fn () => $service->getEmbedCode($playbackId)),
+        ], fn ($v) => $v !== null);
     }
 
     public function preProcess($data)

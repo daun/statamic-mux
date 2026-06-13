@@ -19,31 +19,31 @@
                 <ui-badge pill v-if="isProxy" icon="page-ghost" v-tooltip="t('proxy_tooltip')">
                     {{ t('proxy') }}
                 </ui-badge>
-                <ui-badge pill v-if="showDetails" icon="info-square" as="button" v-tooltip="t('details_tooltip')" @click="detailsExpanded = !detailsExpanded">
-                    {{ t('details') }}
+                <ui-badge pill as="button" :icon="isInfoExpanded ? 'x-square' : 'info-square'" class="shadow-none!" v-tooltip="t('details_tooltip')" @click="toggleInfo">
+                    {{ t('info') }}
                 </ui-badge>
             </div>
-            <ui-card inset variant="flat" class="w-full overflow-auto bg-gray-50! dark:bg-gray-800!" v-if="showDetails && detailsExpanded">
-                <table class="w-full text-xs text-gray-600 dark:text-gray-300">
-                    <tbody class="divide-y divide-gray-800/10 dark:divide-white/10 [&_td]:px-1.5! [&_td]:py-2! [&_td:first-child]:pl-3! [&_td:last-child]:pr-3! [&_td]:text-left [&_svg]:opacity-60">
-                        <tr key="id">
-                            <td>
-                                <ui-icon name="mux::fingerprint" v-tooltip="'Mux ID'"></ui-icon>
-                            </td>
-                            <td>{{ value.id }}</td>
-                        </tr>
-                        <tr v-for="[policy, id] in playbackIds" :key="id">
-                            <td v-if="policy === 'signed'">
-                                <ui-icon name="mux::padlock" v-tooltip="'Signed Playback ID'"></ui-icon>
-                            </td>
-                            <td v-else>
-                                <ui-icon name="mux::play-button" v-tooltip="'Public Playback ID'"></ui-icon>
-                            </td>
-                            <td>{{ id }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </ui-card>
+            <ul v-if="isInfoExpanded" class="max-w-full grid p-1.5 border border-gray-150 dark:border-gray-700 rounded-lg overflow-hidden">
+                <li
+                    v-for="{ key, icon, label, value } in infoItems"
+                    :key="key"
+                    class="group flex min-w-0 max-w-full rounded-lg px-1 py-1.5 text-sm text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 outline-hidden"
+                    @click="copy(value, key)"
+                >
+                    <div class="flex-shrink-0 flex size-5 items-center justify-center p-1">
+                        <ui-icon v-if="icon" :name="icon" class="size-3.5! text-gray-400 dark:text-gray-500" />
+                    </div>
+                    <div class="flex-1 flex items-baseline gap-3 px-2 overflow-hidden">
+                        <span class="shrink-0 font-medium">{{ label }}</span>
+                        <span class="flex-1 truncate font-mono text-xs text-gray-400 dark:text-gray-500">
+                            <span class="text-[0.9em]">{{ value }}</span>
+                        </span>
+                    </div>
+                    <div class="flex-shrink-0 size-5 items-center justify-center p-1 hidden group-focus-within:flex! group-hover:flex!" :class="{ 'flex!': itemCopied === key }">
+                        <ui-icon :name="itemCopied === key ? 'clipboard-check' : 'clipboard'" class="size-3.5! text-gray-400 dark:text-gray-500" :class="{ 'text-gray-800! dark:text-gray-200!': itemCopied === key }" />
+                    </div>
+                </li>
+            </ul>
             <ui-checkbox v-if="showReuploadToggle" v-model="value.reupload" name="reupload" :label="t('reupload_on_save')" />
         </template>
     </div>
@@ -56,12 +56,14 @@ export default {
     mixins: [Fieldtype],
     data() {
         return {
-            detailsExpanded: false
-        };
+            isInfoExpanded: false,
+            itemCopied: null,
+            itemCopiedTimeout: null,
+        }
     },
     computed: {
         showReuploadToggle() {
-            return this.allowReuploads && ! this.isProxy;
+            return this.allowReuploads && !this.isProxy;
         },
         allowReuploads() {
             return this.config?.allow_reupload;
@@ -76,19 +78,49 @@ export default {
             return this.meta?.is_video || false;
         },
         isUploaded() {
-            return !! this.value.id;
+            return !!this.value.id;
         },
         isProxy() {
             return this.meta?.is_proxy || false;
         },
-        playbackIds() {
-            return Object.entries(this.value.playback_ids || {});
-        }
+        infoItems() {
+            const info = this.meta?.mux || {};
+
+            const items = [
+                { key: 'asset_id', icon: 'taxonomies' },
+                { key: 'playback_id', icon: 'taxonomies' },
+                { key: 'player_url', icon: 'mux::video-square' },
+                // { key: 'stream_url', icon: 'mux::streaming' },
+                { key: 'embed_code', icon: 'programming-code-block' },
+                // { key: 'thumbnail_url', icon: 'mux::thumbnail' },
+                { key: 'gif_url', icon: 'mux::thumbnail' },
+            ];
+
+            return items
+                .filter((item) => info[item.key])
+                .map((item) => ({ ...item, label: this.t(`copy.${item.key}`), value: info[item.key] }));
+        },
     },
     methods: {
+        toggleInfo() {
+            this.isInfoExpanded = !this.isInfoExpanded;
+        },
+        copy(value, key) {
+            if (! value) {
+                return;
+            }
+
+            Statamic.$callbacks.call('copyToClipboard', value);
+
+            clearTimeout(this.itemCopiedTimeout);
+            this.itemCopied = key;
+            this.itemCopiedTimeout = setTimeout(() => {
+                this.itemCopied = null;
+            }, 4000);
+        },
         t(key, replacements = {}) {
             return __(`statamic-mux::messages.fieldtype.${key}`, replacements);
-        }
+        },
     },
 };
 </script>

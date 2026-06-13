@@ -1,6 +1,6 @@
 {
   "resources/css/addon.css": {
-    "file": "assets/addon-BNv7da6H.css",
+    "file": "assets/addon-CVorINHh.css",
     "name": "addon",
     "names": [
       "addon.css"
@@ -9,7 +9,7 @@
     "isEntry": true
   },
   "resources/js/addon.js": {
-    "file": "assets/addon-D2cJ2QL5.js",
+    "file": "assets/addon-BiYct5_h.js",
     "name": "addon",
     "src": "resources/js/addon.js",
     "isEntry": true,
@@ -25,6 +25,7 @@
       "resources/svg/icons/play-button.svg?raw",
       "resources/svg/icons/reload-vertical.svg?raw",
       "resources/svg/icons/reload.svg?raw",
+      "resources/svg/icons/streaming.svg?raw",
       "resources/svg/icons/thumbnail.svg?raw",
       "resources/svg/icons/video-card.svg?raw",
       "resources/svg/icons/video-folder.svg?raw",
@@ -101,6 +102,12 @@
     "file": "assets/reload-Bq8qVQgE.js",
     "name": "reload",
     "src": "resources/svg/icons/reload.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/icons/streaming.svg?raw": {
+    "file": "assets/streaming-BqnmyHbL.js",
+    "name": "streaming",
+    "src": "resources/svg/icons/streaming.svg?raw",
     "isDynamicEntry": true
   },
   "resources/svg/icons/thumbnail.svg?raw": {
