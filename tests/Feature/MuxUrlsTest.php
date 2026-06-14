@@ -82,6 +82,11 @@ test('generates playback url', function () {
     expect(Str::containsAll($this->urls->playback('playback-id'), ['stream.mux.com', 'm3u8', 'playback-id']))->toBeTrue();
 });
 
+test('generates player url', function () {
+    expect($this->urls->player('playback-id'))->toBe('https://player.mux.com/playback-id');
+    expect($this->urls->player('playback-id', ['playback-token' => 'token']))->toBe('https://player.mux.com/playback-id?playback-token=token');
+});
+
 test('generates thumbnail url', function () {
     expect(Str::containsAll($this->urls->thumbnail('playback-id'), ['image.mux.com', 'thumbnail.jpg', 'playback-id']))->toBeTrue();
     expect(Str::containsAll($this->urls->thumbnail('playback-id', 'jpg'), ['image.mux.com', 'thumbnail.jpg', 'playback-id']))->toBeTrue();

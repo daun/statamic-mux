@@ -1,6 +1,6 @@
 <?php
 
-use Daun\StatamicMux\Http\Controllers\Cp\AssetsController;
+use Daun\StatamicMux\Http\Controllers\Cp\ThumbnailController;
 use Daun\StatamicMux\Thumbnails\ThumbnailService;
 use Illuminate\Support\Facades\Auth;
 use Statamic\Facades\Stache;
@@ -38,7 +38,7 @@ test('redirects to thumbnail url for asset with playback id', function () {
     $asset = $this->mp4WithPlaybackId;
     $id = base64_encode($asset->id());
 
-    $response = $this->app->make(AssetsController::class)->thumbnail($id);
+    $response = $this->app->make(ThumbnailController::class)->thumbnail($id);
 
     expect($response->getStatusCode())->toBe(302);
     expect($response->getTargetUrl())->toStartWith('https://image.mux.com');
@@ -49,7 +49,7 @@ test('redirects to animated thumbnail by default', function () {
     $asset = $this->mp4WithPlaybackId;
     $id = base64_encode($asset->id());
 
-    $response = $this->app->make(AssetsController::class)->thumbnail($id);
+    $response = $this->app->make(ThumbnailController::class)->thumbnail($id);
 
     expect($response->getTargetUrl())->toEndWith('animated.webp?width=400');
 });
@@ -60,7 +60,7 @@ test('redirects to static thumbnail when animated is disabled', function () {
     $asset = $this->mp4WithPlaybackId;
     $id = base64_encode($asset->id());
 
-    $response = $this->app->make(AssetsController::class)->thumbnail($id);
+    $response = $this->app->make(ThumbnailController::class)->thumbnail($id);
 
     expect($response->getTargetUrl())->toEndWith('thumbnail.webp?width=400');
 });
@@ -68,18 +68,18 @@ test('redirects to static thumbnail when animated is disabled', function () {
 test('returns 404 for non-existent asset', function () {
     $id = base64_encode('test_container_assets::nonexistent.mp4');
 
-    $this->app->make(AssetsController::class)->thumbnail($id);
+    $this->app->make(ThumbnailController::class)->thumbnail($id);
 })->throws(NotFoundHttpException::class);
 
 test('returns 404 for invalid base64 id', function () {
-    $this->app->make(AssetsController::class)->thumbnail('!!!invalid!!!');
+    $this->app->make(ThumbnailController::class)->thumbnail('!!!invalid!!!');
 })->throws(Exception::class);
 
 test('returns 404 for asset without mux data', function () {
     $asset = $this->mp4;
     $id = base64_encode($asset->id());
 
-    $this->app->make(AssetsController::class)->thumbnail($id);
+    $this->app->make(ThumbnailController::class)->thumbnail($id);
 })->throws(NotFoundHttpException::class);
 
 test('returns 404 when thumbnail service returns null', function () {
@@ -90,11 +90,11 @@ test('returns 404 when thumbnail service returns null', function () {
     $asset = $this->mp4WithPlaybackId;
     $id = base64_encode($asset->id());
 
-    $this->app->make(AssetsController::class)->thumbnail($id);
+    $this->app->make(ThumbnailController::class)->thumbnail($id);
 })->throws(NotFoundHttpException::class);
 
 test('returns 404 for empty id', function () {
-    $this->app->make(AssetsController::class)->thumbnail(base64_encode(''));
+    $this->app->make(ThumbnailController::class)->thumbnail(base64_encode(''));
 })->throws(Exception::class);
 
 test('calls thumbnail service with correct asset', function () {
@@ -108,7 +108,7 @@ test('calls thumbnail service with correct asset', function () {
     $asset = $this->mp4WithPlaybackId;
     $id = base64_encode($asset->id());
 
-    $response = $this->app->make(AssetsController::class)->thumbnail($id);
+    $response = $this->app->make(ThumbnailController::class)->thumbnail($id);
 
     expect($response->getTargetUrl())->toBe('https://image.mux.com/playback-456/thumbnail.webp');
 });

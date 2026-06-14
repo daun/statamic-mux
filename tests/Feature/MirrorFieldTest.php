@@ -3,12 +3,24 @@
 use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Fieldtypes\MuxMirrorFieldtype;
 use Daun\StatamicMux\Support\MirrorField;
+use Statamic\Assets\Asset;
 use Statamic\Facades\Stache;
 use Statamic\Fields\Field;
 
 beforeEach(function () {
     Stache::clear();
 });
+
+/**
+ * Build a configured MuxMirrorFieldtype instance bound to the given asset,
+ * mirroring how Statamic resolves the fieldtype from the asset's blueprint.
+ */
+function preloadFieldtype(Asset $asset): MuxMirrorFieldtype
+{
+    $field = MirrorField::getFromBlueprint($asset)->setParent($asset);
+
+    return $field->fieldtype();
+}
 
 test('checks if configured', function () {
     expect(MirrorField::configured())->toBeBool();
@@ -138,4 +150,103 @@ test('excludes the given asset when finding by Mux id', function () {
     $results = MirrorField::assetsByMuxId('shared-mux-id', except: $first);
 
     expect($results->map->id()->all())->toEqual([$second->id()]);
+});
+
+test('preloads a video asset without mux data', function () {
+    $this->addMirrorFieldToAssetBlueprint();
+    $mp4 = $this->uploadTestFileToTestContainer('test.mp4');
+
+    $data = preloadFieldtype($mp4)->preload();
+
+    expect($data['is_asset'])->toBeTrue();
+    expect($data['is_video'])->toBeTrue();
+    expect($data['is_proxy'])->toBeFalse();
+    expect($data['mux'])->toBe([]);
+});
+
+test('preloads a non-video asset', function () {
+    $this->addMirrorFieldToAssetBlueprint();
+    $jpg = $this->uploadTestFileToTestContainer('test.jpg');
+
+    $data = preloadFieldtype($jpg)->preload();
+
+    expect($data['is_asset'])->toBeTrue();
+    expect($data['is_video'])->toBeFalse();
+    expect($data['is_proxy'])->toBeFalse();
+    expect($data['mux'])->toBe([]);
+});
+
+test('omits mux details when show_details is disabled', function () {
+    $this->addMirrorFieldToAssetBlueprint('mux', ['show_details' => false]);
+    $mp4 = $this->uploadTestFileToTestContainer('test.mp4');
+    $mp4->set('mux', ['id' => 'mux-asset-001', 'playback_ids' => ['public' => 'playback-001']]);
+    $mp4->save();
+    Stache::clear();
+
+    $data = preloadFieldtype($mp4)->preload();
+
+    expect($data['is_video'])->toBeTrue();
+    expect($data['mux'])->toBe([]);
+});
+
+test('includes mux details for a public video asset when show_details is enabled', function () {
+    $this->addMirrorFieldToAssetBlueprint('mux', ['show_details' => true]);
+    $mp4 = $this->uploadTestFileToTestContainer('test.mp4');
+    $mp4->set('mux', ['id' => 'mux-asset-001', 'playback_ids' => ['public' => 'playback-001']]);
+    $mp4->save();
+    Stache::clear();
+
+    $data = preloadFieldtype($mp4)->preload();
+
+    expect($data['is_video'])->toBeTrue();
+    expect($data['is_proxy'])->toBeFalse();
+    expect($data['mux']['asset_id'])->toBe('mux-asset-001');
+    expect($data['mux']['playback_id'])->toBe('playback-001');
+    expect($data['mux']['signed'])->toBeFalse();
+    expect($data['mux'])->toHaveKeys([
+        'player_url',
+        'stream_url',
+        'thumbnail_url',
+        'gif_url',
+        'embed_code',
+    ]);
+});
+
+test('reports signed playback ids in mux details', function () {
+    $this->addMirrorFieldToAssetBlueprint('mux', ['show_details' => true]);
+    $mp4 = $this->uploadTestFileToTestContainer('test.mp4');
+    $mp4->set('mux', ['id' => 'mux-asset-002', 'playback_ids' => ['signed' => 'playback-signed-002']]);
+    $mp4->save();
+    Stache::clear();
+
+    $data = preloadFieldtype($mp4)->preload();
+
+    expect($data['mux']['asset_id'])->toBe('mux-asset-002');
+    expect($data['mux']['playback_id'])->toBe('playback-signed-002');
+    expect($data['mux']['signed'])->toBeTrue();
+});
+
+test('returns only the asset id when no playback id exists', function () {
+    $this->addMirrorFieldToAssetBlueprint('mux', ['show_details' => true]);
+    $mp4 = $this->uploadTestFileToTestContainer('test.mp4');
+    $mp4->set('mux', ['id' => 'mux-asset-003']);
+    $mp4->save();
+    Stache::clear();
+
+    $data = preloadFieldtype($mp4)->preload();
+
+    expect($data['mux'])->toBe(['asset_id' => 'mux-asset-003']);
+});
+
+test('flags proxy assets', function () {
+    $this->addMirrorFieldToAssetBlueprint('mux', ['show_details' => true]);
+    $mp4 = $this->uploadTestFileToTestContainer('test.mp4');
+    $mp4->set('mux', ['id' => 'mux-asset-004', 'playback_ids' => ['public' => 'playback-004'], 'is_proxy' => true]);
+    $mp4->save();
+    Stache::clear();
+
+    $data = preloadFieldtype($mp4)->preload();
+
+    expect($data['is_proxy'])->toBeTrue();
+    expect($data['mux']['asset_id'])->toBe('mux-asset-004');
 });

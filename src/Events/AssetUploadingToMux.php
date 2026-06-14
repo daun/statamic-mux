@@ -16,6 +16,6 @@ class AssetUploadingToMux extends Event
      */
     public static function dispatch()
     {
-        return event(new static(...func_get_args()), [], true);
+        return event(new self(...func_get_args()), [], true);
     }
 }

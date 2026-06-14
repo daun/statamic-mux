@@ -1,9 +1,8 @@
 # `mux:embed` <Badge type="info">Antlers Tag</Badge>
 
-Render an iframe to embed a Mux Player. While the official web components provide a better viewer
-experience, they require component scripts. This tag offers a simple script-free alternative for
-embedding videos. See the [Mux Player docs](https://www.mux.com/docs/guides/mux-player-web#html-embed)
-for customization options.
+Render an iframe that embeds a Mux Player. The official web components require loading component scripts;
+this iframe embed is a script-free alternative. See the
+[Mux Player docs](https://www.mux.com/docs/guides/mux-player-web#html-embed) for customization options.
 
 ```antlers
 {{ mux:embed src="assets::video.mp4" }}

@@ -329,3 +329,79 @@
   line-height: 18px;
   font-size: 12px;
 }
+
+/**
+ * Typography
+ * -------------------------------------------------------------------------- */
+
+.VPContent {
+  p,
+  :is(h1, h2, h3, h4, h5, h6) {
+    text-wrap: pretty;
+  }
+}
+
+/**
+ * Component: Home Hero animation
+ * -------------------------------------------------------------------------- */
+
+.VPHero .image-bg { display: none; }
+
+.VPHero .image-container {
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto;
+  padding: 0;
+  transform: none;
+  overflow: visible;
+}
+
+.VPHero .image {
+  width: 100%;
+  max-width: 480px;
+}
+
+@media (max-width: 960px) {
+  .VPHero .image { display: none; }
+}
+
+@media (min-width: 960px) {
+  .VPHero.has-image .container { gap: 32px; }
+  .VPHero .image { flex: 0 0 460px; max-width: 460px; }
+  .VPHero .image-container { margin-right: 8px; }
+}
+
+.VPHero .main {
+  flex-shrink: 1;
+}
+
+/* Scale the heading + tagline down so the text column balances the ~420px
+   animated player instead of towering over it. */
+.VPHero .name,
+.VPHero .text {
+  line-height: 1;
+  font-size: 26px;
+  font-weight: 500;
+}
+
+.VPHero .name {
+  display: block;
+  margin-bottom: .25em !important;
+}
+
+.VPHero .tagline {
+  line-height: 1.2;
+  font-size: 15px;
+}
+
+@media (min-width: 640px) {
+  .VPHero .name,
+  .VPHero .text { line-height: 1; font-size: 34px; }
+  .VPHero .tagline { line-height: 1.2; font-size: 16px; }
+}
+
+@media (min-width: 960px) {
+  .VPHero .name,
+  .VPHero .text { line-height: 1; font-size: 40px; }
+  .VPHero .tagline { line-height: 1.2; font-size: 18px; padding-top: 10px; }
+}

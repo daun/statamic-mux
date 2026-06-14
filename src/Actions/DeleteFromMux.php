@@ -1,0 +1,146 @@
+<?php
+
+namespace Daun\StatamicMux\Actions;
+
+use Daun\StatamicMux\Data\Actions\MuxLibraryItem;
+use Daun\StatamicMux\Data\MuxAsset;
+use Daun\StatamicMux\Http\Controllers\Cp\ListingReconciler;
+use Daun\StatamicMux\Mux\MuxService;
+use Daun\StatamicMux\Support\MirrorField;
+use Statamic\Actions\Action;
+use Statamic\Assets\Asset;
+
+use function Statamic\trans as __;
+use function Statamic\trans_choice;
+
+class DeleteFromMux extends Action
+{
+    protected $dangerous = true;
+
+    protected $icon = 'trash';
+
+    public static function title()
+    {
+        return __('Delete from Mux');
+    }
+
+    public function visibleTo($item)
+    {
+        return $item instanceof MuxLibraryItem || ($item instanceof MuxAsset && $item->exists());
+    }
+
+    public function authorize($user, $item)
+    {
+        return $user->can('delete mux assets');
+    }
+
+    public function confirmationText()
+    {
+        /** @translation */
+        return 'Permanently delete this video from Mux?|Permanently delete these :count videos from Mux?';
+    }
+
+    public function buttonText()
+    {
+        /** @translation */
+        return 'Delete|Delete :count videos';
+    }
+
+    public function run($items, $values)
+    {
+        $service = app(MuxService::class);
+        $reconciler = app(ListingReconciler::class);
+        $failures = collect();
+
+        foreach ($items as $item) {
+            $muxId = $this->getMuxId($item);
+            if (! $muxId) {
+                continue;
+            }
+
+            // Pass the local Asset if available so the mux_id is cleared from local data
+            $target = $this->getLocalAsset($item) ?? $muxId;
+
+            try {
+                $deleted = $service->deleteMuxAsset($target);
+            } catch (\Throwable $e) {
+                $failures->push($muxId);
+
+                continue;
+            }
+
+            if ($deleted) {
+                $reconciler->forgetRemoteAsset($muxId);
+            } else {
+                $failures->push($muxId);
+            }
+        }
+
+        $total = $items->count();
+        $failed = $failures->count();
+
+        if ($failed === $total) {
+            throw new \Exception($total === 1
+                ? __('Mux video cannot be deleted. It may not have been created by this addon.')
+                : __('None of the :count Mux videos can be deleted.', ['count' => $total])
+            );
+        }
+
+        if ($failed > 0) {
+            $success = $total - $failed;
+            $message = __(':success of :total Mux videos queued for deletion. :failed cannot be deleted.', [
+                'success' => $success,
+                'total' => $total,
+                'failed' => $failed,
+            ]);
+        } else {
+            $message = trans_choice('Mux video queued for deletion|:count Mux videos queued for deletion', $total, ['count' => $total]);
+        }
+
+        $rows = $this->localRowIds($items);
+
+        return $rows ? [
+            'message' => $message,
+            'callback' => ['pollMuxMirroredAssetRows', $rows, 'delete'],
+        ] : $message;
+    }
+
+    protected function localRowIds($items): array
+    {
+        return collect($items)
+            ->filter(fn ($item) => $item instanceof MuxAsset && $item->asset)
+            ->map(fn (MuxAsset $item) => $item->asset->id())
+            ->values()
+            ->all();
+    }
+
+    protected function getLocalAsset(mixed $item): ?Asset
+    {
+        if ($item instanceof Asset && MirrorField::shouldMirror($item)) {
+            return $item;
+        }
+
+        if ($item instanceof MuxAsset) {
+            return $item->asset;
+        }
+
+        return null;
+    }
+
+    protected function getMuxId(mixed $item): ?string
+    {
+        if ($item instanceof Asset && MirrorField::shouldMirror($item)) {
+            $item = MuxAsset::fromAsset($item);
+        }
+
+        if ($item instanceof MuxAsset) {
+            return $item->id();
+        }
+
+        if ($item instanceof MuxLibraryItem) {
+            return $item->id();
+        }
+
+        return null;
+    }
+}

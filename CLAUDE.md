@@ -59,7 +59,8 @@ graph TD
 - **MuxService** (`src/Mux/MuxService.php`): Main service class that orchestrates all Mux operations including asset creation, deletion, and playback ID management.
 - **MuxApi** (`src/Mux/MuxApi.php`): Wrapper around the Mux PHP SDK for API interactions.
 - **MuxAsset** (`src/Data/MuxAsset.php`): Data class representing a Mux asset with an underlying local Asset.
-- **ServiceProvider** (`src/ServiceProvider.php`): Registers all services, commands, fieldtypes, and tags with Laravel/Statamic.
+- **ListingController** (`src/Http/Controllers/Cp/ListingController.php`): Control panel routes and API endpoints for mirrored assets and Mux library listings.
+- **ServiceProvider** (`src/ServiceProvider.php`): Registers all services, commands, routes, permissions, fieldtypes, and tags with Laravel/Statamic.
 
 ### Key Patterns
 
@@ -125,8 +126,9 @@ Mock fixtures are stored in `tests/__fixtures__/` for consistent testing.
 
 ### Laravel Artisan Commands
 
-The addon provides three custom Artisan commands:
+The addon provides four custom Artisan commands:
 
+- `php artisan mux:debug` - Validate configuration and troubleshoot setup
 - `php artisan mux:mirror` - Mirror assets to Mux
 - `php artisan mux:prune` - Delete orphaned assets on Mux
 - `php artisan mux:upload` - Upload specific assets to Mux
@@ -152,6 +154,7 @@ The addon provides three custom Artisan commands:
 - Public playback IDs for open content
 - Signed playback IDs with JWT tokens for restricted content
 - Signed URLs with expiration timestamps
+- Scoped control panel permissions: `manage mux`, `view mux library`, `open mux dashboard`, `delete mux assets`, and `trigger mux sync`
 
 ### Developer Experience Criteria
 
@@ -167,20 +170,18 @@ The addon provides three custom Artisan commands:
 - Asset management with lifecycle events
 - Frontend rendering with video, player, and embed tags
 - Security with signed URLs and playback policies
-- CLI commands for asset operations
+- CLI commands for asset operations and configuration debugging
 - Replace original videos with short placeholder clip to optimize storage
+- Asset browser filter for Mux videos
+- Animated thumbnails and upload status in asset listings
+- Faster, more reliable video thumbnails
+- Re-upload cleanup that deletes superseded Mux assets unless shared by another file
+- Control panel listings for mirrored assets and the Mux library
+- Manual Mux library sync from the control panel
+- Fieldtype component values for player URL, embed code, and thumbnail URL with copy-to-clipboard
 
-### In Progress
+### Current Focus
 
+- Maintain v3.4.x after shipping control panel listings
+- Keep docs current, especially `docs/control-panel.md` for permissions, filters, and listing behavior
 - Expand test coverage for critical paths
-
-### Planned
-
-- Control panel dashboard for Mux asset management
-
-## Feature Plans
-
-### Control panel dashboard
-
-- List all Mux assets in a dedicated listing view
-- Allow manual sync, deletion, and link to local assets

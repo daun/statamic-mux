@@ -2,6 +2,7 @@
 
 namespace Daun\StatamicMux\Jobs;
 
+use Daun\StatamicMux\Concerns\DispatchesAsync;
 use Daun\StatamicMux\Mux\Actions\CreateMuxAsset;
 use Daun\StatamicMux\Support\Queue;
 use Illuminate\Bus\Queueable;
@@ -14,6 +15,7 @@ use Statamic\Assets\Asset;
 class CreateMuxAssetJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use DispatchesAsync;
 
     public function __construct(
         protected Asset|string $asset,

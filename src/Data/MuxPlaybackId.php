@@ -16,10 +16,10 @@ class MuxPlaybackId implements Arrayable, Stringable
         protected string $policy
     ) {}
 
-    public static function make(string $id, string $policy): ?static
+    public static function make(string $id, string $policy): ?self
     {
         if ($id && $policy) {
-            return new static($id, $policy);
+            return new self($id, $policy);
         } else {
             return null;
         }

@@ -1,0 +1,9 @@
+var e=`<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14"><g>
+    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M0.959867 10.2685C1.114 11.7092 2.2727 12.8679 3.71266 13.0284 4.78221 13.1476 5.88037 13.25 7 13.25s2.21779 -0.1024 3.2873 -0.2216c1.44 -0.1605 2.5987 -1.3192 2.7528 -2.7599 0.1138 -1.06348 0.2099 -2.15535 0.2099 -3.2685 0 -1.11316 -0.0961 -2.20502 -0.2099 -3.26853 -0.1541 -1.44065 -1.3128 -2.59936 -2.7528 -2.759861C9.21779 0.852392 8.11963 0.75 7 0.75S4.78221 0.852392 3.71266 0.971609C2.2727 1.13211 1.114 2.29082 0.959867 3.73147 0.846083 4.79498 0.75 5.88684 0.75 7c0 1.11315 0.096084 2.20502 0.209867 3.2685Z" stroke-width="1"></path>
+    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M5.22546 8.71759c0 0.34729 0.05416 0.82156 0.11545 1.24706 0.08096 0.56205 0.63466 0.92375 1.17082 0.73675 0.92381 -0.3224 1.78204 -0.79218 2.41333 -1.46443 0.27551 -0.29338 0.27553 -0.74538 0.00003 -1.03878 -0.63125 -0.67226 -1.48951 -1.14208 -2.41333 -1.46437 -0.53613 -0.18705 -1.08982 0.17462 -1.1708 0.73665 -0.06131 0.42551 -0.1155 0.89981 -0.1155 1.24712Z" stroke-width="1"></path>
+    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M5.38668 0.855506 4.46115 4.23692" stroke-width="1"></path>
+    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.49666 0.929438 8.59473 4.23694" stroke-width="1"></path>
+    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.0494 4.23694H0.951172" stroke-width="1"></path>
+  </g>
+</svg>
+`;export{e as default};

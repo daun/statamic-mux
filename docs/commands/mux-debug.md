@@ -7,7 +7,7 @@ and missing asset containers with Mux Mirror fields.
 
 ```sh
 # Check for Mux configuration issues
-php please mux:debug
+php artisan mux:debug
 ```
 
 Example output:
@@ -18,5 +18,3 @@ Example output:
 ✓ The mirror feature is globally enabled.
 ✗ No asset containers found with Mux Mirror fields.
 ```
-
-<!--@include: ../partials/command-names.md-->

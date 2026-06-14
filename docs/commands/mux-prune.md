@@ -9,10 +9,8 @@ Use `--dry-run` to print a list of affected files without actually performing th
 
 ```sh
 # Remove orphaned videos
-php please mux:prune
+php artisan mux:prune
 
 # Perform a trial run and print a list of affected files
-php please mux:prune --dry-run
+php artisan mux:prune --dry-run
 ```
-
-<!--@include: ../partials/command-names.md-->
