@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.4.1] - 2026-06-30
+
+- Guard against null asset during fieldtype preload (@jacksleight)
+
 ## [3.4.0] - 2026-06-13
 
 - Add control panel listings for mirrored assets and Mux library
@@ -173,6 +177,7 @@
 
 - Beta release
 
+[3.4.1]: https://github.com/daun/statamic-mux/releases/tag/3.4.1
 [3.4.0]: https://github.com/daun/statamic-mux/releases/tag/3.4.0
 [3.3.1]: https://github.com/daun/statamic-mux/releases/tag/3.3.1
 [3.3.0]: https://github.com/daun/statamic-mux/releases/tag/3.3.0
