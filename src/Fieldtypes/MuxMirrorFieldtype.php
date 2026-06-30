@@ -57,7 +57,7 @@ class MuxMirrorFieldtype extends Fieldtype
 
         return [
             'is_asset' => (bool) $asset,
-            'is_video' => $asset->isVideo(),
+            'is_video' => $asset?->isVideo() ?? false,
             'is_proxy' => $muxAsset?->isProxy() ?? false,
             'mux' => $muxAsset && $this->config('show_details')
                 ? $this->muxInfo($muxAsset)
