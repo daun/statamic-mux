@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+
+- Prevent control panel crash when signing keys are missing for signed playback ids
+
 ## [3.4.1] - 2026-06-30
 
 - Guard against null asset during fieldtype preload (@jacksleight)

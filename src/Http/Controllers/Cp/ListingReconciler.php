@@ -4,6 +4,7 @@ namespace Daun\StatamicMux\Http\Controllers\Cp;
 
 use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Data\MuxPlaybackId;
+use Daun\StatamicMux\Facades\Log;
 use Daun\StatamicMux\Http\Controllers\Cp\Listing\RemoteVideoSource;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
@@ -426,9 +427,13 @@ class ListingReconciler
         return MuxPlaybackId::make($playbackId['id'] ?? '', $playbackId['policy'] ?? '');
     }
 
-    protected function getMuxThumbnailUrl(MuxPlaybackId $playbackId, string $orientation = 'landscape', ?int $size = null): string
+    protected function getMuxThumbnailUrl(MuxPlaybackId $playbackId, string $orientation = 'landscape', ?int $size = null): ?string
     {
-        return $this->thumbnails->forPlaybackId($playbackId, $orientation, $size);
+        return rescue(
+            fn () => $this->thumbnails->forPlaybackId($playbackId, $orientation, $size),
+            fn (\Throwable $th) => Log::error("Failed to generate Mux thumbnail: {$th->getMessage()}"),
+            report: false,
+        );
     }
 
     /**

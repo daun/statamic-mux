@@ -30,6 +30,10 @@ beforeEach(function () {
     $this->mp4WithPlaybackId->set('mux', ['id' => 123, 'playback_ids' => ['public' => 456]]);
     $this->mp4WithPlaybackId->save();
 
+    $this->mp4WithSignedPlaybackId = $this->uploadTestFileToTestContainer('test.mp4', 'test-signed.mp4');
+    $this->mp4WithSignedPlaybackId->set('mux', ['id' => 123, 'playback_ids' => ['signed' => 'signed-playback-id']]);
+    $this->mp4WithSignedPlaybackId->save();
+
     Stache::clear();
 });
 
@@ -79,6 +83,25 @@ test('injects static cdn thumbnails if configured', function () {
     expect($data)->toBeArray()->not->toBeEmpty();
     expect($data['thumbnail'])->toStartWith('https://image.mux.com');
     expect($data['thumbnail'])->toEndWith('thumbnail.webp?width=400');
+});
+
+test('does not crash asset browser hook when signing keys missing for signed playback id', function () {
+    config(['mux.playback_policy' => 'signed']);
+    config(['mux.signing_key.key_id' => null]);
+    config(['mux.signing_key.private_key' => null]);
+
+    $this->thumbnails->createHooks();
+
+    $asset = $this->mp4WithSignedPlaybackId;
+
+    $data = null;
+    expect(function () use (&$data, $asset) {
+        $data = $this->app->makeWith(AssetResource::class, ['resource' => $asset])->resolve()['data'] ?? null;
+    })->not->toThrow(Exception::class);
+
+    // Degrades to the default thumbnail instead of a Mux url
+    expect($data)->toBeArray()->not->toBeEmpty();
+    expect($data['thumbnail'])->toBeNull();
 });
 
 test('does not inject thumbnails for non-mux assets', function () {
