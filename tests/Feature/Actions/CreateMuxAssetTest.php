@@ -150,6 +150,32 @@ it('ingests assets from public containers', function () {
     ]);
 });
 
+it('saves the record without a playback id when none is assigned yet', function () {
+    Event::fake([AssetUploadedToMux::class]);
+
+    $this->service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
+
+    $this->guzzler->expects($this->once())
+        ->post('https://api.mux.com/video/v1/assets')
+        ->willRespondJson([
+            'data' => [
+                'status' => 'preparing',
+                'id' => 'JaUWdXuXM93J9Q2yvSqQnqz6s5MBuXGv',
+                'created_at' => '1607452572',
+            ],
+        ]);
+
+    $result = $this->createMuxAsset->handle($this->mp4);
+
+    expect($result)->toBe('JaUWdXuXM93J9Q2yvSqQnqz6s5MBuXGv');
+
+    Event::assertDispatched(AssetUploadedToMux::class);
+
+    expect($this->mp4->get('mux'))->toEqual([
+        'id' => 'JaUWdXuXM93J9Q2yvSqQnqz6s5MBuXGv',
+    ]);
+});
+
 it('uploads assets from private containers', function () {
     Event::fake([AssetUploadedToMux::class]);
 

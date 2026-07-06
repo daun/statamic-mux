@@ -3,6 +3,7 @@
 namespace Daun\StatamicMux\Thumbnails;
 
 use Daun\StatamicMux\Data\MuxPlaybackId;
+use Daun\StatamicMux\Facades\Log;
 use Daun\StatamicMux\Mux\MuxService;
 use Statamic\Assets\Asset;
 use Statamic\Http\Resources\CP\Assets\Asset as AssetResource;
@@ -56,25 +57,33 @@ class ThumbnailService
 
         AssetResource::hook('asset', function ($payload, $next) use ($self) {
             /** @phpstan-ignore-next-line */
-            $resource = $this->resource;
-
-            if ($resource instanceof Asset && $self->service->getMuxId($resource)) {
-                $payload->data->thumbnail = $self->forAsset($resource) ?? $payload->data->thumbnail;
-            }
+            $self->injectThumbnail($this->resource, $payload);
 
             return $next($payload);
         });
 
         FolderAssetResource::hook('asset', function ($payload, $next) use ($self) {
             /** @phpstan-ignore-next-line */
-            $resource = $this->resource;
-
-            if ($resource instanceof Asset && $self->service->getMuxId($resource)) {
-                $payload->data->thumbnail = $self->forAsset($resource) ?? $payload->data->thumbnail;
-            }
+            $self->injectThumbnail($this->resource, $payload);
 
             return $next($payload);
         });
+    }
+
+    /**
+     * Inject a Mux thumbnail into a control panel asset resource payload.
+     */
+    public function injectThumbnail(mixed $resource, object $payload): void
+    {
+        if (! $resource instanceof Asset || ! $this->service->getMuxId($resource)) {
+            return;
+        }
+
+        rescue(
+            fn () => $payload->data->thumbnail = $this->forAsset($resource) ?? $payload->data->thumbnail,
+            fn (\Throwable $th) => Log::error("Failed to generate Mux thumbnail: {$th->getMessage()}"),
+            report: false,
+        );
     }
 
     public function forPlaybackId(MuxPlaybackId $playbackId, string $orientation = 'landscape', ?int $size = null): string

@@ -5,15 +5,19 @@ namespace Daun\StatamicMux\Commands;
 use Daun\StatamicMux\Concerns\HasCommandOutputStyles;
 use Daun\StatamicMux\Jobs\DeleteMuxAssetJob;
 use Daun\StatamicMux\Mux\MuxService;
+use Daun\StatamicMux\Support\Attribution;
 use Daun\StatamicMux\Support\MirrorField;
 use Daun\StatamicMux\Support\Queue;
 use Illuminate\Console\Command;
+use Illuminate\Support\Carbon;
 use Statamic\Console\RunsInPlease;
 
 class PruneCommand extends Command
 {
     use HasCommandOutputStyles;
     use RunsInPlease;
+
+    protected const PROXY_GRACE_PERIOD_HOURS = 24;
 
     protected $signature = 'mux:prune
                         {--dry-run : Perform a trial run with no removals and print a list of affected files}';
@@ -59,7 +63,19 @@ class PruneCommand extends Command
 
         $localMuxIds = $assets->map(fn ($asset) => $service->getMuxId($asset))->filter();
 
+        $muxAssetsById = $muxAssets->keyBy('id');
+
         $orphans = $actualMuxIds->diff($localMuxIds);
+
+        $pending = $orphans->filter(fn ($muxId) => $this->isPendingProxy($muxAssetsById->get($muxId)))->values();
+        $orphans = $orphans->diff($pending)->values();
+
+        $pending->each(function ($muxId) {
+            $this->line("Skipping in-flight proxy <name>{$muxId}</name>");
+        })->whenNotEmpty(function () {
+            $this->newLine();
+        });
+
         $orphans->each(function ($muxId) use ($service) {
             if ($this->dryrun) {
                 $this->line("Would remove <name>{$muxId}</name>");
@@ -92,5 +108,21 @@ class PruneCommand extends Command
         } else {
             $this->info("<success>✓ Queued {$orphans->count()} videos for removal, kept {$found->count()} videos</success>");
         }
+    }
+
+    protected function isPendingProxy($muxAsset): bool
+    {
+        if (! Attribution::isProxy(data_get($muxAsset, 'passthrough'))) {
+            return false;
+        }
+
+        $createdAt = data_get($muxAsset, 'created_at');
+
+        if (blank($createdAt)) {
+            return true;
+        }
+
+        return Carbon::createFromTimestamp((int) $createdAt)
+            ->greaterThan(now()->subHours(self::PROXY_GRACE_PERIOD_HOURS));
     }
 }

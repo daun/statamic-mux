@@ -30,7 +30,9 @@ class MuxTags extends Tags
     public function wildcard($field)
     {
         if (! $this->context->has($field)) {
-            throw new \Exception("Variable [{$field}] does not exist in context.");
+            Log::debug("Cannot generate data for Mux Antlers tag: variable [{$field}] does not exist in context");
+
+            return $this->isPair ? [] : null;
         }
 
         $item = $this->context->value($field);

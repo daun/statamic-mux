@@ -6,6 +6,7 @@ export default {
             listingPollingRows: {},
             listingPollingTimer: null,
             listingPollingBusy: false,
+            listingPollingFailures: 0,
         };
     },
 
@@ -78,6 +79,7 @@ export default {
 
             this.listingPollingRows = {};
             this.listingPollingBusy = false;
+            this.listingPollingFailures = 0;
         },
 
         async pollListingRows() {
@@ -99,10 +101,18 @@ export default {
                 );
                 const updatedRows = response.data?.data || [];
 
+                this.listingPollingFailures = 0;
                 updatedRows.forEach((updatedRow) => this.patchListingPolledRow(updatedRow));
                 this.clearExpiredListingPollingRows();
             } catch (e) {
                 console.warn('Failed to poll listing rows.', e);
+
+                if (++this.listingPollingFailures >= 3) {
+                    this.stopListingRowPolling();
+                    Statamic.$toast.error(__('Failed to check Mux status. Please refresh to try again.'));
+                    return;
+                }
+
                 this.clearExpiredListingPollingRows();
             } finally {
                 this.listingPollingBusy = false;

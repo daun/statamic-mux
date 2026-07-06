@@ -19,7 +19,9 @@ class ThumbnailController extends CpController
         $this->authorize('manage mux');
 
         if (($asset = Assets::findById(base64_decode($id))) instanceof Asset) {
-            if ($thumbnail = $this->service->generateForAsset($asset)) {
+            $thumbnail = rescue(fn () => $this->service->generateForAsset($asset), null, report: false);
+
+            if ($thumbnail) {
                 return redirect($thumbnail);
             }
         }

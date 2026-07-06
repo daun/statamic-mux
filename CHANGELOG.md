@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.2]
+
+- Validate placeholder rendition before replacing original file
+- Ignore pending placeholder jobs when pruning assets
+- Prevent control panel crash when missing signing keys
+- Tolerate malformed query params on listing endpoints
+
 ## [3.4.1] - 2026-06-30
 
 - Guard against null asset during fieldtype preload (@jacksleight)
@@ -177,6 +184,7 @@
 
 - Beta release
 
+[3.4.2]: https://github.com/daun/statamic-mux/releases/tag/3.4.2
 [3.4.1]: https://github.com/daun/statamic-mux/releases/tag/3.4.1
 [3.4.0]: https://github.com/daun/statamic-mux/releases/tag/3.4.0
 [3.3.1]: https://github.com/daun/statamic-mux/releases/tag/3.3.1

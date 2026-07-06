@@ -132,13 +132,18 @@ class ListingController extends CpController
 
     protected function extractParams(Request $request): array
     {
+        $search = $request->input('search');
+        $sort = $request->input('sort');
+        $order = $request->input('order', 'asc');
+        $filters = $request->input('filters', '');
+
         return [
-            'search' => $request->input('search'),
-            'sort' => $request->input('sort'),
-            'order' => $request->input('order', 'asc'),
-            'page' => (int) $request->input('page', 1),
-            'perPage' => (int) $request->input('perPage', 25),
-            'filters' => $this->parseFilters($request->input('filters', '')),
+            'search' => is_string($search) ? $search : null,
+            'sort' => is_string($sort) ? $sort : null,
+            'order' => is_string($order) ? $order : 'asc',
+            'page' => max(1, $request->integer('page', 1)),
+            'perPage' => max(1, min(500, $request->integer('perPage', 25))),
+            'filters' => $this->parseFilters(is_string($filters) ? $filters : ''),
             'rows' => $this->parseRows($request->input('rows')),
         ];
     }

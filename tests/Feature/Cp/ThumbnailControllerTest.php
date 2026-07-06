@@ -31,6 +31,10 @@ beforeEach(function () {
     $this->mp4WithoutPlaybackId->set('mux', ['id' => 'mux-asset-789']);
     $this->mp4WithoutPlaybackId->save();
 
+    $this->mp4WithSignedPlaybackId = $this->uploadTestFileToTestContainer('test.mp4', 'test-signed.mp4');
+    $this->mp4WithSignedPlaybackId->set('mux', ['id' => 'mux-asset-987', 'playback_ids' => ['signed' => 'signed-playback-id']]);
+    $this->mp4WithSignedPlaybackId->save();
+
     Stache::clear();
 });
 
@@ -112,6 +116,17 @@ test('calls thumbnail service with correct asset', function () {
 
     expect($response->getTargetUrl())->toBe('https://image.mux.com/playback-456/thumbnail.webp');
 });
+
+test('returns 404 instead of crashing when signing keys missing for signed playback id', function () {
+    config(['mux.playback_policy' => 'signed']);
+    config(['mux.signing_key.key_id' => null]);
+    config(['mux.signing_key.private_key' => null]);
+
+    $asset = $this->mp4WithSignedPlaybackId;
+    $id = base64_encode($asset->id());
+
+    $this->app->make(ThumbnailController::class)->thumbnail($id);
+})->throws(NotFoundHttpException::class);
 
 test('thumbnail route is registered', function () {
     $route = cp_route('mux.thumbnail', 'test-id');
