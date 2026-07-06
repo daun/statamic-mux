@@ -3,14 +3,13 @@
 ## [3.4.2]
 
 - Validate proxy rendition before replacing original file
-- Save assets without assigned playback id instead of failing
 - Prevent control panel crash when missing signing keys
 - Return null instead of an unsigned url when signing fails
 - Validate signing keys in mux:debug
-- Dispatch asset lifecycle jobs after the response when running the sync queue driver
 - Tolerate malformed query params on listing endpoints
+- Ignore pending download jobs when pruning orphaned assets
+- Dispatch asset lifecycle jobs after the response when running the sync queue driver
 - Redact playback tokens from logs and validate signing keys in mux:debug
-- Keep pruning from deleting proxy assets with pending download jobs
 - Stop polling listing status and show an error after repeated request failures
 
 ## [3.4.1] - 2026-06-30

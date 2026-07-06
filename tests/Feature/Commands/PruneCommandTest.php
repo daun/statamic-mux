@@ -283,6 +283,118 @@ it('shows dry-run output when no orphans found', function () {
     Queue::assertNotPushed(DeleteMuxAssetJob::class);
 });
 
+// Proxy asset scenarios
+
+it('keeps in-flight proxy assets younger than the grace period', function () {
+    Queue::fake();
+
+    $this->createAssetContainer('videos');
+    $this->addMirrorFieldToAssetBlueprint(container: 'videos');
+
+    $localVideo = $this->uploadTestFileToTestContainer('test.mp4', container: 'videos');
+    $localVideo->set('mux', ['id' => 'local-mux-id']);
+    $localVideo->save();
+
+    $service = Mockery::mock(MuxService::class);
+    $service->shouldReceive('configured')->andReturn(true);
+    $service->shouldReceive('listMuxAssets')->andReturn(collect([
+        (object) ['id' => 'local-mux-id'],
+        (object) [
+            'id' => 'proxy-mux-id',
+            'passthrough' => 'statamic-proxy::local-mux-id',
+            'created_at' => (string) now()->subHours(2)->timestamp,
+        ],
+    ]));
+    $service->shouldReceive('getMuxId')->andReturnUsing(function ($asset) {
+        return $asset->get('mux')['id'] ?? null;
+    });
+    $service->shouldNotReceive('deleteMuxAsset');
+    app()->instance(MuxService::class, $service);
+
+    config(['queue.default' => 'sync']);
+
+    $this->artisan(PruneCommand::class)
+        ->expectsOutputToContain('Skipping in-flight proxy proxy-mux-id')
+        ->expectsOutputToContain('Keeping local-mux-id')
+        ->expectsOutputToContain('✓ Removed 0 videos, kept 1 videos')
+        ->assertSuccessful();
+
+    Queue::assertNotPushed(DeleteMuxAssetJob::class);
+});
+
+it('removes proxy assets older than the grace period', function () {
+    Queue::fake();
+
+    $this->createAssetContainer('videos');
+    $this->addMirrorFieldToAssetBlueprint(container: 'videos');
+
+    $localVideo = $this->uploadTestFileToTestContainer('test.mp4', container: 'videos');
+    $localVideo->set('mux', ['id' => 'local-mux-id']);
+    $localVideo->save();
+
+    $service = Mockery::mock(MuxService::class);
+    $service->shouldReceive('configured')->andReturn(true);
+    $service->shouldReceive('listMuxAssets')->andReturn(collect([
+        (object) ['id' => 'local-mux-id'],
+        (object) [
+            'id' => 'proxy-mux-id',
+            'passthrough' => 'statamic-proxy::local-mux-id',
+            'created_at' => (string) now()->subHours(48)->timestamp,
+        ],
+    ]));
+    $service->shouldReceive('getMuxId')->andReturnUsing(function ($asset) {
+        return $asset->get('mux')['id'] ?? null;
+    });
+    $service->shouldReceive('deleteMuxAsset')->with('proxy-mux-id')->once();
+    app()->instance(MuxService::class, $service);
+
+    config(['queue.default' => 'sync']);
+
+    $this->artisan(PruneCommand::class)
+        ->expectsOutputToContain('Removed proxy-mux-id')
+        ->expectsOutputToContain('Keeping local-mux-id')
+        ->expectsOutputToContain('✓ Removed 1 videos, kept 1 videos')
+        ->assertSuccessful();
+
+    Queue::assertNotPushed(DeleteMuxAssetJob::class);
+});
+
+it('removes non-proxy orphans regardless of age', function () {
+    Queue::fake();
+
+    $this->createAssetContainer('videos');
+    $this->addMirrorFieldToAssetBlueprint(container: 'videos');
+
+    $localVideo = $this->uploadTestFileToTestContainer('test.mp4', container: 'videos');
+    $localVideo->set('mux', ['id' => 'local-mux-id']);
+    $localVideo->save();
+
+    $service = Mockery::mock(MuxService::class);
+    $service->shouldReceive('configured')->andReturn(true);
+    $service->shouldReceive('listMuxAssets')->andReturn(collect([
+        (object) ['id' => 'local-mux-id'],
+        (object) [
+            'id' => 'orphan-mux-id',
+            'passthrough' => 'statamic::local-asset-id',
+            'created_at' => (string) now()->subMinutes(5)->timestamp,
+        ],
+    ]));
+    $service->shouldReceive('getMuxId')->andReturnUsing(function ($asset) {
+        return $asset->get('mux')['id'] ?? null;
+    });
+    $service->shouldReceive('deleteMuxAsset')->with('orphan-mux-id')->once();
+    app()->instance(MuxService::class, $service);
+
+    config(['queue.default' => 'sync']);
+
+    $this->artisan(PruneCommand::class)
+        ->expectsOutputToContain('Removed orphan-mux-id')
+        ->expectsOutputToContain('✓ Removed 1 videos, kept 1 videos')
+        ->assertSuccessful();
+
+    Queue::assertNotPushed(DeleteMuxAssetJob::class);
+});
+
 // Command name test
 
 it('can be called by command name', function () {
