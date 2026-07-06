@@ -1,5 +1,7 @@
 <?php
 
+use Statamic\Facades\Role;
+use Statamic\Facades\User;
 use Tests\TestCase;
 
 /*
@@ -61,6 +63,20 @@ function snapshots_path(...$paths): string
 function statamic_package_path(...$paths): string
 {
     return join_paths(__DIR__, '../vendor/statamic/cms', ...$paths);
+}
+
+function userWithMuxPermission(?string $permission): Statamic\Contracts\Auth\User
+{
+    $user = User::make()->email(uniqid().'@test.com')->password('secret');
+    $user->save();
+
+    if ($permission) {
+        $role = Role::make('role-'.md5($permission))->addPermission($permission);
+        $role->save();
+        $user->assignRole($role->handle())->save();
+    }
+
+    return $user;
 }
 
 if (! function_exists('join_paths')) {
