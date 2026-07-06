@@ -62,6 +62,7 @@ class MuxMirrorFieldtypeFilter extends FieldtypeFilter
                 'uploaded' => $query->where('is_video', true)->whereNotNull("{$handle}->id"),
                 'not_uploaded' => $query->where('is_video', true)->whereNull("{$handle}->id"),
                 'ignored' => $query->where('is_video', false),
+                default => null,
             };
         }
 
@@ -69,6 +70,7 @@ class MuxMirrorFieldtypeFilter extends FieldtypeFilter
             match ($values['policy'] ?? null) {
                 'public' => $query->whereNotNull("{$handle}->playback_ids->public"),
                 'signed' => $query->whereNotNull("{$handle}->playback_ids->signed"),
+                default => null,
             };
         }
 
@@ -87,11 +89,13 @@ class MuxMirrorFieldtypeFilter extends FieldtypeFilter
             'status' => __('Status'),
             'policy' => __('Policy'),
             'id' => __('ID'),
+            default => null,
         };
         $value = match ($values['field'] ?? null) {
             'status' => Arr::get($this->fieldItems(), "status.options.{$values['status']}"),
             'policy' => Arr::get($this->fieldItems(), "policy.options.{$values['policy']}"),
             'id' => $values['id'] ?? null,
+            default => null,
         };
 
         return $base.' '.$field.' '.__('Is').' '.$value;

@@ -1,51 +1,51 @@
 # Introduction
 
-**Statamic Mux** is an addon for integrating the [Mux](https://www.mux.com/) video encoding and streaming service into Statamic sites.
+**Statamic Mux** is an addon for integrating the [Mux](https://www.mux.com/) video encoding and streaming service.
 
 ## Philosophy
 
-The main goal of this addon: **make working with videos as easy as working with images**. All the magic
-happens behind the scenes: videos are mirrored to your Mux account and can start streaming within seconds
-using the official [`<mux-video>`](https://www.npmjs.com/package/@mux/mux-video) web component as a drop-in replacement for the native video element.
+The main goal of this addon: **make working with videos as easy as working with images**.
+
+## How it works
+
+Videos uploaded to an asset container are mirrored to your Mux account. Within a few seconds, they can be streamed
+using the official [`<mux-video>`](/tags/mux-video) web component, which is a drop-in replacement for the native video element.
 
 ## Features
 
-**Direct sync**  
+**Automatic sync**  
 Mirror locally uploaded videos to your Mux account
 
-**Seamless video upload workflow**  
-Just drop the original video files directly into the backend
+**Standard upload workflow**  
+Upload original video files into the control panel like any other asset
 
-**No custom fieldtype required**  
-Handle and display videos like any other asset in Statamic
+**No separate fieldtype required**  
+Manage videos using the built-in assets fieldtype, freely mixing images and videos
 
 **Instant playback**  
-Just-in-time encoding ensures videos can be streamed immediately
+Videos can be streamed within seconds of upload, before full encoding completes
 
 **Optimized streaming**  
-Smart adaptive bitrates deliver the right resolution for your viewers' bandwith
+Mux delivers a resolution matched to each viewer's bandwidth
 
 **Customizable player**  
-Tailor the video player component to match your site's design
-
-**Real-time analytics**  
-Get insights into your audience and video playback performance
+Configure the Mux video player component to match your site's design
 
 **Secure streaming**  
-Protect your content using signed urls
+Restrict access to videos using signed URLs
 
-## Responsive Video
+## Why a video service
 
-Just like image pipelines efficiently deliver optimized images for faster load times on a variety of devices
-and connections, video encoding services like Mux play a crucial role for optimizing video content.
-Video encoding demands more resources and expertise than image processing, so a dedicated service
-like Mux becomes essential for performant websites.
+Video encoding and delivery require more processing and storage than images. Serving video files directly
+from your origin server, without adaptive bitrate streaming, results in large downloads and inconsistent
+playback across devices and connections. A dedicated service handles encoding, storage, and adaptive
+delivery.
 
-## Why Mux?
+## Why Mux
 
-While there is a host of services for video encoding to choose from, Mux offers all the key
-components: encoding, storage, and delivery. It stands out with its API-first approach prioritizing
-developer productivity, as well as its official web components for creating rich, customized video players.
+Mux provides encoding, storage, and delivery through a single API. This addon uses Mux specifically because
+it exposes these features through an HTTP API and ships official web components for video playback, both of
+which the addon depends on.
 
 ## License
 

@@ -2,8 +2,18 @@ name: CI
 
 on:
   pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '.claude/**'
+      - '.pi/**'
   push:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '.claude/**'
+      - '.pi/**'
 
 jobs:
   tests:
@@ -25,10 +35,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.0
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@2.37.2
         with:
           php-version: ${{ matrix.php }}
           tools: composer:v2
@@ -51,7 +61,7 @@ jobs:
         run: composer run test:ci
 
       - name: Check code coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7.0.0
         if: ${{ matrix.php == '8.5' && matrix.laravel == '12.*' }}
         with:
           file: ./coverage.xml

@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Facade;
  * @method static string|null getMuxId(\Statamic\Assets\Asset $asset)
  * @method static \Daun\StatamicMux\Data\MuxPlaybackId|null getPlaybackId(\Statamic\Assets\Asset $asset, \Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy|null $policy = null, bool $requestIfMissing = true)
  * @method static string getPlaybackUrl(\Daun\StatamicMux\Data\MuxPlaybackId $playbackId, array $params = [])
+ * @method static string getPlayerUrl(\Daun\StatamicMux\Data\MuxPlaybackId $playbackId, array $params = [])
+ * @method static string getEmbedCode(\Daun\StatamicMux\Data\MuxPlaybackId $playbackId, array $params = [])
  * @method static string getThumbnailUrl(\Daun\StatamicMux\Data\MuxPlaybackId $playbackId, array $params = [])
  * @method static string getGifUrl(\Daun\StatamicMux\Data\MuxPlaybackId $playbackId, array $params = [])
  * @method static string|null getPlaceholderDataUri(\Daun\StatamicMux\Data\MuxPlaybackId $playbackId, array $params = [])

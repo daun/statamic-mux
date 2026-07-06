@@ -1,12 +1,12 @@
 # Displaying Videos in Your Frontend
 
-Once uploaded to Mux, your videos are ready to be streamed within a few seconds, thanks to just-in-time encoding.
+Once uploaded to Mux, videos can be streamed within a few seconds through just-in-time encoding.
 
 ## Video Components
 
-Mux offers a set of [web components](https://github.com/muxinc/elements) that can be used as drop-in
-replacements of the native `video` element. Instead of a source file, they receive a Mux playback id to offer
-adaptive bitrate streaming.
+Mux provides a set of [web components](https://github.com/muxinc/elements) that act as drop-in
+replacements for the native `video` element. Instead of a source file, they take a Mux playback id and
+handle adaptive bitrate streaming.
 
 ### `mux-video`
 
@@ -21,9 +21,8 @@ and `loop` or events like `playing` will continue to work as expected.
 
 ### `mux-player`
 
-Wraps the native `video` element in a full-fledged customizable video player. Accepts the same attributes
-and emits the same events as a video element, but adds lots of useful interactive controls for video
-playback.
+Wraps the native `video` element in a customizable video player. Accepts the same attributes and emits the
+same events as a video element, and adds interactive playback controls.
 
 ```diff
 - <video src="/assets/video.mp4">

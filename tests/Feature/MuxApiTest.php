@@ -3,6 +3,8 @@
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxClient;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use MuxPhp\Api\AssetsApi;
 use MuxPhp\Api\DeliveryUsageApi;
 use MuxPhp\Api\DirectUploadsApi;
@@ -70,6 +72,34 @@ test('returns a configured DeliveryUsageApi instance', function () {
     expect($this->api->deliveryUsage()->getConfig())->toBe($this->api->config());
 });
 
+test('builds dashboard url from the whoami endpoint', function () {
+    Cache::forget('statamic-mux.whoami.'.sha1('token-idtoken-secret'));
+
+    $api = new MuxApi($this->guzzler->getClient(), 'token-id', 'token-secret');
+
+    $this->guzzler->expects($this->once())
+        ->get('https://api.mux.com/system/v1/whoami')
+        ->willRespondJson([
+            'data' => [
+                'environment_id' => 'env-001',
+                'environment_name' => 'Production',
+                'organization_id' => 'org-001',
+            ],
+        ]);
+
+    expect($api->dashboardUrl())->toBe('https://dashboard.mux.com/environments/env-001/');
+
+    $this->guzzler->assertHistoryCount(1);
+});
+
+test('does not build dashboard url without api credentials', function () {
+    $api = new MuxApi($this->guzzler->getClient(), '', '');
+
+    expect($api->dashboardUrl())->toBeNull();
+
+    $this->guzzler->assertHistoryCount(0);
+});
+
 test('sends API request to create asset', function () {
     $assetRequest = $this->api->createAssetRequest([
         'input' => $this->api->input(['url' => 'https://example.com/video.mp4']),
@@ -110,4 +140,125 @@ test('sends API request to create asset', function () {
 
     expect($muxAsset)->toBeInstanceOf(Asset::class);
     expect($muxAsset->getId())->toBe('SqQnqz6s5MBuXGvJaUWdXuXM93J9Q2yv');
+});
+
+test('lists all assets in concurrent page batches', function () {
+    $makeAssets = fn (int $page, int $count) => collect(range(1, $count))
+        ->when($count === 0, fn ($items) => collect())
+        ->map(fn (int $index) => [
+            'id' => "mux-page-{$page}-asset-{$index}",
+            'status' => 'ready',
+        ])
+        ->all();
+
+    foreach ([1 => 100, 2 => 100, 3 => 100, 4 => 100, 5 => 100, 6 => 1, 7 => 0, 8 => 0, 9 => 0, 10 => 0] as $page => $count) {
+        $this->guzzler->expects($this->once())
+            ->get('https://api.mux.com/video/v1/assets')
+            ->withQuery([
+                'limit' => 100,
+                'page' => $page,
+            ])
+            ->willRespondJson([
+                'data' => $makeAssets($page, $count),
+            ]);
+    }
+
+    $assets = $this->api->listAllAssets();
+
+    $this->guzzler->assertHistoryCount(10);
+
+    expect($assets)->toHaveCount(501);
+    expect($assets->first()->getId())->toBe('mux-page-1-asset-1');
+    expect($assets->last()->getId())->toBe('mux-page-6-asset-1');
+});
+
+test('gets multiple assets concurrently', function () {
+    $this->guzzler->expects($this->once())
+        ->get('https://api.mux.com/video/v1/assets/mux-asset-001')
+        ->willRespondJson([
+            'data' => [
+                'id' => 'mux-asset-001',
+                'status' => 'ready',
+            ],
+        ]);
+
+    $this->guzzler->expects($this->once())
+        ->get('https://api.mux.com/video/v1/assets/mux-asset-002')
+        ->willRespondJson([
+            'data' => [
+                'id' => 'mux-asset-002',
+                'status' => 'ready',
+            ],
+        ]);
+
+    $assets = $this->api->getAssets(['mux-asset-001', 'mux-asset-002']);
+
+    $this->guzzler->assertHistoryCount(2);
+
+    expect($assets)->toHaveKeys(['mux-asset-001', 'mux-asset-002']);
+    expect($assets->get('mux-asset-001'))->toBeInstanceOf(Asset::class);
+    expect($assets->get('mux-asset-002'))->toBeInstanceOf(Asset::class);
+});
+
+test('ignores missing assets when getting multiple assets', function () {
+    $this->guzzler->expects($this->once())
+        ->get('https://api.mux.com/video/v1/assets/mux-asset-001')
+        ->willRespondJson([
+            'data' => [
+                'id' => 'mux-asset-001',
+                'status' => 'ready',
+            ],
+        ]);
+
+    $this->guzzler->expects($this->once())
+        ->get('https://api.mux.com/video/v1/assets/mux-missing')
+        ->willRespond(Http::response(['error' => ['messages' => ['Not found']]], 404));
+
+    $assets = $this->api->getAssets(['mux-asset-001', 'mux-missing']);
+
+    $this->guzzler->assertHistoryCount(2);
+
+    expect($assets)->toHaveKey('mux-asset-001');
+    expect($assets)->not->toHaveKey('mux-missing');
+});
+
+test('get asset returns null when mux responds with not found', function () {
+    $this->guzzler->expects($this->once())
+        ->get('https://api.mux.com/video/v1/assets/mux-missing')
+        ->willRespond(Http::response(['error' => ['messages' => ['Not found']]], 404));
+
+    expect($this->api->getAsset('mux-missing'))->toBeNull();
+
+    $this->guzzler->assertHistoryCount(1);
+});
+
+test('get assets returns empty collection for empty ids without requests', function () {
+    expect($this->api->getAssets(['', null, ''])->all())->toBe([]);
+
+    $this->guzzler->assertHistoryCount(0);
+});
+
+test('whoami returns null when mux response has no data object', function () {
+    Cache::forget('statamic-mux.whoami.'.sha1('token-idtoken-secret'));
+
+    $api = new MuxApi($this->guzzler->getClient(), 'token-id', 'token-secret');
+
+    $this->guzzler->expects($this->once())
+        ->get('https://api.mux.com/system/v1/whoami')
+        ->willRespondJson(['data' => null]);
+
+    expect($api->whoami())->toBeNull();
+
+    $this->guzzler->assertHistoryCount(1);
+});
+
+test('whoami returns cached environment details without another request', function () {
+    Cache::put('statamic-mux.whoami.'.sha1('token-idtoken-secret'), ['environment_id' => 'env-cached'], now()->addMonth());
+
+    $api = new MuxApi($this->guzzler->getClient(), 'token-id', 'token-secret');
+
+    expect($api->whoami())->toBe(['environment_id' => 'env-cached']);
+    expect($api->dashboardUrl())->toBe('https://dashboard.mux.com/environments/env-cached/');
+
+    $this->guzzler->assertHistoryCount(0);
 });

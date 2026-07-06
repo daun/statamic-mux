@@ -2,17 +2,15 @@
 
 **Upload local videos to Mux, and remove orphaned Mux videos.**
 
-This basically runs `mux:upload` and `mux:prune` in sequence.
+Runs `mux:upload` and `mux:prune` in sequence.
 
 ```sh
 # Sync local assets to Mux
-php please mux:mirror
+php artisan mux:mirror
 
 # Sync local assets to Mux, reupload existing videos
-php please mux:mirror --force
+php artisan mux:mirror --force
 
 # Perform a trial run and print a list of affected files
-php please mux:mirror --dry-run
+php artisan mux:mirror --dry-run
 ```
-
-<!--@include: ../partials/command-names.md-->

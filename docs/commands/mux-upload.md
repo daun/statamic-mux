@@ -8,13 +8,11 @@ Use `--dry-run` to print a list of affected files without actually performing th
 
 ```sh
 # Upload videos to Mux, skip existing videos
-php please mux:upload
+php artisan mux:upload
 
 # Upload videos to Mux, reupload existing videos
-php please mux:upload --force
+php artisan mux:upload --force
 
 # Perform a trial run and print a list of affected files
-php please mux:upload --dry-run
+php artisan mux:upload --dry-run
 ```
-
-<!--@include: ../partials/command-names.md-->

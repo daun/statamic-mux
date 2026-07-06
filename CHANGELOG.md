@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.4.1] - 2026-06-30
+
+- Guard against null asset during fieldtype preload (@jacksleight)
+
+## [3.4.0] - 2026-06-13
+
+- Add control panel listings for mirrored assets and Mux library
+- Scope permissions for explicit access to control panel listings
+- Surface player url, embed code and thumbnail url in fieldtype component
+- Copy to clipboard for all fieldtype component values
+
+## [3.3.1] - 2026-06-11
+
+- Fix render timeout in structured collections (@danielreales7)
+
 ## [3.3.0] - 2026-05-27
 
 - Delete the previous Mux asset after requesting a re-upload
@@ -162,6 +177,9 @@
 
 - Beta release
 
+[3.4.1]: https://github.com/daun/statamic-mux/releases/tag/3.4.1
+[3.4.0]: https://github.com/daun/statamic-mux/releases/tag/3.4.0
+[3.3.1]: https://github.com/daun/statamic-mux/releases/tag/3.3.1
 [3.3.0]: https://github.com/daun/statamic-mux/releases/tag/3.3.0
 [3.2.1]: https://github.com/daun/statamic-mux/releases/tag/3.2.1
 [3.2.0]: https://github.com/daun/statamic-mux/releases/tag/3.2.0

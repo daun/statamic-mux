@@ -8,8 +8,9 @@ render a video player using Mux's official web components, or generate placehold
 | [**`mux`**](/tags/mux) | Render custom markup using available Mux video data |
 | [**`mux:video`**](/tags/mux-video) | Render a basic mux-video component |
 | [**`mux:player`**](/tags/mux-player) | Render a customizable mux-player component |
+| [**`mux:embed`**](/tags/mux-embed) | Render a script-free iframe embed of a Mux player |
 | [**`mux:thumbnail`**](/tags/mux-thumbnail) | Generate a thumbnail image url |
-| [**`mux:placeholder`**](/tags/mux-gif) | Generate a small blurry placeholder image |
+| [**`mux:placeholder`**](/tags/mux-placeholder) | Generate a small blurry placeholder image |
 | [**`mux:gif`**](/tags/mux-gif) | Generate an animated gif url |
 | [**`mux:id`**](/tags/mux-id) | Get the internal Mux id of a video |
 | [**`mux:playback_id`**](/tags/mux-playback-id) | Get the playback id of a video for streaming |
