@@ -515,6 +515,7 @@ class ListingReconciler
 
     protected function paginate(Collection $items, int $page, int $perPage): array
     {
+        $perPage = max(1, $perPage);
         $total = $items->count();
         $lastPage = max(1, (int) ceil($total / $perPage));
         $page = max(1, min($page, $lastPage));

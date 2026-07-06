@@ -8,7 +8,7 @@
 - Return null instead of an unsigned url when signing fails
 - Validate signing keys in mux:debug
 - Dispatch asset lifecycle jobs after the response when running the sync queue driver
-- Tolerate malformed query params on control panel listing endpoints
+- Tolerate malformed query params on listing endpoints
 - Redact playback tokens from logs and validate signing keys in mux:debug
 - Keep pruning from deleting proxy assets with pending download jobs
 - Stop polling listing status and show an error after repeated request failures

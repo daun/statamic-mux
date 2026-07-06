@@ -485,6 +485,28 @@ test('local api ignores malformed filters parameter', function () {
     expect($response->getData(true)['data'])->not->toBeEmpty();
 });
 
+test('listing endpoints tolerate malformed query params', function (string $method, array $query) {
+    $controller = $this->app->make(ApiListingController::class);
+    $request = Request::create("/mux/listing/{$method}", 'GET', $query);
+    $response = $controller->{$method}($request);
+
+    expect($response->getStatusCode())->toBe(200);
+})->with([
+    'zero perPage' => ['local', ['perPage' => 0]],
+    'empty perPage' => ['local', ['perPage' => '']],
+    'zero page' => ['local', ['page' => 0]],
+    'array search' => ['local', ['search' => ['x']]],
+    'array sort' => ['local', ['sort' => ['x']]],
+    'array order' => ['local', ['order' => ['x']]],
+    'array filters' => ['local', ['filters' => ['x']]],
+    'remote zero perPage' => ['remote', ['perPage' => 0]],
+    'remote empty perPage' => ['remote', ['perPage' => '']],
+    'remote array search' => ['remote', ['search' => ['x']]],
+    'remote array sort' => ['remote', ['sort' => ['x']]],
+    'remote array order' => ['remote', ['order' => ['x']]],
+    'remote array filters' => ['remote', ['filters' => ['x']]],
+]);
+
 test('remote api parses filters parameter', function () {
     $filters = base64_encode(json_encode(['match_status' => 'mirrored', 'is_test' => '0'], JSON_THROW_ON_ERROR));
 
