@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Prevent control panel crash when signing keys are missing for signed playback ids
+- Validate downloaded proxy renditions before replacing the original video file
 
 ## [3.4.1] - 2026-06-30
 

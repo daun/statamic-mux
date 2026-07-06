@@ -8,6 +8,7 @@ use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Mux\MuxUrls;
 use Illuminate\Foundation\Application;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use MuxPhp\Models\Asset as MuxApiAssetModel;
 use Statamic\Assets\Asset;
@@ -35,14 +36,16 @@ class DownloadProxyVersion
         }
 
         try {
-            $this->downloadRendition($asset, $proxyId);
+            $downloaded = $this->downloadRendition($asset, $proxyId);
 
-            Log::info(
-                'Downloaded proxy version of Mux asset',
-                ['asset' => $asset->id(), 'proxy_id' => $proxyId],
-            );
+            if ($downloaded) {
+                Log::info(
+                    'Downloaded proxy version of Mux asset',
+                    ['asset' => $asset->id(), 'proxy_id' => $proxyId],
+                );
+            }
 
-            return true;
+            return $downloaded;
         } catch (\Throwable $th) {
             Log::error(
                 "Error downloading proxy version of Mux asset: {$th->getMessage()}",
@@ -109,6 +112,17 @@ class DownloadProxyVersion
         $playbackId = $this->getPlaybackId($data);
         $rendition = $this->getRenditionName($data);
 
+        if (! $playbackId || ! $rendition) {
+            Log::error(
+                'Cannot download proxy version of Mux asset: missing playback ID or rendition',
+                ['asset' => $asset->id(), 'proxy_id' => $proxyId, 'playback_id' => $playbackId, 'rendition' => $rendition],
+            );
+
+            MuxAsset::fromAsset($asset)->withProxy(false)->save();
+
+            return false;
+        }
+
         $url = $this->urls->download($playbackId, $rendition, $asset->filename());
 
         Log::debug(
@@ -117,7 +131,13 @@ class DownloadProxyVersion
         );
 
         try {
-            $contents = Http::get($url)->body();
+            $response = Http::get($url)->throw();
+            $contents = $response->body();
+
+            if (! $this->isPlausibleVideoResponse($response, $contents)) {
+                throw new \RuntimeException('Downloaded proxy rendition does not appear to be valid video content');
+            }
+
             $asset->disk()->put($asset->path(), $contents);
             $asset->writeMeta([...$asset->generateMeta(), 'duration' => $duration]);
             $asset->save();
@@ -133,6 +153,39 @@ class DownloadProxyVersion
 
             throw $th;
         }
+    }
+
+    /**
+     * Determine whether a download response plausibly contains video data.
+     */
+    protected function isPlausibleVideoResponse(Response $response, string $contents): bool
+    {
+        $minimumBytes = 1024;
+        if (strlen($contents) < $minimumBytes) {
+            Log::error('Refusing to replace original file: proxy rendition body too small', [
+                'bytes' => strlen($contents),
+                'minimum' => $minimumBytes,
+            ]);
+
+            return false;
+        }
+
+        // Mux serves static renditions as video/*, some CDNs report application/octet-stream
+        $contentType = strtolower(trim(explode(';', (string) $response->header('Content-Type'))[0]));
+        if ($contentType !== '') {
+            $looksLikeVideo = str_starts_with($contentType, 'video/')
+                || $contentType === 'application/octet-stream';
+
+            if (! $looksLikeVideo) {
+                Log::error('Refusing to replace original file: unexpected proxy rendition content type', [
+                    'content_type' => $contentType,
+                ]);
+
+                return false;
+            }
+        }
+
+        return true;
     }
 
     protected function getPlaybackId(MuxApiAssetModel $data): ?string
