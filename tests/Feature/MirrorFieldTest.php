@@ -4,6 +4,7 @@ use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Fieldtypes\MuxMirrorFieldtype;
 use Daun\StatamicMux\Support\MirrorField;
 use Statamic\Assets\Asset;
+use Statamic\Facades\Entry;
 use Statamic\Facades\Stache;
 use Statamic\Fields\Field;
 
@@ -18,6 +19,21 @@ beforeEach(function () {
 function preloadFieldtype(Asset $asset): MuxMirrorFieldtype
 {
     $field = MirrorField::getFromBlueprint($asset)->setParent($asset);
+
+    return $field->fieldtype();
+}
+
+/**
+ * Build a mux_mirror fieldtype bound to an arbitrary (non-asset) parent,
+ * as would happen if the field were used outside of an asset blueprint.
+ */
+function preloadFieldtypeWithParent($parent): MuxMirrorFieldtype
+{
+    $field = new Field('mux', ['type' => 'mux_mirror']);
+
+    if ($parent) {
+        $field->setParent($parent);
+    }
 
     return $field->fieldtype();
 }
@@ -160,6 +176,34 @@ test('preloads a video asset without mux data', function () {
 
     expect($data['is_asset'])->toBeTrue();
     expect($data['is_video'])->toBeTrue();
+    expect($data['is_proxy'])->toBeFalse();
+    expect($data['mux'])->toBe([]);
+});
+
+test('preloads without a parent without throwing', function () {
+    $data = null;
+
+    expect(function () use (&$data) {
+        $data = preloadFieldtypeWithParent(null)->preload();
+    })->not->toThrow(Exception::class);
+
+    expect($data['is_asset'])->toBeFalse();
+    expect($data['is_video'])->toBeFalse();
+    expect($data['is_proxy'])->toBeFalse();
+    expect($data['mux'])->toBe([]);
+});
+
+test('preloads with a non-asset parent without throwing', function () {
+    $entry = Entry::make();
+
+    $data = null;
+
+    expect(function () use ($entry, &$data) {
+        $data = preloadFieldtypeWithParent($entry)->preload();
+    })->not->toThrow(Exception::class);
+
+    expect($data['is_asset'])->toBeFalse();
+    expect($data['is_video'])->toBeFalse();
     expect($data['is_proxy'])->toBeFalse();
     expect($data['mux'])->toBe([]);
 });
