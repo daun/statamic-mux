@@ -71,11 +71,15 @@ class CreateMuxAsset
                 ['asset' => $asset->id(), 'mux_id' => $muxId, 'playback_id' => $playbackId?->getId(), 'playback_policy' => $playbackId?->getPolicy()],
             );
 
-            MuxAsset::fromAsset($asset)
+            $record = MuxAsset::fromAsset($asset)
                 ->clear()
-                ->withId($muxId)
-                ->withPlaybackId($playbackId->getId(), (string) $playbackId->getPolicy())
-                ->save();
+                ->withId($muxId);
+
+            if ($playbackId) {
+                $record->withPlaybackId($playbackId->getId(), (string) $playbackId->getPolicy());
+            }
+
+            $record->save();
 
             if ($previousMuxId && $otherAssets->isEmpty()) {
                 $this->service->deleteMuxAsset($previousMuxId);
