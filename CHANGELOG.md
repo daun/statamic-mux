@@ -1,9 +1,16 @@
 # Changelog
 
-## [Unreleased]
+## [3.4.2]
 
-- Prevent control panel crash when signing keys are missing for signed playback ids
-- Validate downloaded proxy renditions before replacing the original video file
+- Prevent control panel crash when missing signing keys
+- Return null instead of an unsigned url when signing fails
+- Validate signing keys in mux:debug
+- Validate proxy rendition before replacing original file
+- Dispatch asset lifecycle jobs after the response when running the sync queue driver
+- Tolerate malformed query params on control panel listing endpoints
+- Redact playback tokens from logs and validate signing keys in mux:debug
+- Keep pruning from deleting proxy assets with pending download jobs
+- Stop polling listing status and show an error after repeated request failures
 
 ## [3.4.1] - 2026-06-30
 
