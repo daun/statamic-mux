@@ -62,7 +62,7 @@ MUX_LOG_LEVEL=debug    # addon log level
 ```
 
 ::: warning Failed upload jobs
-Mux asset creation jobs make one attempt and are not retried automatically. A request may have succeeded at Mux even when the job reports a network failure, so manually retrying the queued job may create a duplicate remote asset. Check the Mux library and the local asset's Mux data first; only then start a fresh explicit upload or reupload.
+Mux asset creation jobs make up to three attempts for temporary API, server, or network failures. Permanent API rejections fail immediately without retrying. An ambiguous network failure may mean a request succeeded at Mux before its response was lost, so a retry can leave an unreferenced remote asset that can later be removed with `mux:prune`.
 :::
 
 ## Optimizing Storage
