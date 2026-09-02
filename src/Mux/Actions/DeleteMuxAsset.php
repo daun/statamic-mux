@@ -10,7 +10,9 @@ use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Support\Attribution;
 use Daun\StatamicMux\Support\MirrorField;
-use Statamic\Assets\Asset;
+use MuxPhp\ApiException;
+use MuxPhp\Models\Asset as RemoteAsset;
+use Statamic\Assets\Asset as LocalAsset;
 
 class DeleteMuxAsset
 {
@@ -22,7 +24,7 @@ class DeleteMuxAsset
     /**
      * Delete a video asset from Mux.
      */
-    public function handle(Asset|string $asset): bool
+    public function handle(string|LocalAsset|RemoteAsset $asset): bool
     {
         if (! $asset) {
             Log::notice(
@@ -33,9 +35,21 @@ class DeleteMuxAsset
             return false;
         }
 
-        // Special case: delete Mux asset by its ID
+        // Special case: delete Mux asset by its ID or fetched API model
         if (is_string($asset)) {
             return $this->deleteMuxAsset($asset);
+        }
+
+        if ($asset instanceof RemoteAsset) {
+            $muxId = $asset->getId();
+
+            if (! is_string($muxId) || ! $muxId) {
+                Log::notice('Error deleting Mux asset: no asset ID provided');
+
+                return false;
+            }
+
+            return $this->deleteMuxAsset($muxId, $asset);
         }
 
         // Delete Mux asset tied to local Statamic asset
@@ -47,12 +61,18 @@ class DeleteMuxAsset
     }
 
     /**
-     * Delete a Mux asset by its ID
+     * Delete a Mux asset by its ID.
      */
-    protected function deleteMuxAsset(string $muxId): bool
+    protected function deleteMuxAsset(string $muxId, ?RemoteAsset $remoteAsset = null): bool
     {
         try {
-            if (! $this->wasAssetCreatedByAddon($muxId)) {
+            $remoteAsset ??= $this->api->getAsset($muxId);
+
+            if (! $remoteAsset) {
+                return true;
+            }
+
+            if (! $this->wasAssetCreatedByAddon($remoteAsset)) {
                 Log::notice(
                     'Cannot delete Mux asset: asset was not created by addon',
                     ['mux_id' => $muxId],
@@ -69,20 +89,31 @@ class DeleteMuxAsset
             );
 
             return true;
+        } catch (ApiException $e) {
+            if ($e->getCode() === 404) {
+                return true;
+            }
+
+            Log::error(
+                "Error deleting asset from Mux: {$e->getMessage()}",
+                ['mux_id' => $muxId, 'exception' => $e],
+            );
+
+            throw $e;
         } catch (\Throwable $th) {
             Log::error(
                 "Error deleting asset from Mux: {$th->getMessage()}",
                 ['mux_id' => $muxId, 'exception' => $th],
             );
 
-            throw new \Exception("Error deleting asset from Mux: {$th->getMessage()}", previous: $th);
+            throw $th;
         }
     }
 
     /**
      * Delete a remote Mux asset by its local Statamic asset.
      */
-    protected function deleteConnectedMuxAsset(Asset $asset): bool
+    protected function deleteConnectedMuxAsset(LocalAsset $asset): bool
     {
         if (! $asset->isVideo()) {
             return false;
@@ -131,10 +162,9 @@ class DeleteMuxAsset
     /**
      * Check if an asset was created by this addon.
      */
-    protected function wasAssetCreatedByAddon(string $muxId): bool
+    protected function wasAssetCreatedByAddon(RemoteAsset $asset): bool
     {
-        $asset = $this->api->assets()->getAsset($muxId)->getData();
-        $passthrough = $asset?->getPassthrough() ?? null;
+        $passthrough = $asset->getPassthrough();
 
         Log::debug(
             'Checking Mux asset ownership by passthrough identifier',
