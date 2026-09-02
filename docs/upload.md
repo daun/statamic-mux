@@ -61,6 +61,10 @@ LOG_LEVEL=debug        # global log level
 MUX_LOG_LEVEL=debug    # addon log level
 ```
 
+::: warning Failed upload jobs
+Mux asset creation jobs make one attempt and are not retried automatically. A request may have succeeded at Mux even when the job reports a network failure, so manually retrying the queued job may create a duplicate remote asset. Check the Mux library and the local asset's Mux data first; only then start a fresh explicit upload or reupload.
+:::
+
 ## Optimizing Storage
 
 By default, the addon keeps the original video files on your configured asset disk. This avoids depending

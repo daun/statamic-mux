@@ -17,6 +17,8 @@ class CreateMuxAssetJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     use DispatchesAsync;
 
+    public int $tries = 1;
+
     public function __construct(
         protected Asset|string $asset,
         protected bool $force = false
