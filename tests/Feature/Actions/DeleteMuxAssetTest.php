@@ -8,6 +8,8 @@ use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxClient;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
+use MuxPhp\ApiException;
+use MuxPhp\Models\Asset as RemoteAsset;
 use Statamic\Facades\Stache;
 
 beforeEach(function () {
@@ -218,4 +220,72 @@ it('deletes orphaned Mux assets created by the addon', function () {
 
     expect($result)->toBeTrue();
     $this->guzzler->assertHistoryCount(2);
+});
+
+it('deletes a fetched Mux asset without fetching it again', function () {
+    $remoteAsset = new RemoteAsset([
+        'id' => 'FETCHED-ID',
+        'status' => RemoteAsset::STATUS_READY,
+        'passthrough' => 'statamic::video.mp4',
+    ]);
+
+    $this->guzzler->expects($this->once())
+        ->delete('https://api.mux.com/video/v1/assets/FETCHED-ID')
+        ->willRespond(Http::response(status: 204));
+
+    $result = $this->deleteMuxAsset->handle($remoteAsset);
+
+    expect($result)->toBeTrue();
+    $this->guzzler->assertHistoryCount(1);
+});
+
+it('treats a missing asset during ownership lookup as deleted', function () {
+    $this->guzzler->expects($this->once())
+        ->get('https://api.mux.com/video/v1/assets/MISSING-ID')
+        ->willRespond(Http::response(status: 404));
+
+    $result = $this->deleteMuxAsset->handle('MISSING-ID');
+
+    expect($result)->toBeTrue();
+    $this->guzzler->assertHistoryCount(1);
+});
+
+it('treats a missing asset during final deletion as deleted', function () {
+    $this->guzzler->expects($this->once())
+        ->get('https://api.mux.com/video/v1/assets/RACED-ID')
+        ->willRespondJson([
+            'data' => [
+                'status' => 'ready',
+                'id' => 'RACED-ID',
+                'passthrough' => 'statamic::video.mp4',
+            ],
+        ]);
+
+    $this->guzzler->expects($this->once())
+        ->delete('https://api.mux.com/video/v1/assets/RACED-ID')
+        ->willRespond(Http::response(status: 404));
+
+    $result = $this->deleteMuxAsset->handle('RACED-ID');
+
+    expect($result)->toBeTrue();
+    $this->guzzler->assertHistoryCount(2);
+});
+
+it('preserves non-404 Mux API exceptions', function () {
+    $this->guzzler->expects($this->once())
+        ->get('https://api.mux.com/video/v1/assets/FAILED-ID')
+        ->willRespondJson([
+            'data' => [
+                'status' => 'ready',
+                'id' => 'FAILED-ID',
+                'passthrough' => 'statamic::video.mp4',
+            ],
+        ]);
+
+    $this->guzzler->expects($this->once())
+        ->delete('https://api.mux.com/video/v1/assets/FAILED-ID')
+        ->willRespond(Http::response(status: 503));
+
+    expect(fn () => $this->deleteMuxAsset->handle('FAILED-ID'))
+        ->toThrow(ApiException::class);
 });

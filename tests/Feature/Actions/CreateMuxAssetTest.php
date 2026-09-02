@@ -4,12 +4,18 @@ use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Events\AssetUploadedToMux;
 use Daun\StatamicMux\Events\AssetUploadingToMux;
 use Daun\StatamicMux\Facades\Mux;
+use Daun\StatamicMux\Jobs\CreateMuxAssetJob;
+use Daun\StatamicMux\Jobs\DeleteReplacedMuxAssetJob;
 use Daun\StatamicMux\Mux\Actions\CreateMuxAsset;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxClient;
 use Daun\StatamicMux\Mux\MuxService;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Psr7\Request;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Statamic\Contracts\Assets\Asset;
 use Statamic\Facades\Stache;
 
@@ -270,6 +276,47 @@ it('uploads assets from private containers', function () {
     ]);
 });
 
+it('issues one creation request when a direct upload PUT fails', function () {
+    $privateMp4 = $this->uploadTestFileToTestContainer('test.mp4', filename: 'failed-private.mp4', container: 'private');
+
+    $this->service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
+
+    $this->guzzler->expects($this->once())
+        ->post('https://api.mux.com/video/v1/uploads')
+        ->willRespondJson([
+            'data' => [
+                'url' => 'https://storage.googleapis.com/video-storage-us-east1-uploads/failed-upload',
+                'status' => 'waiting',
+                'id' => 'FAILED-UPLOAD-ID',
+            ],
+        ]);
+
+    $this->guzzler->expects($this->once())
+        ->put('https://storage.googleapis.com/video-storage-us-east1-uploads/failed-upload')
+        ->willRespond(Http::response(status: 503));
+
+    expect(fn () => $this->createMuxAsset->handle($privateMp4))
+        ->toThrow(Exception::class, 'Error uploading video to Mux');
+
+    expect($this->guzzler->historyCount())->toBe(2);
+});
+
+it('issues one creation request when a public ingestion response is lost', function () {
+    $this->service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
+
+    $this->guzzler->expects($this->once())
+        ->post('https://api.mux.com/video/v1/assets')
+        ->will(new ConnectException(
+            'Mux accepted the request but the response was lost.',
+            new Request('POST', 'https://api.mux.com/video/v1/assets'),
+        ));
+
+    expect(fn () => $this->createMuxAsset->handle($this->mp4))
+        ->toThrow(Exception::class, 'Error uploading video to Mux');
+
+    expect($this->guzzler->historyCount())->toBe(1);
+});
+
 it('uploads assets from inaccessible containers', function () {
     Event::fake([AssetUploadedToMux::class]);
 
@@ -507,13 +554,19 @@ it('allows modifying asset settings via hook', function () {
     expect($result)->toBe('JaUWdXuXM93J9Q2yvSqQnqz6s5MBuXGv');
 });
 
-it('deletes the previous Mux asset after re-upload when no duplicates exist', function () {
+it('delegates cleanup of the previous Mux asset after re-upload', function () {
+    config([
+        'queue.default' => 'database',
+        'mux.queue.connection' => 'sync',
+        'mux.queue.queue' => 'mux-cleanup',
+    ]);
+    Bus::fake([DeleteReplacedMuxAssetJob::class]);
     Event::fake([AssetUploadedToMux::class]);
 
     MuxAsset::fromAsset($this->mp4)->withId('OLD-MUX-ID')->save();
     Stache::clear();
 
-    $this->service->shouldReceive('deleteMuxAsset')->with('OLD-MUX-ID')->once()->andReturn(true);
+    $this->service->shouldNotReceive('deleteMuxAsset');
 
     $this->guzzler->expects($this->once())
         ->post('https://api.mux.com/video/v1/assets')
@@ -531,10 +584,83 @@ it('deletes the previous Mux asset after re-upload when no duplicates exist', fu
     $result = $this->createMuxAsset->handle($this->mp4, force: true);
 
     expect($result)->toBe('NEW-MUX-ID');
-    $this->service->shouldHaveReceived('deleteMuxAsset')->with('OLD-MUX-ID')->once();
+    Bus::assertDispatchedAfterResponse(DeleteReplacedMuxAssetJob::class, function ($job) {
+        $muxId = (new ReflectionClass($job))->getProperty('muxId')->getValue($job);
+
+        return $muxId === 'OLD-MUX-ID'
+            && $job->connection === 'sync'
+            && $job->queue === 'mux-cleanup';
+    });
 });
 
-it('keeps the previous Mux asset after re-upload when other local assets reference it', function () {
+it('does not retry replacement creation when predecessor cleanup fails', function () {
+    config(['queue.default' => 'database']);
+    Queue::fake();
+    Event::fake([AssetUploadedToMux::class]);
+
+    MuxAsset::fromAsset($this->mp4)->withId('OLD-MUX-ID')->save();
+    Stache::clear();
+
+    $this->service->shouldReceive('deleteMuxAsset')
+        ->zeroOrMoreTimes()
+        ->andThrow(new RuntimeException('Mux cannot delete an asset that is still preparing.'));
+
+    $this->guzzler->expects($this->any())
+        ->post('https://api.mux.com/video/v1/assets')
+        ->willRespondJson([
+            'data' => [
+                'status' => 'preparing',
+                'playback_ids' => [
+                    ['policy' => 'public', 'id' => 'FIRST-PLAYBACK-ID'],
+                ],
+                'id' => 'FIRST-REPLACEMENT-ID',
+                'created_at' => '1607452572',
+            ],
+        ])
+        ->willRespondJson([
+            'data' => [
+                'status' => 'preparing',
+                'playback_ids' => [
+                    ['policy' => 'public', 'id' => 'SECOND-PLAYBACK-ID'],
+                ],
+                'id' => 'SECOND-REPLACEMENT-ID',
+                'created_at' => '1607452573',
+            ],
+        ]);
+
+    $job = new CreateMuxAssetJob($this->mp4, force: true);
+    $failure = null;
+
+    for ($attempt = 0; $attempt < 2; $attempt++) {
+        try {
+            $job->handle($this->createMuxAsset);
+            $failure = null;
+            break;
+        } catch (Throwable $exception) {
+            $failure = $exception;
+        }
+    }
+
+    expect([
+        'escaped_exception' => $failure?->getMessage(),
+        'create_requests' => $this->guzzler->historyCount(),
+    ])->toBe([
+        'escaped_exception' => null,
+        'create_requests' => 1,
+    ]);
+
+    expect($this->mp4->get('mux'))->toEqual([
+        'id' => 'FIRST-REPLACEMENT-ID',
+        'playback_ids' => ['public' => 'FIRST-PLAYBACK-ID'],
+    ]);
+    $this->service->shouldNotHaveReceived('deleteMuxAsset');
+    Queue::assertPushed(DeleteReplacedMuxAssetJob::class, 1);
+    Event::assertDispatched(AssetUploadedToMux::class);
+});
+
+it('queues cleanup after re-upload when other local assets reference the previous Mux asset', function () {
+    config(['queue.default' => 'database']);
+    Queue::fake();
     Event::fake([AssetUploadedToMux::class]);
 
     $duplicate = $this->uploadTestFileToTestContainer('test.mp4', 'duplicate.mp4');
@@ -560,6 +686,7 @@ it('keeps the previous Mux asset after re-upload when other local assets referen
 
     expect($result)->toBe('NEW-MUX-ID');
     $this->service->shouldNotHaveReceived('deleteMuxAsset');
+    Queue::assertPushed(DeleteReplacedMuxAssetJob::class, 1);
 });
 
 it('allows modifying asset metadata via hook', function () {

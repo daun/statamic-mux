@@ -7,10 +7,10 @@ use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Events\AssetUploadedToMux;
 use Daun\StatamicMux\Events\AssetUploadingToMux;
 use Daun\StatamicMux\Facades\Log;
+use Daun\StatamicMux\Jobs\DeleteReplacedMuxAssetJob;
 use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
-use Daun\StatamicMux\Support\MirrorField;
 use MuxPhp\Models\Asset as MuxApiAssetModel;
 use MuxPhp\Models\PlaybackID;
 use Statamic\Assets\Asset;
@@ -43,9 +43,6 @@ class CreateMuxAsset
         }
 
         $previousMuxId = $this->service->getMuxId($asset);
-        $otherAssets = $previousMuxId
-            ? MirrorField::assetsByMuxId($previousMuxId, except: $asset)
-            : collect();
 
         try {
             if ($this->assetIsPubliclyAccessible($asset)) {
@@ -81,8 +78,8 @@ class CreateMuxAsset
 
             $record->save();
 
-            if ($previousMuxId && $otherAssets->isEmpty()) {
-                $this->service->deleteMuxAsset($previousMuxId);
+            if ($previousMuxId) {
+                DeleteReplacedMuxAssetJob::dispatchAsync($previousMuxId);
             }
 
             AssetUploadedToMux::dispatch($asset, $muxId);

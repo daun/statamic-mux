@@ -61,6 +61,10 @@ LOG_LEVEL=debug        # global log level
 MUX_LOG_LEVEL=debug    # addon log level
 ```
 
+::: warning Failed upload jobs
+Mux asset creation jobs make up to three attempts for temporary API, server, or network failures. Permanent API rejections fail immediately without retrying. An ambiguous network failure may mean a request succeeded at Mux before its response was lost, so a retry can leave an unreferenced remote asset that can later be removed with `mux:prune`.
+:::
+
 ## Optimizing Storage
 
 By default, the addon keeps the original video files on your configured asset disk. This avoids depending
