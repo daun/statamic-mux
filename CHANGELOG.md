@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.4.3]
+
+- Avoid upload retry while asset is still processing
+
 ## [3.4.2]
 
 - Validate placeholder rendition before replacing original file
@@ -184,6 +188,7 @@
 
 - Beta release
 
+[3.4.3]: https://github.com/daun/statamic-mux/releases/tag/3.4.3
 [3.4.2]: https://github.com/daun/statamic-mux/releases/tag/3.4.2
 [3.4.1]: https://github.com/daun/statamic-mux/releases/tag/3.4.1
 [3.4.0]: https://github.com/daun/statamic-mux/releases/tag/3.4.0
