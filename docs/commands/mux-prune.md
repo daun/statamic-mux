@@ -5,6 +5,10 @@
 Deletes any videos on Mux that no longer exist as local assets. Only affects videos
 that were uploaded by this addon.
 
+Deleting a local asset already removes its video from Mux, so orphans only appear when
+that cleanup was skipped or failed, or when an interrupted upload was retried and left
+a duplicate behind.
+
 Use `--dry-run` to print a list of affected files without actually performing the removal.
 
 ```sh
