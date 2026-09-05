@@ -16,6 +16,7 @@ use Daun\StatamicMux\Support\URL;
 use Daun\StatamicMux\Thumbnails\PlaceholderService;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Arr;
+use MuxPhp\Models\Asset as MuxApiAsset;
 use Statamic\Assets\Asset;
 use Statamic\Facades\Asset as Assets;
 
@@ -97,7 +98,7 @@ class MuxService
     /**
      * Delete a video asset from Mux.
      */
-    public function deleteMuxAsset(Asset|string $asset): bool
+    public function deleteMuxAsset(Asset|MuxApiAsset|string $asset): bool
     {
         if (! $asset) {
             return false;

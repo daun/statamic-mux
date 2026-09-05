@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static bool configured()
  * @method static string|null createMuxAsset(\Statamic\Assets\Asset|string $asset, bool $force = false)
  * @method static bool updateMuxAsset(\Statamic\Assets\Asset|string $asset)
- * @method static bool deleteMuxAsset(\Statamic\Assets\Asset|string $asset)
+ * @method static bool deleteMuxAsset(\Statamic\Assets\Asset|\MuxPhp\Models\Asset|string $asset)
  * @method static void hasExistingMuxAsset(\Statamic\Assets\Asset $asset)
  * @method static void listMuxAssets(int $limit = 100, int $page = 1)
  * @method static string|null getMuxId(\Statamic\Assets\Asset $asset)

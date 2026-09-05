@@ -10,6 +10,7 @@ use Daun\StatamicMux\Support\MirrorField;
 use Daun\StatamicMux\Support\Queue;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
+use MuxPhp\Models\Asset as MuxApiAsset;
 use Statamic\Console\RunsInPlease;
 
 class PruneCommand extends Command
@@ -76,15 +77,19 @@ class PruneCommand extends Command
             $this->newLine();
         });
 
-        $orphans->each(function ($muxId) use ($service) {
+        $orphans->each(function ($muxId) use ($muxAssetsById, $service) {
             if ($this->dryrun) {
                 $this->line("Would remove <name>{$muxId}</name>");
-            } elseif ($this->sync) {
-                $service->deleteMuxAsset($muxId);
-                $this->line("Removed <name>{$muxId}</name>");
             } else {
-                DeleteMuxAssetJob::dispatch($muxId);
-                $this->line("Queued removal of <name>{$muxId}</name>");
+                $muxAsset = $this->remoteAsset($muxAssetsById->get($muxId));
+
+                if ($this->sync) {
+                    $service->deleteMuxAsset($muxAsset);
+                    $this->line("Removed <name>{$muxId}</name>");
+                } else {
+                    DeleteMuxAssetJob::dispatch($muxAsset);
+                    $this->line("Queued removal of <name>{$muxId}</name>");
+                }
             }
         })->whenNotEmpty(function () {
             $this->newLine();
@@ -108,6 +113,18 @@ class PruneCommand extends Command
         } else {
             $this->info("<success>✓ Queued {$orphans->count()} videos for removal, kept {$found->count()} videos</success>");
         }
+    }
+
+    protected function remoteAsset($asset): MuxApiAsset
+    {
+        if ($asset instanceof MuxApiAsset) {
+            return $asset;
+        }
+
+        return new MuxApiAsset([
+            'id' => data_get($asset, 'id'),
+            'passthrough' => data_get($asset, 'passthrough'),
+        ]);
     }
 
     protected function isPendingProxy($muxAsset): bool

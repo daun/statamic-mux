@@ -9,6 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use MuxPhp\Models\Asset as MuxApiAsset;
 use Statamic\Assets\Asset;
 
 class DeleteMuxAssetJob implements ShouldQueue
@@ -16,7 +17,7 @@ class DeleteMuxAssetJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public function __construct(
-        protected Asset|string $asset
+        protected Asset|MuxApiAsset|string $asset
     ) {
         $this->connection = Queue::connection();
         $this->queue = Queue::queue();

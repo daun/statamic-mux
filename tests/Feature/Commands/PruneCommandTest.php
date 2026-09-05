@@ -4,6 +4,7 @@ use Daun\StatamicMux\Commands\PruneCommand;
 use Daun\StatamicMux\Jobs\DeleteMuxAssetJob;
 use Daun\StatamicMux\Mux\MuxService;
 use Illuminate\Support\Facades\Queue;
+use MuxPhp\Models\Asset as MuxApiAsset;
 use Statamic\Facades\Stache;
 
 beforeEach(function () {
@@ -63,7 +64,7 @@ it('removes orphaned videos from Mux', function () {
     $service->shouldReceive('configured')->andReturn(true);
     $service->shouldReceive('listMuxAssets')->andReturn(collect([
         (object) ['id' => 'local-mux-id'],
-        (object) ['id' => 'orphan-mux-id'],
+        (object) ['id' => 'orphan-mux-id', 'passthrough' => 'statamic::videos/orphan.mp4'],
     ]));
     $service->shouldReceive('getMuxId')->andReturnUsing(function ($asset) {
         return $asset->get('mux')['id'] ?? null;
@@ -79,10 +80,11 @@ it('removes orphaned videos from Mux', function () {
         ->assertSuccessful();
 
     Queue::assertPushed(DeleteMuxAssetJob::class, function ($job) {
-        $class = new ReflectionClass($job);
-        $asset = $class->getProperty('asset')->getValue($job);
+        $asset = (new ReflectionClass($job))->getProperty('asset')->getValue($job);
 
-        return $asset === 'orphan-mux-id';
+        return $asset instanceof MuxApiAsset
+            && $asset->getId() === 'orphan-mux-id'
+            && $asset->getPassthrough() === 'statamic::videos/orphan.mp4';
     });
 });
 
@@ -105,7 +107,9 @@ it('removes orphaned videos in sync mode', function () {
     $service->shouldReceive('getMuxId')->andReturnUsing(function ($asset) {
         return $asset->get('mux')['id'] ?? null;
     });
-    $service->shouldReceive('deleteMuxAsset')->with('orphan-mux-id')->once();
+    $service->shouldReceive('deleteMuxAsset')
+        ->with(Mockery::on(fn ($asset) => $asset instanceof MuxApiAsset && $asset->getId() === 'orphan-mux-id'))
+        ->once();
     app()->instance(MuxService::class, $service);
 
     config(['queue.default' => 'sync']);
@@ -345,7 +349,9 @@ it('removes proxy assets older than the grace period', function () {
     $service->shouldReceive('getMuxId')->andReturnUsing(function ($asset) {
         return $asset->get('mux')['id'] ?? null;
     });
-    $service->shouldReceive('deleteMuxAsset')->with('proxy-mux-id')->once();
+    $service->shouldReceive('deleteMuxAsset')
+        ->with(Mockery::on(fn ($asset) => $asset instanceof MuxApiAsset && $asset->getId() === 'proxy-mux-id'))
+        ->once();
     app()->instance(MuxService::class, $service);
 
     config(['queue.default' => 'sync']);
@@ -382,7 +388,9 @@ it('removes non-proxy orphans regardless of age', function () {
     $service->shouldReceive('getMuxId')->andReturnUsing(function ($asset) {
         return $asset->get('mux')['id'] ?? null;
     });
-    $service->shouldReceive('deleteMuxAsset')->with('orphan-mux-id')->once();
+    $service->shouldReceive('deleteMuxAsset')
+        ->with(Mockery::on(fn ($asset) => $asset instanceof MuxApiAsset && $asset->getId() === 'orphan-mux-id'))
+        ->once();
     app()->instance(MuxService::class, $service);
 
     config(['queue.default' => 'sync']);
