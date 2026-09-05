@@ -9,7 +9,7 @@
             <ui-badge pill icon="x-square" color="amber">
                 {{ t('not_uploaded') }}
             </ui-badge>
-            <ui-checkbox v-if="showReuploadToggle" v-model="value.reupload" name="reupload" :label="t('upload_on_save')" />
+            <ui-checkbox v-if="showReuploadToggle" v-model="reupload" name="reupload" :label="t('upload_on_save')" />
         </template>
         <template v-else>
             <div class="flex flex-wrap gap-2">
@@ -44,7 +44,7 @@
                     </div>
                 </li>
             </ul>
-            <ui-checkbox v-if="showReuploadToggle" v-model="value.reupload" name="reupload" :label="t('reupload_on_save')" />
+            <ui-checkbox v-if="showReuploadToggle" v-model="reupload" name="reupload" :label="t('reupload_on_save')" />
         </template>
     </div>
 </template>
@@ -61,7 +61,21 @@ export default {
             itemCopiedTimeout: null,
         }
     },
+    mounted() {
+        Statamic.$events.$on('asset.saved', this.disarmReupload);
+    },
+    unmounted() {
+        Statamic.$events.$off('asset.saved', this.disarmReupload);
+    },
     computed: {
+        reupload: {
+            get() {
+                return !!this.value.reupload;
+            },
+            set(reupload) {
+                this.update({ ...this.value, reupload });
+            },
+        },
         showReuploadToggle() {
             return this.allowReuploads && !this.isProxy;
         },
@@ -102,6 +116,11 @@ export default {
         },
     },
     methods: {
+        disarmReupload(asset) {
+            if (!this.reupload || asset?.id !== this.meta.asset_id) return;
+
+            this.injectedPublishContainer.withoutDirtying(() => (this.reupload = false));
+        },
         toggleInfo() {
             this.isInfoExpanded = !this.isInfoExpanded;
         },
