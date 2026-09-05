@@ -2,7 +2,9 @@
 
 use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Fieldtypes\MuxMirrorFieldtype;
+use Daun\StatamicMux\Jobs\CreateMuxAssetJob;
 use Daun\StatamicMux\Support\MirrorField;
+use Illuminate\Support\Facades\Queue;
 use Statamic\Assets\Asset;
 use Statamic\Facades\Entry;
 use Statamic\Facades\Stache;
@@ -174,6 +176,7 @@ test('preloads a video asset without mux data', function () {
 
     $data = preloadFieldtype($mp4)->preload();
 
+    expect($data['asset_id'])->toBe($mp4->id());
     expect($data['is_asset'])->toBeTrue();
     expect($data['is_video'])->toBeTrue();
     expect($data['is_proxy'])->toBeFalse();
@@ -187,6 +190,7 @@ test('preloads without a parent without throwing', function () {
         $data = preloadFieldtypeWithParent(null)->preload();
     })->not->toThrow(Exception::class);
 
+    expect($data['asset_id'])->toBeNull();
     expect($data['is_asset'])->toBeFalse();
     expect($data['is_video'])->toBeFalse();
     expect($data['is_proxy'])->toBeFalse();
@@ -294,3 +298,44 @@ test('flags proxy assets', function () {
     expect($data['is_proxy'])->toBeTrue();
     expect($data['mux']['asset_id'])->toBe('mux-asset-004');
 });
+
+test('preprocess always exposes a transient reupload flag on loaded fields', function () {
+    $this->addMirrorFieldToAssetBlueprint();
+    $mp4 = $this->uploadTestFileToTestContainer('test.mp4');
+
+    $processed = preloadFieldtype($mp4)->preProcess(['id' => 'mux-asset-005']);
+
+    expect($processed)->toBe(['reupload' => false, 'id' => 'mux-asset-005']);
+});
+
+test('process removes the reupload flag and dispatches one forced upload when checked', function () {
+    $this->addMirrorFieldToAssetBlueprint();
+    $mp4 = $this->uploadTestFileToTestContainer('test.mp4');
+    config(['queue.default' => 'database']);
+    Queue::fake();
+
+    $result = preloadFieldtype($mp4)->process(['id' => 'mux-asset-005', 'reupload' => true]);
+
+    expect($result)->toBe(['id' => 'mux-asset-005']);
+
+    Queue::assertPushed(CreateMuxAssetJob::class, 1);
+    Queue::assertPushed(CreateMuxAssetJob::class, function ($job) use ($mp4) {
+        $class = new ReflectionClass($job);
+        $asset = $class->getProperty('asset')->getValue($job);
+        $force = $class->getProperty('force')->getValue($job);
+
+        return $asset->id() === $mp4->id() && $force === true;
+    });
+});
+
+test('process strips the reupload flag without dispatching when not checked', function (array $data) {
+    $this->addMirrorFieldToAssetBlueprint();
+    $mp4 = $this->uploadTestFileToTestContainer('test.mp4');
+    Queue::fake();
+
+    expect(preloadFieldtype($mp4)->process($data))->toBe(['id' => 'mux-asset-005']);
+    Queue::assertNothingPushed();
+})->with([
+    'unchecked' => [['id' => 'mux-asset-005', 'reupload' => false]],
+    'absent' => [['id' => 'mux-asset-005']],
+]);

@@ -56,6 +56,7 @@ class MuxMirrorFieldtype extends Fieldtype
         $muxAsset = $asset ? MuxAsset::fromAsset($asset) : null;
 
         return [
+            'asset_id' => $asset?->id(),
             'is_asset' => (bool) $asset,
             'is_video' => $asset?->isVideo() ?? false,
             'is_proxy' => $muxAsset?->isProxy() ?? false,
