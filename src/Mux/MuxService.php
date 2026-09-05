@@ -107,23 +107,32 @@ class MuxService
     }
 
     /**
-     * Check if a video asset exists in Mux.
+     * Check whether the local asset's referenced Mux asset exists.
      */
-    public function hasExistingMuxAsset(Asset $asset)
+    public function hasExistingMuxAsset(Asset $asset): bool
     {
         $muxId = $this->getMuxId($asset);
-        if ($muxId && $this->api->assetExists($muxId)) {
-            return true;
-        } else {
-            Log::notice('Asset does not exist on Mux, clearing stale local data', [
-                'asset' => $asset->id(),
-                'mux_id' => $muxId,
-            ]);
 
-            MuxAsset::fromAsset($asset)->clear()->save();
+        return $muxId ? $this->api->assetExists($muxId) : false;
+    }
 
-            return false;
+    /**
+     * Clear the local Mux data of an asset whose remote asset no longer exists.
+     */
+    public function clearMuxAsset(Asset $asset): void
+    {
+        $muxId = $this->getMuxId($asset);
+
+        if (! $muxId) {
+            return;
         }
+
+        Log::notice('Asset does not exist on Mux, clearing stale local data', [
+            'asset' => $asset->id(),
+            'mux_id' => $muxId,
+        ]);
+
+        MuxAsset::fromAsset($asset)->clear()->save();
     }
 
     /**

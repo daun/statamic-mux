@@ -111,12 +111,16 @@ class UploadCommand extends Command
         $assetsToUpload->each(function ($asset) use ($service) {
             if ($this->dryrun) {
                 $this->line("Would upload <name>{$asset->id()}</name>");
-            } elseif ($this->sync) {
-                $service->createMuxAsset($asset);
-                $this->line("Uploaded <name>{$asset->id()}</name>");
             } else {
-                CreateMuxAssetJob::dispatch($asset);
-                $this->line("Queued upload of <name>{$asset->id()}</name>");
+                $service->clearMuxAsset($asset);
+
+                if ($this->sync) {
+                    $service->createMuxAsset($asset);
+                    $this->line("Uploaded <name>{$asset->id()}</name>");
+                } else {
+                    CreateMuxAssetJob::dispatch($asset);
+                    $this->line("Queued upload of <name>{$asset->id()}</name>");
+                }
             }
         })->whenNotEmpty(function () {
             $this->newLine();
