@@ -125,3 +125,32 @@ it('leaves non-404 deletion failures visible to the queue', function () {
     expect(fn () => (new DeleteReplacedMuxAssetJob('MUX-ID'))->handle($this->action, $this->api))
         ->toThrow(ApiException::class, 'Mux delete unavailable');
 });
+
+it('fails permanent lookup failures immediately', function () {
+    $exception = new ApiException('Unauthorized', 401);
+
+    $this->api->shouldReceive('getAsset')->once()->with('MUX-ID')->andThrow($exception);
+    $this->action->shouldNotReceive('handle');
+
+    $job = (new DeleteReplacedMuxAssetJob('MUX-ID'))->withFakeQueueInteractions();
+    $job->handle($this->action, $this->api);
+
+    $job->assertFailedWith($exception)->assertNotReleased();
+});
+
+it('fails permanent deletion failures immediately', function () {
+    $remoteAsset = new MuxApiAsset([
+        'id' => 'MUX-ID',
+        'status' => MuxApiAsset::STATUS_READY,
+        'passthrough' => 'statamic::video.mp4',
+    ]);
+    $exception = new ApiException('Forbidden', 403);
+
+    $this->api->shouldReceive('getAsset')->once()->with('MUX-ID')->andReturn($remoteAsset);
+    $this->action->shouldReceive('handle')->once()->with($remoteAsset)->andThrow($exception);
+
+    $job = (new DeleteReplacedMuxAssetJob('MUX-ID'))->withFakeQueueInteractions();
+    $job->handle($this->action, $this->api);
+
+    $job->assertFailedWith($exception)->assertNotReleased();
+});

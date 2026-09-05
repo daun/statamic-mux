@@ -4,6 +4,7 @@ namespace Daun\StatamicMux\Jobs;
 
 use DateTime;
 use Daun\StatamicMux\Concerns\DispatchesAsync;
+use Daun\StatamicMux\Concerns\FailsOnPermanentMuxErrors;
 use Daun\StatamicMux\Mux\Actions\DeleteMuxAsset;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Support\MirrorField;
@@ -13,11 +14,12 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Throwable;
 
 class DeleteReplacedMuxAssetJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    use DispatchesAsync;
+    use DispatchesAsync, FailsOnPermanentMuxErrors;
 
     public function __construct(
         protected string $muxId
@@ -38,23 +40,27 @@ class DeleteReplacedMuxAssetJob implements ShouldQueue
 
     public function handle(DeleteMuxAsset $action, MuxApi $api): void
     {
-        if (MirrorField::assetsByMuxId($this->muxId)->isNotEmpty()) {
-            return;
+        try {
+            if (MirrorField::assetsByMuxId($this->muxId)->isNotEmpty()) {
+                return;
+            }
+
+            $remoteAsset = $api->getAsset($this->muxId);
+
+            if (! $remoteAsset) {
+                return;
+            }
+
+            if ($remoteAsset->getStatus() === $remoteAsset::STATUS_PREPARING) {
+                $this->release($this->getBackoffDelay());
+
+                return;
+            }
+
+            $action->handle($remoteAsset);
+        } catch (Throwable $exception) {
+            $this->failOnPermanentMuxError($exception);
         }
-
-        $remoteAsset = $api->getAsset($this->muxId);
-
-        if (! $remoteAsset) {
-            return;
-        }
-
-        if ($remoteAsset->getStatus() === $remoteAsset::STATUS_PREPARING) {
-            $this->release($this->getBackoffDelay());
-
-            return;
-        }
-
-        $action->handle($remoteAsset);
     }
 
     private function getBackoffDelay(): int

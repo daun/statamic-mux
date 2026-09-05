@@ -3,6 +3,7 @@
 namespace Daun\StatamicMux\Jobs;
 
 use DateTime;
+use Daun\StatamicMux\Concerns\FailsOnPermanentMuxErrors;
 use Daun\StatamicMux\Mux\Actions\DownloadProxyVersion;
 use Daun\StatamicMux\Support\Queue;
 use Illuminate\Bus\Queueable;
@@ -11,10 +12,12 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Statamic\Assets\Asset;
+use Throwable;
 
 class DownloadProxyVersionJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use FailsOnPermanentMuxErrors;
 
     public function __construct(
         protected Asset $asset,
@@ -31,19 +34,24 @@ class DownloadProxyVersionJob implements ShouldQueue
 
     public function handle(DownloadProxyVersion $action): void
     {
-        // Check if we need to process this at all
-        if (! $action->shouldHandle($this->asset, $this->proxyId)) {
-            return;
-        }
+        try {
+            // Check if we need to process this at all
+            if (! $action->shouldHandle($this->asset, $this->proxyId)) {
+                return;
+            }
 
-        // Not ready? Release back for later processing
-        if (! $action->isReady($this->asset, $this->proxyId)) {
-            $this->release($this->getBackoffDelay());
-            return;
-        }
+            // Not ready? Release back for later processing
+            if (! $action->isReady($this->asset, $this->proxyId)) {
+                $this->release($this->getBackoffDelay());
 
-        if ($downloaded = $action->handle($this->asset, $this->proxyId)) {
-            DeleteMuxAssetJob::dispatch($this->proxyId);
+                return;
+            }
+
+            if ($downloaded = $action->handle($this->asset, $this->proxyId)) {
+                DeleteMuxAssetJob::dispatch($this->proxyId);
+            }
+        } catch (Throwable $exception) {
+            $this->failOnPermanentMuxError($exception);
         }
     }
 

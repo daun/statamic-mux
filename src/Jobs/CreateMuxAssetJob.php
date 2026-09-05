@@ -3,8 +3,8 @@
 namespace Daun\StatamicMux\Jobs;
 
 use Daun\StatamicMux\Concerns\DispatchesAsync;
+use Daun\StatamicMux\Concerns\FailsOnPermanentMuxErrors;
 use Daun\StatamicMux\Mux\Actions\CreateMuxAsset;
-use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Support\Queue;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -17,7 +17,7 @@ use Throwable;
 class CreateMuxAssetJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    use DispatchesAsync;
+    use DispatchesAsync, FailsOnPermanentMuxErrors;
 
     public int $tries = 3;
 
@@ -36,13 +36,7 @@ class CreateMuxAssetJob implements ShouldQueue
         try {
             $action->handle($this->asset, $this->force);
         } catch (Throwable $exception) {
-            if (MuxApi::isPermanentError($exception)) {
-                $this->fail($exception);
-
-                return;
-            }
-
-            throw $exception;
+            $this->failOnPermanentMuxError($exception);
         }
     }
 }

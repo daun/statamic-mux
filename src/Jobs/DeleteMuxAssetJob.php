@@ -2,8 +2,8 @@
 
 namespace Daun\StatamicMux\Jobs;
 
+use Daun\StatamicMux\Concerns\FailsOnPermanentMuxErrors;
 use Daun\StatamicMux\Mux\Actions\DeleteMuxAsset;
-use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Support\Queue;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -17,6 +17,7 @@ use Throwable;
 class DeleteMuxAssetJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use FailsOnPermanentMuxErrors;
 
     public int $tries = 3;
 
@@ -34,13 +35,7 @@ class DeleteMuxAssetJob implements ShouldQueue
         try {
             $action->handle($this->asset);
         } catch (Throwable $exception) {
-            if (MuxApi::isPermanentError($exception)) {
-                $this->fail($exception);
-
-                return;
-            }
-
-            throw $exception;
+            $this->failOnPermanentMuxError($exception);
         }
     }
 }
