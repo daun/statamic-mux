@@ -7,6 +7,7 @@ use Daun\StatamicMux\Facades\Log;
 use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Promise\EachPromise;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -25,6 +26,7 @@ use MuxPhp\Models\CreatePlaybackIDRequest;
 use MuxPhp\Models\CreateUploadRequest;
 use MuxPhp\Models\InputSettings;
 use Statamic\Facades\Blink;
+use Throwable;
 
 class MuxApi
 {
@@ -205,7 +207,7 @@ class MuxApi
 
         try {
             return new CreateAssetRequest($data);
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             Log::error(
                 "Failed to create Mux asset request: {$th->getMessage()}",
                 ['data' => $data, 'exception' => $th],
@@ -225,7 +227,7 @@ class MuxApi
 
         try {
             return new CreateUploadRequest($data);
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             Log::error(
                 "Failed to create Mux upload request: {$th->getMessage()}",
                 ['data' => $data, 'exception' => $th],
@@ -243,7 +245,7 @@ class MuxApi
 
         try {
             return new CreatePlaybackIDRequest($data);
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             Log::error(
                 "Failed to create Mux playback ID request: {$th->getMessage()}",
                 ['data' => $data, 'exception' => $th],
@@ -287,7 +289,7 @@ class MuxApi
                     $responses[$page] = $response;
                 },
                 'rejected' => function ($reason, int $page): void {
-                    if ($reason instanceof \Throwable) {
+                    if ($reason instanceof Throwable) {
                         Log::error(
                             "Failed to list Mux assets: {$reason->getMessage()}",
                             ['page' => $page, 'exception' => $reason],
@@ -333,7 +335,7 @@ class MuxApi
             } else {
                 throw $e;
             }
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             Log::error(
                 "Failed to load Mux asset: {$th->getMessage()}",
                 ['mux_id' => $muxId, 'exception' => $th],
@@ -375,7 +377,7 @@ class MuxApi
                     return;
                 }
 
-                if ($reason instanceof \Throwable) {
+                if ($reason instanceof Throwable) {
                     Log::error(
                         "Failed to load Mux asset: {$reason->getMessage()}",
                         ['mux_id' => $muxId, 'exception' => $reason],
@@ -415,7 +417,7 @@ class MuxApi
             } else {
                 throw $e;
             }
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             Log::error(
                 "Failed to check Mux asset existence: {$th->getMessage()}",
                 ['mux_id' => $muxId, 'exception' => $th],
@@ -444,7 +446,7 @@ class MuxApi
             } else {
                 throw $e;
             }
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             Log::error(
                 "Failed to check Mux asset status: {$th->getMessage()}",
                 ['mux_id' => $muxId, 'exception' => $th],
@@ -476,7 +478,7 @@ class MuxApi
             } else {
                 throw $e;
             }
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             Log::error(
                 "Failed to check Mux renditions status: {$th->getMessage()}",
                 ['mux_id' => $muxId, 'exception' => $th],
@@ -484,5 +486,35 @@ class MuxApi
 
             throw $th;
         }
+    }
+
+    /**
+     * Check whether Mux rejected a request in a way that repeating it cannot fix.
+     *
+     * Callers wrap the SDK, so the status is often buried in a previous exception.
+     * 408 and 429 are 4xx but explicitly ask the caller to try again later.
+     */
+    public static function isPermanentError(?Throwable $exception): bool
+    {
+        while ($exception !== null) {
+            $status = static::statusCodeOf($exception);
+
+            if ($status !== null && $status >= 400 && $status < 500 && ! in_array($status, [408, 429], true)) {
+                return true;
+            }
+
+            $exception = $exception->getPrevious();
+        }
+
+        return false;
+    }
+
+    protected static function statusCodeOf(Throwable $exception): ?int
+    {
+        return match (true) {
+            $exception instanceof ApiException => $exception->getCode(),
+            $exception instanceof RequestException => $exception->getResponse()?->getStatusCode(),
+            default => null,
+        };
     }
 }
