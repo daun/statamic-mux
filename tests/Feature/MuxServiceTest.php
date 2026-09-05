@@ -6,6 +6,7 @@ use Daun\StatamicMux\Mux\MuxClient;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Support\MirrorField;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Http;
 use MuxPhp\Models\Asset;
 use Statamic\Facades\Stache;
 
@@ -305,4 +306,67 @@ test('paginates API request to list all assets', function () {
     expect($muxAssets)->toHaveLength(2);
     expect($muxAssets[0])->toBeInstanceOf(Asset::class);
     expect($muxAssets[0]->getId())->toBe('8jd7M77xQgf2NzuocJRPYdSdEfY5dLlcRwFARtgQqU4');
+});
+
+test('checks remote existence without writing when no local mux id exists', function () {
+    $service = $this->app->make(MuxService::class);
+
+    expect($service->hasExistingMuxAsset($this->mp4))->toBeFalse();
+    expect($this->mp4->get('mux'))->toBeNull();
+    $this->guzzler->assertHistoryCount(0);
+});
+
+test('checks remote existence without writing when asset exists', function () {
+    $service = $this->app->make(MuxService::class);
+
+    $muxData = ['id' => 'mux-asset-id', 'duration' => 12.34];
+
+    $this->mp4->set('mux', $muxData);
+    $this->mp4->saveQuietly();
+
+    $this->guzzler->expects($this->once())
+        ->get('https://api.mux.com/video/v1/assets/mux-asset-id')
+        ->willRespondJson(['data' => ['id' => 'mux-asset-id', 'status' => 'ready']]);
+
+    expect($service->hasExistingMuxAsset($this->mp4))->toBeTrue();
+    expect($this->mp4->get('mux'))->toEqual($muxData);
+});
+
+test('checks remote existence without writing when asset is missing', function () {
+    $service = $this->app->make(MuxService::class);
+
+    $muxData = ['id' => 'stale-mux-id', 'duration' => 12.34];
+
+    $this->mp4->set('mux', $muxData);
+    $this->mp4->saveQuietly();
+
+    $this->guzzler->expects($this->once())
+        ->get('https://api.mux.com/video/v1/assets/stale-mux-id')
+        ->willRespond(Http::response(['error' => ['messages' => ['Not found']]], 404));
+
+    expect($service->hasExistingMuxAsset($this->mp4))->toBeFalse();
+    expect($this->mp4->get('mux'))->toEqual($muxData);
+});
+
+test('clears stale local data without hitting the api', function () {
+    $service = $this->app->make(MuxService::class);
+
+    $muxData = ['id' => 'stale-mux-id', 'duration' => 12.34];
+
+    $this->mp4->set('mux', $muxData);
+    $this->mp4->saveQuietly();
+
+    $service->clearMuxAsset($this->mp4);
+
+    expect($this->mp4->get('mux'))->toBeEmpty();
+    $this->guzzler->assertHistoryCount(0);
+});
+
+test('does not write when clearing an asset without a local mux id', function () {
+    $service = $this->app->make(MuxService::class);
+
+    $service->clearMuxAsset($this->mp4);
+
+    expect($this->mp4->get('mux'))->toBeNull();
+    $this->guzzler->assertHistoryCount(0);
 });

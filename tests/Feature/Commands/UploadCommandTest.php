@@ -2,8 +2,11 @@
 
 use Daun\StatamicMux\Commands\UploadCommand;
 use Daun\StatamicMux\Jobs\CreateMuxAssetJob;
+use Daun\StatamicMux\Mux\MuxClient;
 use Daun\StatamicMux\Mux\MuxService;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
+use Statamic\Facades\Asset;
 use Statamic\Facades\Stache;
 
 beforeEach(function () {
@@ -84,6 +87,7 @@ it('uploads new videos', function () {
     $service = Mockery::mock(MuxService::class);
     $service->shouldReceive('configured')->andReturn(true);
     $service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
+    $service->shouldReceive('clearMuxAsset');
     app()->instance(MuxService::class, $service);
 
     config(['queue.default' => 'database']);
@@ -113,6 +117,7 @@ it('uploads new videos in sync mode', function () {
     $service = Mockery::mock(MuxService::class);
     $service->shouldReceive('configured')->andReturn(true);
     $service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
+    $service->shouldReceive('clearMuxAsset');
     $service->shouldReceive('createMuxAsset')->once()->andReturn('mux-asset-id');
     app()->instance(MuxService::class, $service);
 
@@ -244,6 +249,7 @@ it('limits upload to specific container', function () {
     $service = Mockery::mock(MuxService::class);
     $service->shouldReceive('configured')->andReturn(true);
     $service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
+    $service->shouldReceive('clearMuxAsset');
     $service->shouldReceive('createMuxAsset')->once()->andReturn('mux-asset-id');
     app()->instance(MuxService::class, $service);
 
@@ -273,6 +279,7 @@ it('processes videos from multiple containers when no container specified', func
     $service = Mockery::mock(MuxService::class);
     $service->shouldReceive('configured')->andReturn(true);
     $service->shouldReceive('hasExistingMuxAsset')->andReturn(false);
+    $service->shouldReceive('clearMuxAsset');
     $service->shouldReceive('createMuxAsset')->twice()->andReturn('mux-asset-id');
     app()->instance(MuxService::class, $service);
 
@@ -359,6 +366,43 @@ it('shows dry-run output for skipped videos', function () {
     Queue::assertNotPushed(CreateMuxAssetJob::class);
 });
 
+it('does not mutate local asset metadata during dry run', function () {
+    Queue::fake();
+
+    $container = $this->createAssetContainer('videos');
+    $this->addMirrorFieldToAssetBlueprint(container: 'videos');
+
+    $video = $this->uploadTestFileToTestContainer('test.mp4', container: 'videos');
+
+    $muxData = [
+        'id' => 'stale-mux-id',
+        'playback_ids' => ['public' => 'public-playback-id'],
+        'duration' => 12.34,
+    ];
+
+    $video->set('mux', $muxData);
+    $video->saveQuietly();
+
+    $this->app->bind(MuxClient::class, fn () => $this->guzzler->getClient());
+
+    $this->guzzler->expects($this->once())
+        ->get('https://api.mux.com/video/v1/assets/stale-mux-id')
+        ->willRespond(Http::response(['error' => ['messages' => ['Not found']]], 404));
+
+    config(['queue.default' => 'database']);
+
+    $this->artisan(UploadCommand::class, ['--dry-run' => true])
+        ->expectsOutput('Performing dry run: no videos will be uploaded')
+        ->expectsOutputToContain("Would upload {$video->id()}")
+        ->assertSuccessful();
+
+    Queue::assertNotPushed(CreateMuxAssetJob::class);
+
+    $stored = Asset::find($video->id());
+
+    expect($stored->get('mux'))->toEqual($muxData);
+});
+
 // Mixed scenarios
 
 it('handles mixed scenarios with uploads, reuploads, and skips', function () {
@@ -374,6 +418,7 @@ it('handles mixed scenarios with uploads, reuploads, and skips', function () {
     $service = Mockery::mock(MuxService::class);
     $service->shouldReceive('configured')->andReturn(true);
     $service->shouldReceive('hasExistingMuxAsset')->andReturn(false, true, true);
+    $service->shouldReceive('clearMuxAsset');
     app()->instance(MuxService::class, $service);
 
     config(['queue.default' => 'database']);
@@ -420,6 +465,7 @@ it('handles mixed scenarios without force flag', function () {
     $service = Mockery::mock(MuxService::class);
     $service->shouldReceive('configured')->andReturn(true);
     $service->shouldReceive('hasExistingMuxAsset')->andReturn(false, true);
+    $service->shouldReceive('clearMuxAsset');
     $service->shouldReceive('createMuxAsset')->once()->andReturn('mux-asset-id');
     app()->instance(MuxService::class, $service);
 
