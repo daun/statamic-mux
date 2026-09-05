@@ -4,7 +4,7 @@ namespace Daun\StatamicMux\Http\Controllers\Cp\Listing;
 
 use Daun\StatamicMux\Support\Attribution;
 use Illuminate\Support\Carbon;
-use MuxPhp\Models\Asset;
+use MuxPhp\Models\Asset as MuxApiAsset;
 
 /**
  * Thin adapter over a Mux SDK asset (the authoritative remote data), exposing
@@ -14,7 +14,7 @@ use MuxPhp\Models\Asset;
 class RemoteVideoSource
 {
     public function __construct(
-        protected Asset $asset,
+        protected MuxApiAsset $asset,
     ) {}
 
     public function id(): ?string
@@ -32,7 +32,7 @@ class RemoteVideoSource
         // An errored asset never produced a usable playback, so we expose none.
         // This removes its public playback URLs, thumbnail and player/embed
         // actions everywhere the row is rendered.
-        if ($this->processingStatus() === Asset::STATUS_ERRORED) {
+        if ($this->processingStatus() === MuxApiAsset::STATUS_ERRORED) {
             return [];
         }
 

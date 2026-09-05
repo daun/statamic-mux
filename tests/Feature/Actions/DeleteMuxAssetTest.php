@@ -9,7 +9,7 @@ use Daun\StatamicMux\Mux\MuxClient;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use MuxPhp\ApiException;
-use MuxPhp\Models\Asset as RemoteAsset;
+use MuxPhp\Models\Asset as MuxApiAsset;
 use Statamic\Facades\Stache;
 
 beforeEach(function () {
@@ -223,9 +223,9 @@ it('deletes orphaned Mux assets created by the addon', function () {
 });
 
 it('deletes a fetched Mux asset without fetching it again', function () {
-    $remoteAsset = new RemoteAsset([
+    $remoteAsset = new MuxApiAsset([
         'id' => 'FETCHED-ID',
-        'status' => RemoteAsset::STATUS_READY,
+        'status' => MuxApiAsset::STATUS_READY,
         'passthrough' => 'statamic::video.mp4',
     ]);
 

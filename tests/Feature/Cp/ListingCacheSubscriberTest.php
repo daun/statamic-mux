@@ -8,7 +8,7 @@ use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Subscribers\ListingCacheSubscriber;
 use Daun\StatamicMux\Thumbnails\ThumbnailService;
 use Illuminate\Support\Facades\Cache;
-use MuxPhp\Models\Asset;
+use MuxPhp\Models\Asset as MuxApiAsset;
 use MuxPhp\Models\PlaybackID;
 use Statamic\Facades\Stache;
 
@@ -23,7 +23,7 @@ beforeEach(function () {
 
     Stache::clear();
 
-    $remoteAsset = Mockery::mock(Asset::class);
+    $remoteAsset = Mockery::mock(MuxApiAsset::class);
     $remoteAsset->shouldReceive('getId')->andReturn('mux-asset-001');
     $remoteAsset->shouldReceive('getStatus')->andReturn('ready');
     $remoteAsset->shouldReceive('getDuration')->andReturn(120.0);

@@ -11,8 +11,8 @@ use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Support\Attribution;
 use Daun\StatamicMux\Support\MirrorField;
 use MuxPhp\ApiException;
-use MuxPhp\Models\Asset as RemoteAsset;
-use Statamic\Assets\Asset as LocalAsset;
+use MuxPhp\Models\Asset as MuxApiAsset;
+use Statamic\Assets\Asset;
 
 class DeleteMuxAsset
 {
@@ -24,7 +24,7 @@ class DeleteMuxAsset
     /**
      * Delete a video asset from Mux.
      */
-    public function handle(string|LocalAsset|RemoteAsset $asset): bool
+    public function handle(Asset|MuxApiAsset|string $asset): bool
     {
         if (! $asset) {
             Log::notice(
@@ -40,7 +40,7 @@ class DeleteMuxAsset
             return $this->deleteMuxAsset($asset);
         }
 
-        if ($asset instanceof RemoteAsset) {
+        if ($asset instanceof MuxApiAsset) {
             $muxId = $asset->getId();
 
             if (! is_string($muxId) || ! $muxId) {
@@ -63,16 +63,16 @@ class DeleteMuxAsset
     /**
      * Delete a Mux asset by its ID.
      */
-    protected function deleteMuxAsset(string $muxId, ?RemoteAsset $remoteAsset = null): bool
+    protected function deleteMuxAsset(string $muxId, ?MuxApiAsset $muxApiAsset = null): bool
     {
         try {
-            $remoteAsset ??= $this->api->getAsset($muxId);
+            $muxApiAsset ??= $this->api->getAsset($muxId);
 
-            if (! $remoteAsset) {
+            if (! $muxApiAsset) {
                 return true;
             }
 
-            if (! $this->wasAssetCreatedByAddon($remoteAsset)) {
+            if (! $this->wasAssetCreatedByAddon($muxApiAsset)) {
                 Log::notice(
                     'Cannot delete Mux asset: asset was not created by addon',
                     ['mux_id' => $muxId],
@@ -113,7 +113,7 @@ class DeleteMuxAsset
     /**
      * Delete a remote Mux asset by its local Statamic asset.
      */
-    protected function deleteConnectedMuxAsset(LocalAsset $asset): bool
+    protected function deleteConnectedMuxAsset(Asset $asset): bool
     {
         if (! $asset->isVideo()) {
             return false;
@@ -162,7 +162,7 @@ class DeleteMuxAsset
     /**
      * Check if an asset was created by this addon.
      */
-    protected function wasAssetCreatedByAddon(RemoteAsset $asset): bool
+    protected function wasAssetCreatedByAddon(MuxApiAsset $asset): bool
     {
         $passthrough = $asset->getPassthrough();
 

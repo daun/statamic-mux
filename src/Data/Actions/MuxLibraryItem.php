@@ -2,7 +2,7 @@
 
 namespace Daun\StatamicMux\Data\Actions;
 
-use MuxPhp\Models\Asset as MuxApiAssetModel;
+use MuxPhp\Models\Asset as MuxApiAsset;
 
 /**
  * Lightweight wrapper around a remote Mux asset for use with the Statamic Action system.
@@ -11,7 +11,7 @@ class MuxLibraryItem
 {
     public function __construct(
         protected string $muxId,
-        protected ?MuxApiAssetModel $apiAsset = null,
+        protected ?MuxApiAsset $apiAsset = null,
         protected ?string $dashboardBaseUrl = null,
     ) {}
 
@@ -20,7 +20,7 @@ class MuxLibraryItem
         return $this->muxId;
     }
 
-    public function apiAsset(): ?MuxApiAssetModel
+    public function apiAsset(): ?MuxApiAsset
     {
         return $this->apiAsset;
     }

@@ -9,7 +9,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use MuxPhp\Api\AssetsApi;
 use MuxPhp\ApiException;
-use MuxPhp\Models\Asset;
+use MuxPhp\Models\Asset as MuxApiAsset;
 use MuxPhp\Models\PlaybackID;
 use Statamic\Facades\Stache;
 
@@ -80,9 +80,9 @@ beforeEach(function () {
     $this->reconciler = new ListingReconciler($muxApi, $muxService, $thumbnails);
 });
 
-function makeRemoteAsset(string $id, string $status = 'ready', float $duration = 60.0, ?string $title = null): Asset
+function makeRemoteAsset(string $id, string $status = 'ready', float $duration = 60.0, ?string $title = null): MuxApiAsset
 {
-    $asset = Mockery::mock(Asset::class);
+    $asset = Mockery::mock(MuxApiAsset::class);
     $asset->shouldReceive('getId')->andReturn($id);
     $asset->shouldReceive('getStatus')->andReturn($status);
     $asset->shouldReceive('getDuration')->andReturn($duration);

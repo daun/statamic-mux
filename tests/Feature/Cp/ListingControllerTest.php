@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Queue;
 use MuxPhp\Api\AssetsApi;
 use MuxPhp\ApiException;
-use MuxPhp\Models\Asset;
+use MuxPhp\Models\Asset as MuxApiAsset;
 use MuxPhp\Models\PlaybackID;
 use Statamic\Exceptions\AuthorizationException;
 use Statamic\Facades\CP\Nav;
@@ -43,7 +43,7 @@ beforeEach(function () {
     Stache::clear();
 
     // Mock the MuxService to avoid real API calls
-    $remoteAsset = Mockery::mock(Asset::class);
+    $remoteAsset = Mockery::mock(MuxApiAsset::class);
     $remoteAsset->shouldReceive('getId')->andReturn('mux-asset-001');
     $remoteAsset->shouldReceive('getStatus')->andReturn('ready');
     $remoteAsset->shouldReceive('getDuration')->andReturn(120.0);

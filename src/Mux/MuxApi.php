@@ -18,7 +18,7 @@ use MuxPhp\Api\PlaybackIDApi;
 use MuxPhp\Api\URLSigningKeysApi;
 use MuxPhp\ApiException;
 use MuxPhp\Configuration;
-use MuxPhp\Models\Asset;
+use MuxPhp\Models\Asset as MuxApiAsset;
 use MuxPhp\Models\AssetStaticRenditions;
 use MuxPhp\Models\CreateAssetRequest;
 use MuxPhp\Models\CreatePlaybackIDRequest;
@@ -254,7 +254,7 @@ class MuxApi
     }
 
     /**
-     * @return Collection<Asset>
+     * @return Collection<MuxApiAsset>
      */
     public function listAssets(int $limit = 100, int $page = 1): Collection
     {
@@ -262,7 +262,7 @@ class MuxApi
     }
 
     /**
-     * @return Collection<Asset>
+     * @return Collection<MuxApiAsset>
      */
     public function listAllAssets(int $concurrency = 5): Collection
     {
@@ -320,7 +320,7 @@ class MuxApi
         return $assets;
     }
 
-    public function getAsset(string $muxId): ?Asset
+    public function getAsset(string $muxId): ?MuxApiAsset
     {
         try {
             $response = $this->assets()->getAsset($muxId)->getData();
@@ -345,7 +345,7 @@ class MuxApi
 
     /**
      * @param  Collection<int, string>|array<int, string>  $muxIds
-     * @return Collection<string, Asset>
+     * @return Collection<string, MuxApiAsset>
      */
     public function getAssets(Collection|array $muxIds, int $concurrency = 5): Collection
     {
@@ -430,7 +430,7 @@ class MuxApi
         try {
             $response = $this->assets()->getAsset($muxId)->getData();
             $status = $response?->getStatus();
-            $expected = Asset::STATUS_READY;
+            $expected = MuxApiAsset::STATUS_READY;
 
             Log::debug(
                 'Checking Mux asset status: '.($status === $expected ? 'ready' : 'not ready'),

@@ -11,7 +11,7 @@ use Daun\StatamicMux\Jobs\DeleteReplacedMuxAssetJob;
 use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
-use MuxPhp\Models\Asset as MuxApiAssetModel;
+use MuxPhp\Models\Asset as MuxApiAsset;
 use MuxPhp\Models\PlaybackID;
 use Statamic\Assets\Asset;
 
@@ -144,7 +144,7 @@ class CreateMuxAsset
     /**
      * Upload a video asset to Mux using a direct upload link.
      */
-    protected function uploadAssetToMux(Asset $asset): ?MuxApiAssetModel
+    protected function uploadAssetToMux(Asset $asset): ?MuxApiAsset
     {
         $data = $this->getAssetData($asset) + $this->getAssetSettings($asset);
         $request = $this->api->createUploadRequest($data);
@@ -178,7 +178,7 @@ class CreateMuxAsset
     /**
      * Upload a video asset to Mux using ingestion from a public url.
      */
-    protected function ingestAssetToMux(Asset $asset): ?MuxApiAssetModel
+    protected function ingestAssetToMux(Asset $asset): ?MuxApiAsset
     {
         $input = $this->api->input(['url' => $asset->absoluteUrl()]);
         $data = ['input' => $input] + $this->getAssetData($asset) + $this->getAssetSettings($asset);
@@ -195,7 +195,7 @@ class CreateMuxAsset
     /**
      * Get the playback id from a Mux asset data object.
      */
-    protected function getPlaybackId(MuxApiAssetModel $data): ?PlaybackID
+    protected function getPlaybackId(MuxApiAsset $data): ?PlaybackID
     {
         return collect($data->getPlaybackIds() ?? [])
             ->sort(fn ($id) => MuxPlaybackPolicy::make($id)?->isPublic() ? -1 : 0)

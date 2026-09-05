@@ -11,7 +11,7 @@ use MuxPhp\Api\DirectUploadsApi;
 use MuxPhp\Api\LiveStreamsApi;
 use MuxPhp\Api\PlaybackIDApi;
 use MuxPhp\Api\URLSigningKeysApi;
-use MuxPhp\Models\Asset;
+use MuxPhp\Models\Asset as MuxApiAsset;
 
 beforeEach(function () {
     $this->app->bind(MuxClient::class, fn () => $this->guzzler->getClient());
@@ -138,7 +138,7 @@ test('sends API request to create asset', function () {
 
     $this->guzzler->assertHistoryCount(1);
 
-    expect($muxAsset)->toBeInstanceOf(Asset::class);
+    expect($muxAsset)->toBeInstanceOf(MuxApiAsset::class);
     expect($muxAsset->getId())->toBe('SqQnqz6s5MBuXGvJaUWdXuXM93J9Q2yv');
 });
 
@@ -196,8 +196,8 @@ test('gets multiple assets concurrently', function () {
     $this->guzzler->assertHistoryCount(2);
 
     expect($assets)->toHaveKeys(['mux-asset-001', 'mux-asset-002']);
-    expect($assets->get('mux-asset-001'))->toBeInstanceOf(Asset::class);
-    expect($assets->get('mux-asset-002'))->toBeInstanceOf(Asset::class);
+    expect($assets->get('mux-asset-001'))->toBeInstanceOf(MuxApiAsset::class);
+    expect($assets->get('mux-asset-002'))->toBeInstanceOf(MuxApiAsset::class);
 });
 
 test('ignores missing assets when getting multiple assets', function () {
