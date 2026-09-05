@@ -69,7 +69,8 @@ it('retries for 24 hours with escalating release delays', function (int $attempt
     $job = (new CreateProxyVersionJob($asset))->setJob($fakeJob);
     $job->handle($action);
 
-    expect($job->retryUntil()->equalTo(now()->addDay()))->toBeTrue();
+    expect($job->retryUntil()->equalTo(now()->addDay()))->toBeTrue()
+        ->and($job->backoff())->toBe([1, 3, 5, 10, 20, 30, 60, 120, 300, 600, 1200, 1800, 3600, 10800]);
     $job->assertReleased($delay);
 })->with([
     'first attempt' => [1, 1],

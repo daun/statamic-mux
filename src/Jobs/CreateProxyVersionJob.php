@@ -31,6 +31,11 @@ class CreateProxyVersionJob implements ShouldQueue
         return now()->addDay();
     }
 
+    public function backoff(): array
+    {
+        return [1, 3, 5, 10, 20, 30, 60, 120, 300, 600, 1200, 1800, 3600, 10800];
+    }
+
     public function handle(CreateProxyVersion $action): void
     {
         try {
@@ -56,9 +61,9 @@ class CreateProxyVersionJob implements ShouldQueue
 
     private function getBackoffDelay(): int
     {
-        $backoffDelays = [1, 3, 5, 10, 20, 30, 60, 120, 300, 600, 1200, 1800, 3600, 10800];
+        $backoff = $this->backoff();
         $attempt = $this->attempts() - 1;
 
-        return $backoffDelays[$attempt] ?? end($backoffDelays);
+        return $backoff[$attempt] ?? end($backoff);
     }
 }
