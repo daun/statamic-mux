@@ -6,6 +6,7 @@ use Daun\StatamicMux\Events\AssetDeletingFromMux;
 use Daun\StatamicMux\Mux\Actions\DeleteMuxAsset;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxClient;
+use Daun\StatamicMux\Mux\RemoteAssetCache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use MuxPhp\ApiException;
@@ -269,6 +270,98 @@ it('treats a missing asset during final deletion as deleted', function () {
 
     expect($result)->toBeTrue();
     $this->guzzler->assertHistoryCount(2);
+});
+
+it('evicts the listing cache whenever the asset ends up absent from Mux', function (string $muxId, array $responses, int $historyCount) {
+    $cache = Mockery::mock(RemoteAssetCache::class);
+    $cache->shouldReceive('forget')->once()->with($muxId);
+    $this->app->instance(RemoteAssetCache::class, $cache);
+    $action = $this->app->make(DeleteMuxAsset::class);
+
+    foreach ($responses as $response) {
+        $expectation = $this->guzzler->expects($this->once());
+        $request = $response['method'] === 'get'
+            ? $expectation->get("https://api.mux.com/video/v1/assets/{$muxId}")
+            : $expectation->delete("https://api.mux.com/video/v1/assets/{$muxId}");
+
+        isset($response['json'])
+            ? $request->willRespondJson($response['json'])
+            : $request->willRespond(Http::response(status: $response['status']));
+    }
+
+    expect($action->handle($muxId))->toBeTrue();
+    $this->guzzler->assertHistoryCount($historyCount);
+})->with([
+    'deleted' => [
+        'EVICT-DELETED',
+        [
+            ['method' => 'get', 'json' => ['data' => ['status' => 'ready', 'id' => 'EVICT-DELETED', 'passthrough' => 'statamic::video.mp4']]],
+            ['method' => 'delete', 'status' => 204],
+        ],
+        2,
+    ],
+    'already absent' => [
+        'EVICT-ABSENT',
+        [['method' => 'get', 'status' => 404]],
+        1,
+    ],
+    'deleted concurrently' => [
+        'EVICT-RACED',
+        [
+            ['method' => 'get', 'json' => ['data' => ['status' => 'ready', 'id' => 'EVICT-RACED', 'passthrough' => 'statamic::video.mp4']]],
+            ['method' => 'delete', 'status' => 404],
+        ],
+        2,
+    ],
+]);
+
+it('keeps the listing cache for rejected and failed deletions', function (string $muxId, array $responses, bool $throws) {
+    $cache = Mockery::mock(RemoteAssetCache::class);
+    $cache->shouldNotReceive('forget');
+    $this->app->instance(RemoteAssetCache::class, $cache);
+    $action = $this->app->make(DeleteMuxAsset::class);
+
+    foreach ($responses as $response) {
+        $expectation = $this->guzzler->expects($this->once());
+        $request = $response['method'] === 'get'
+            ? $expectation->get("https://api.mux.com/video/v1/assets/{$muxId}")
+            : $expectation->delete("https://api.mux.com/video/v1/assets/{$muxId}");
+
+        isset($response['json'])
+            ? $request->willRespondJson($response['json'])
+            : $request->willRespond(Http::response(status: $response['status']));
+    }
+
+    $throws
+        ? expect(fn () => $action->handle($muxId))->toThrow(ApiException::class)
+        : expect($action->handle($muxId))->toBeFalse();
+})->with([
+    'not created by the addon' => [
+        'KEEP-FOREIGN',
+        [['method' => 'get', 'json' => ['data' => ['status' => 'ready', 'id' => 'KEEP-FOREIGN', 'passthrough' => 'example-passthrough']]]],
+        false,
+    ],
+    'deletion failed' => [
+        'KEEP-FAILED',
+        [
+            ['method' => 'get', 'json' => ['data' => ['status' => 'ready', 'id' => 'KEEP-FAILED', 'passthrough' => 'statamic::video.mp4']]],
+            ['method' => 'delete', 'status' => 503],
+        ],
+        true,
+    ],
+]);
+
+it('keeps the listing cache when a deletion is cancelled by a listener', function () {
+    Event::listen(AssetDeletingFromMux::class, fn () => false);
+    $cache = Mockery::mock(RemoteAssetCache::class);
+    $cache->shouldNotReceive('forget');
+    $this->app->instance(RemoteAssetCache::class, $cache);
+
+    $this->addMirrorFieldToAssetBlueprint();
+    MuxAsset::fromAsset($this->mp4)->withId('CANCELLED-ID')->save();
+
+    expect($this->app->make(DeleteMuxAsset::class)->handle($this->mp4))->toBeFalse();
+    $this->guzzler->assertHistoryCount(0);
 });
 
 it('preserves non-404 Mux API exceptions', function () {

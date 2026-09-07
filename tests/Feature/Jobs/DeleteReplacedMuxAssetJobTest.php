@@ -4,6 +4,7 @@ use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Jobs\DeleteReplacedMuxAssetJob;
 use Daun\StatamicMux\Mux\Actions\DeleteMuxAsset;
 use Daun\StatamicMux\Mux\MuxApi;
+use Daun\StatamicMux\Mux\RemoteAssetCache;
 use Illuminate\Queue\Jobs\FakeJob;
 use MuxPhp\ApiException;
 use MuxPhp\Models\Asset as MuxApiAsset;
@@ -74,6 +75,33 @@ it('deletes a ready predecessor using the fetched remote asset', function () {
     $this->action->shouldReceive('handle')->once()->with($remoteAsset)->andReturnTrue();
 
     (new DeleteReplacedMuxAssetJob('READY-ID'))->handle($this->action, $this->api);
+});
+
+// The deletion action evicts the cache itself, so only the branch that returns
+// before reaching it still needs to do so here.
+it('removes an already absent predecessor from the listing cache', function () {
+    $cache = Mockery::mock(RemoteAssetCache::class);
+
+    $this->api->shouldReceive('getAsset')->once()->with('MISSING-ID')->andReturnNull();
+    $this->action->shouldNotReceive('handle');
+    $cache->shouldReceive('forget')->once()->with('MISSING-ID');
+
+    (new DeleteReplacedMuxAssetJob('MISSING-ID'))->handle($this->action, $this->api, $cache);
+});
+
+it('leaves cache eviction of a deleted predecessor to the deletion action', function () {
+    $remoteAsset = new MuxApiAsset([
+        'id' => 'READY-ID',
+        'status' => MuxApiAsset::STATUS_READY,
+        'passthrough' => 'statamic::video.mp4',
+    ]);
+    $cache = Mockery::mock(RemoteAssetCache::class);
+
+    $this->api->shouldReceive('getAsset')->once()->with('READY-ID')->andReturn($remoteAsset);
+    $this->action->shouldReceive('handle')->once()->with($remoteAsset)->andReturnTrue();
+    $cache->shouldNotReceive('forget');
+
+    (new DeleteReplacedMuxAssetJob('READY-ID'))->handle($this->action, $this->api, $cache);
 });
 
 it('deletes an errored predecessor without releasing the job', function () {

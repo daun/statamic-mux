@@ -6,6 +6,7 @@ use DateTime;
 use Daun\StatamicMux\Concerns\DispatchesAsync;
 use Daun\StatamicMux\Mux\Actions\DeleteMuxAsset;
 use Daun\StatamicMux\Mux\MuxApi;
+use Daun\StatamicMux\Mux\RemoteAssetCache;
 use Daun\StatamicMux\Support\MirrorField;
 use Daun\StatamicMux\Support\Queue;
 use Illuminate\Bus\Queueable;
@@ -36,7 +37,7 @@ class DeleteReplacedMuxAssetJob implements ShouldQueue
         return [60, 180, 300, 600, 1200, 1800, 3600, 10800];
     }
 
-    public function handle(DeleteMuxAsset $action, MuxApi $api): void
+    public function handle(DeleteMuxAsset $action, MuxApi $api, ?RemoteAssetCache $cache = null): void
     {
         if (MirrorField::assetsByMuxId($this->muxId)->isNotEmpty()) {
             return;
@@ -44,7 +45,10 @@ class DeleteReplacedMuxAssetJob implements ShouldQueue
 
         $remoteAsset = $api->getAsset($this->muxId);
 
+        // The deletion action evicts the cache itself; this branch never reaches it.
         if (! $remoteAsset) {
+            $cache?->forget($this->muxId);
+
             return;
         }
 

@@ -24,6 +24,7 @@ class ServiceProvider extends AddonServiceProvider
         Commands\DebugCommand::class,
         Commands\MirrorCommand::class,
         Commands\PruneCommand::class,
+        Commands\RelinkCommand::class,
         Commands\UploadCommand::class,
     ];
 

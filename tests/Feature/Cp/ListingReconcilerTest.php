@@ -4,12 +4,15 @@ use Daun\StatamicMux\Data\MuxPlaybackId;
 use Daun\StatamicMux\Http\Controllers\Cp\ListingReconciler;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
+use Daun\StatamicMux\Mux\Reconciler;
+use Daun\StatamicMux\Mux\RemoteAssetCache;
 use Daun\StatamicMux\Thumbnails\ThumbnailService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use MuxPhp\Api\AssetsApi;
 use MuxPhp\ApiException;
 use MuxPhp\Models\Asset;
+use MuxPhp\Models\AssetMetadata;
 use MuxPhp\Models\PlaybackID;
 use Statamic\Facades\Stache;
 
@@ -77,7 +80,8 @@ beforeEach(function () {
     $this->app->instance(MuxService::class, $muxService);
     $this->app->instance('mux.service', $muxService);
 
-    $this->reconciler = new ListingReconciler($muxApi, $muxService, $thumbnails);
+    $this->cache = new RemoteAssetCache($muxApi);
+    $this->reconciler = new ListingReconciler($muxApi, $muxService, $thumbnails, $this->cache, $this->app->make(Reconciler::class));
 });
 
 function makeRemoteAsset(string $id, string $status = 'ready', float $duration = 60.0, ?string $title = null): Asset
@@ -92,14 +96,10 @@ function makeRemoteAsset(string $id, string $status = 'ready', float $duration =
     $asset->shouldReceive('getCreatedAt')->andReturn('1717200000');
     $asset->shouldReceive('getAspectRatio')->andReturn('16:9');
 
-    $meta = null;
-    if ($title) {
-        $meta = Mockery::mock();
-        $meta->shouldReceive('getTitle')->andReturn($title);
-    } else {
-        $meta = Mockery::mock();
-        $meta->shouldReceive('getTitle')->andReturn(null);
-    }
+    $meta = Mockery::mock(AssetMetadata::class);
+    $meta->shouldReceive('getTitle')->andReturn($title);
+    $meta->shouldReceive('getCreatorId')->andReturn(null);
+    $meta->shouldReceive('getExternalId')->andReturn(null);
     $asset->shouldReceive('getMeta')->andReturn($meta);
 
     $playbackId = Mockery::mock(PlaybackID::class);
@@ -227,13 +227,13 @@ test('builds remote rows with correct state badges', function () {
 
     // Mirrored: remote asset with exactly 1 local match
     $mirrored = $rows->firstWhere('mux_id', 'mux-asset-001');
-    expect($mirrored['match_status'])->toBe('mirrored');
+    expect($mirrored['match_status'])->toBe('linked');
     expect($mirrored['playback_id'])->toBe('playback-mux-asset-001');
     expect($mirrored['playback_ids'])->toBe([['id' => 'playback-mux-asset-001', 'policy' => 'public']]);
 
     // Orphaned: remote asset with 0 local matches
     $orphaned = $rows->firstWhere('mux_id', 'mux-asset-orphan');
-    expect($orphaned['match_status'])->toBe('orphaned');
+    expect($orphaned['match_status'])->toBe('foreign');
     expect($orphaned['title'])->toBe('Orphaned Video');
 });
 
@@ -248,7 +248,7 @@ test('detects duplicated remote references', function () {
     $rows = collect($result['data']);
 
     $duplicated = $rows->firstWhere('mux_id', 'mux-asset-001');
-    expect($duplicated['match_status'])->toBe('duplicated');
+    expect($duplicated['match_status'])->toBe('shared-reference');
     expect($duplicated['local_matches'])->toBe(2);
 });
 
@@ -270,7 +270,7 @@ test('remote title falls back to mux id', function () {
 test('caches remote assets for 10 minutes', function () {
     Cache::forget('mux.remote_assets');
 
-    $this->reconciler->getCachedRemoteAssets();
+    $this->cache->get();
     expect(Cache::has('mux.remote_assets'))->toBeTrue();
 
     $cached = Cache::get('mux.remote_assets');
@@ -280,7 +280,7 @@ test('caches remote assets for 10 minutes', function () {
 test('refresh bypasses and replaces cache', function () {
     Cache::put('mux.remote_assets', collect(['stale-data']), 600);
 
-    $result = $this->reconciler->refreshRemoteAssets();
+    $result = $this->cache->refresh();
     expect($result)->toHaveCount(3);
     expect(Cache::get('mux.remote_assets'))->toHaveCount(3);
 });
@@ -327,10 +327,10 @@ test('filters remote by match status', function () {
     Cache::forget('mux.remote_assets');
 
     $result = $this->reconciler->getRemoteVideos([
-        'filters' => [['field' => 'match_status', 'value' => 'orphaned']],
+        'filters' => [['field' => 'match_status', 'value' => 'foreign']],
     ]);
     expect($result['meta']['total'])->toBe(1);
-    expect($result['data'][0]['match_status'])->toBe('orphaned');
+    expect($result['data'][0]['match_status'])->toBe('foreign');
 });
 
 test('filters remote by processing status', function () {

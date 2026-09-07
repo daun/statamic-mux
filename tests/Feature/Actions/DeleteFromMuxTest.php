@@ -3,7 +3,6 @@
 use Daun\StatamicMux\Actions\DeleteFromMux;
 use Daun\StatamicMux\Data\Actions\MuxLibraryItem;
 use Daun\StatamicMux\Data\MuxAsset;
-use Daun\StatamicMux\Http\Controllers\Cp\ListingReconciler;
 use Daun\StatamicMux\Mux\MuxService;
 use Statamic\Facades\Stache;
 use Statamic\Facades\User;
@@ -52,10 +51,6 @@ test('run deletes the mux asset and returns a poll callback', function () {
     $service->shouldReceive('deleteMuxAsset')->once()->andReturnTrue();
     $this->app->instance(MuxService::class, $service);
 
-    $reconciler = Mockery::mock(ListingReconciler::class);
-    $reconciler->shouldReceive('forgetRemoteAsset')->once()->with('mux-asset-001');
-    $this->app->instance(ListingReconciler::class, $reconciler);
-
     $result = (new DeleteFromMux)->run(collect([MuxAsset::fromAsset($this->mp4)]), []);
 
     expect($result)->toBeArray()
@@ -66,10 +61,6 @@ test('run throws when the only asset cannot be deleted', function () {
     $service = Mockery::mock(MuxService::class);
     $service->shouldReceive('deleteMuxAsset')->once()->andReturnFalse();
     $this->app->instance(MuxService::class, $service);
-
-    $reconciler = Mockery::mock(ListingReconciler::class);
-    $reconciler->shouldReceive('forgetRemoteAsset')->never();
-    $this->app->instance(ListingReconciler::class, $reconciler);
 
     expect(fn () => (new DeleteFromMux)->run(collect([MuxAsset::fromAsset($this->mp4)]), []))
         ->toThrow(Exception::class);

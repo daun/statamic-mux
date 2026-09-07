@@ -6,6 +6,7 @@ use Daun\StatamicMux\Mux\Enums\MuxPlaybackPolicy;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxClient;
 use Illuminate\Support\Facades\Http;
+use Statamic\Facades\Asset;
 use Statamic\Facades\Stache;
 
 beforeEach(function () {
@@ -121,6 +122,83 @@ it('creates a new playback id when no existing one matches the requested policy'
     expect($result->id())->toBe('newlyCreatedPublicPlaybackId');
     expect($result->isPublic())->toBeTrue();
     $this->guzzler->assertHistoryCount(2);
+});
+
+it('resolves an existing playback id directly for a mux id', function () {
+    $this->guzzler->expects($this->once())
+        ->get("https://api.mux.com/video/v1/assets/{$this->muxId}")
+        ->willRespondJson([
+            'data' => [
+                'id' => $this->muxId,
+                'status' => 'ready',
+                'playback_ids' => [
+                    ['policy' => 'signed', 'id' => 'existingSignedPlaybackId'],
+                    ['policy' => 'public', 'id' => 'existingPublicPlaybackId'],
+                ],
+            ],
+        ]);
+
+    $result = $this->action->request($this->muxId, MuxPlaybackPolicy::Signed);
+
+    expect($result->id())->toBe('existingSignedPlaybackId');
+    expect($result->isSigned())->toBeTrue();
+    $this->guzzler->assertHistoryCount(1);
+});
+
+it('creates a playback id directly for a mux id', function () {
+    $this->guzzler->expects($this->once())
+        ->get("https://api.mux.com/video/v1/assets/{$this->muxId}")
+        ->willRespondJson([
+            'data' => ['id' => $this->muxId, 'status' => 'ready', 'playback_ids' => []],
+        ]);
+
+    $this->guzzler->expects($this->once())
+        ->post("https://api.mux.com/video/v1/assets/{$this->muxId}/playback-ids")
+        ->withJson(['policy' => 'public'])
+        ->willRespondJson([
+            'data' => ['policy' => 'public', 'id' => 'newlyCreatedPlaybackId'],
+        ]);
+
+    $result = $this->action->request($this->muxId, MuxPlaybackPolicy::Public);
+
+    expect($result->id())->toBe('newlyCreatedPlaybackId');
+    expect($result->isPublic())->toBeTrue();
+    $this->guzzler->assertHistoryCount(2);
+});
+
+it('does not touch any local asset when resolving a playback id directly', function () {
+    $this->mp4->set('mux', ['id' => $this->muxId])->save();
+
+    $this->guzzler->expects($this->once())
+        ->get("https://api.mux.com/video/v1/assets/{$this->muxId}")
+        ->willRespondJson([
+            'data' => [
+                'id' => $this->muxId,
+                'status' => 'ready',
+                'playback_ids' => [
+                    ['policy' => 'public', 'id' => 'existingPublicPlaybackId'],
+                ],
+            ],
+        ]);
+
+    $this->action->request($this->muxId, MuxPlaybackPolicy::Public);
+
+    expect(Asset::find($this->mp4->id())->get('mux'))->toBe(['id' => $this->muxId]);
+});
+
+it('rethrows a wrapped exception when resolving a playback id directly fails', function () {
+    $this->guzzler->expects($this->once())
+        ->get("https://api.mux.com/video/v1/assets/{$this->muxId}")
+        ->willRespondJson([
+            'data' => ['id' => $this->muxId, 'status' => 'ready', 'playback_ids' => []],
+        ]);
+
+    $this->guzzler->expects($this->once())
+        ->post("https://api.mux.com/video/v1/assets/{$this->muxId}/playback-ids")
+        ->willRespond(Http::response('server error', 500));
+
+    expect(fn () => $this->action->request($this->muxId, MuxPlaybackPolicy::Public))
+        ->toThrow(Exception::class, 'Error generating playback id for Mux asset');
 });
 
 it('rethrows a wrapped exception when creating a playback id fails', function () {

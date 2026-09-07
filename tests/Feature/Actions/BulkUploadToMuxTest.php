@@ -2,8 +2,8 @@
 
 use Daun\StatamicMux\Actions\BulkUploadToMux;
 use Daun\StatamicMux\Data\MuxAsset;
-use Daun\StatamicMux\Http\Controllers\Cp\ListingReconciler;
 use Daun\StatamicMux\Jobs\CreateMuxAssetJob;
+use Daun\StatamicMux\Mux\RemoteAssetCache;
 use Illuminate\Support\Facades\Queue;
 use Statamic\Facades\Stache;
 use Statamic\Facades\User;
@@ -33,9 +33,9 @@ function fakeCachedRemoteAssets(array $ids): void
         return $remote;
     });
 
-    $reconciler = Mockery::mock(ListingReconciler::class);
-    $reconciler->shouldReceive('getCachedRemoteAssetsIfAvailable')->andReturn($remotes);
-    app()->instance(ListingReconciler::class, $reconciler);
+    $reconciler = Mockery::mock(RemoteAssetCache::class);
+    $reconciler->shouldReceive('getIfAvailable')->andReturn($remotes);
+    app()->instance(RemoteAssetCache::class, $reconciler);
 }
 
 test('authorize requires manage mux permission', function () {

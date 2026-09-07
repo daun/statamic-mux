@@ -1,5 +1,11 @@
 <?php
 
+use Daun\StatamicMux\Mux\Enums\ReconciliationState;
+use Daun\StatamicMux\Mux\Reconciliation\LocalAssetRecord;
+use Daun\StatamicMux\Mux\Reconciliation\ReconciliationPlan;
+use Daun\StatamicMux\Mux\Reconciliation\RemoteAssetRecord;
+use Daun\StatamicMux\Mux\RemoteVideo;
+use MuxPhp\Models\Asset;
 use Statamic\Facades\Role;
 use Statamic\Facades\User;
 use Tests\TestCase;
@@ -92,4 +98,68 @@ if (! function_exists('join_paths')) {
 
         return $basePath.implode('', $paths);
     }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Reconciliation factories
+|--------------------------------------------------------------------------
+|
+| Command tests drive a stubbed plan rather than a live Mux account. These
+| keep the record shape in one place so a signature change lands once.
+|
+*/
+
+function muxRemoteVideo(string $id, array $attributes = []): RemoteVideo
+{
+    return RemoteVideo::make(new Asset([
+        'id' => $id,
+        'status' => 'ready',
+        'created_at' => (string) now()->timestamp,
+        ...$attributes,
+    ]));
+}
+
+function muxRemoteRecord(
+    string|RemoteVideo $video,
+    ReconciliationState $state,
+    ?Statamic\Assets\Asset $asset = null,
+    array $attributes = [],
+): RemoteAssetRecord {
+    return new RemoteAssetRecord(
+        remote: is_string($video) ? muxRemoteVideo($video) : $video,
+        state: $state,
+        asset: $asset,
+        attributedAssetId: $attributes['attributedAssetId'] ?? $asset?->id(),
+        reason: $attributes['reason'] ?? null,
+        container: $attributes['container'] ?? $asset?->containerHandle(),
+        references: $attributes['references'] ?? collect(),
+    );
+}
+
+function muxLocalRecord(
+    Statamic\Assets\Asset $asset,
+    ReconciliationState $state,
+    array $attributes = [],
+): LocalAssetRecord {
+    $selected = $attributes['selected'] ?? null;
+
+    return new LocalAssetRecord(
+        asset: $asset,
+        state: $state,
+        muxId: $attributes['muxId'] ?? null,
+        selected: $selected,
+        candidates: $attributes['candidates'] ?? ($selected ? collect([$selected]) : collect()),
+        reason: $attributes['reason'] ?? null,
+        proxySource: $attributes['proxySource'] ?? $state === ReconciliationState::ProxySource,
+    );
+}
+
+function muxPlan(array $locals = [], array $remotes = [], ?string $container = null): ReconciliationPlan
+{
+    return new ReconciliationPlan(
+        collect($locals),
+        collect($remotes),
+        $container,
+    );
 }

@@ -20,4 +20,13 @@ trait HasCommandOutputStyles
         $this->output->getFormatter()->setStyle('failure', new OutputFormatterStyle('red', options: ['bold']));
         $this->output->getFormatter()->setStyle('name', new OutputFormatterStyle('blue'));
     }
+
+    protected function shortMuxId(?string $muxId): string
+    {
+        if (! $muxId) {
+            return 'unknown';
+        }
+
+        return strlen($muxId) <= 16 ? $muxId : substr($muxId, 0, 12).'…';
+    }
 }
