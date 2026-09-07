@@ -56,7 +56,7 @@ export default {
     mixins: [Fieldtype],
     data() {
         return {
-            isInfoExpanded: false,
+            isInfoExpanded: !!this.config?.expand_details,
             itemCopied: null,
             itemCopiedTimeout: null,
         }

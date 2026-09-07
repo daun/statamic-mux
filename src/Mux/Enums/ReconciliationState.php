@@ -27,9 +27,7 @@ enum ReconciliationState: string
     case ExpiredProxy = 'expired-proxy';
     case OrphanedProxy = 'orphaned-proxy';
 
-    /**
-     * Remote states whose encoding is no longer needed by any local file.
-     */
+    /** Remote states whose encoding is no longer needed by any local file. */
     public function isPrunable(): bool
     {
         return in_array($this, [
@@ -44,18 +42,12 @@ enum ReconciliationState: string
         ], true);
     }
 
-    /**
-     * Remote states where deleting would destroy the only encoding of a live file.
-     */
+    /** Remote states where deleting would destroy the only encoding of a live file. */
     public function isDestructiveToPrune(): bool
     {
         return in_array($this, [self::Unlinked, self::ProxySource], true);
     }
 
-    /**
-     * The plain-language bucket shown in the control panel filter. The precise
-     * state stays on the row; this is what an editor can act on.
-     */
     public function group(): string
     {
         return match ($this) {
@@ -72,8 +64,6 @@ enum ReconciliationState: string
     }
 
     /**
-     * Group filter options for the control panel listing.
-     *
      * @return array<string, string>
      */
     public static function groupOptions(): array

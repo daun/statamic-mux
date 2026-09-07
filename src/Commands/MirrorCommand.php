@@ -65,8 +65,7 @@ class MirrorCommand extends Command
                 : $this->error("Failed to upload {$outcome['record']->path()}: {$outcome['error']}");
         }
 
-        // Pruning an encoding a file still needs is unrecoverable, so a failed
-        // re-link stops the whole prune rather than just its own asset.
+        // Pruning an encoding a file still needs is unrecoverable, so a failed re-link aborts the prune.
         if ($this->failures($relinked)->isNotEmpty()) {
             $this->error('Prune aborted because one or more local assets could not be re-linked.');
 
@@ -93,14 +92,8 @@ class MirrorCommand extends Command
     }
 
     /**
-     * Mirror reconciles in the order relink → upload → prune, so an existing
-     * encoding is reused before upload would recreate it and before prune would
-     * delete it as an orphan.
-     *
-     * --force skips ordinary re-linking and uploads replacements instead, but
-     * still repairs placeholder sources (uploading a placeholder clip would
-     * overwrite the full master on Mux) and keeps the old encodings until the
-     * replacements land.
+     * Force skips re-linking, but still repairs placeholder sources: uploading a
+     * placeholder clip would overwrite the full master on Mux.
      *
      * @return array{0: Collection, 1: Collection, 2: Collection}
      */

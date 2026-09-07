@@ -14,17 +14,7 @@ use Illuminate\Support\Str;
 use Statamic\Assets\Asset;
 use Statamic\Facades\Asset as Assets;
 
-/**
- * Classifies local Statamic assets against remote Mux assets.
- *
- * Runs in three passes so no record is ever mutated after construction:
- *   1. attribute each remote asset and give it a provisional state
- *   2. validate the media of every candidate encoding against its local file
- *   3. build the remote records, then classify the local assets against them
- *
- * Media validation is the only thing that crosses from local to remote, and it
- * cannot run in pass 1 because it needs the local file's duration and aspect.
- */
+/** Classifies local Statamic assets against remote Mux assets. */
 class Reconciler
 {
     public const PROXY_GRACE_PERIOD_HOURS = 24;
@@ -37,9 +27,6 @@ class Reconciler
         protected RemoteAssetCache $cache,
     ) {}
 
-    /**
-     * Fetch both sides completely before returning an actionable plan.
-     */
     public function plan(?string $container = null): ReconciliationPlan
     {
         try {
@@ -53,12 +40,6 @@ class Reconciler
         return $this->fromRemoteAssets($remoteAssets, $container);
     }
 
-    /**
-     * Build a plan from an already-fetched remote list.
-     *
-     * Always classifies from scratch: local metadata and the remote snapshot can
-     * both change between calls, and callers reuse the plan they receive.
-     */
     public function fromRemoteAssets(Collection $remoteAssets, ?string $container = null): ReconciliationPlan
     {
         $videos = $remoteAssets->values()->map(fn ($remote) => RemoteVideo::make($remote));
@@ -71,15 +52,11 @@ class Reconciler
             ->groupBy('mux_id')
             ->map(fn (Collection $items) => $items->pluck('asset')->values());
 
-        // Pass 1: attribution and provisional state.
         $attributed = $videos->map(fn (RemoteVideo $video) => $this->classifyRemote($video, $videosById, $references));
         $byAssetId = $attributed->filter(fn (array $it) => filled($it['asset_id']))->groupBy('asset_id');
 
-        // Pass 2: media validation, the only refinement local data contributes.
         $refinements = $this->validateCandidates($assets, $byAssetId);
 
-        // Pass 3a: final remote records, shared by the remote listing and the
-        // local records that select them as candidates.
         $remoteRecords = $attributed->map(function (array $it) use ($refinements) {
             $refined = $refinements->get($it['video']->id());
 
@@ -96,7 +73,6 @@ class Reconciler
 
         $recordsById = $remoteRecords->keyBy->id();
 
-        // Pass 3b: local classification against the finalized remote records.
         $localRecords = $assets->map(function (Asset $asset) use ($videosById, $byAssetId, $recordsById) {
             $attributedRecords = collect($byAssetId->get($asset->id(), []))
                 ->map(fn (array $it) => $recordsById->get($it['video']->id()))
@@ -110,13 +86,9 @@ class Reconciler
     }
 
     /**
-     * Refine the state of every attributable encoding by comparing its media to
-     * the local file it claims. Only unlinked local files can be re-linked, so
-     * only their candidates are validated.
-     *
      * @param  Collection<int, Asset>  $assets
-     * @param  Collection<int|string, mixed>  $byAssetId  pass 1 results grouped by attributed asset ID
-     * @return Collection<string, array{state: ReconciliationState, reason: ?string}> keyed by Mux ID
+     * @param  Collection<int|string, mixed>  $byAssetId
+     * @return Collection<string, array{state: ReconciliationState, reason: ?string}>
      */
     protected function validateCandidates(Collection $assets, Collection $byAssetId): Collection
     {
@@ -149,8 +121,6 @@ class Reconciler
     }
 
     /**
-     * Attribute a remote asset and give it a provisional state.
-     *
      * @return array{video: RemoteVideo, state: ReconciliationState, asset: ?Asset, asset_id: ?string, reason: ?string, container: ?string, references: Collection}
      */
     protected function classifyRemote(RemoteVideo $video, Collection $videosById, Collection $allReferences): array
@@ -231,9 +201,7 @@ class Reconciler
     }
 
     /**
-     * Classify a local asset against the finalized remote records attributed to it.
-     *
-     * @param  Collection<int, RemoteAssetRecord>  $attributed  remote records attributed to this asset
+     * @param  Collection<int, RemoteAssetRecord>  $attributed
      */
     protected function classifyLocal(Asset $asset, Collection $videosById, Collection $attributed): LocalAssetRecord
     {
@@ -308,7 +276,7 @@ class Reconciler
     }
 
     /**
-     * @param  Collection<int, RemoteAssetRecord>  $attributed  remote records attributed to this asset
+     * @param  Collection<int, RemoteAssetRecord>  $attributed
      */
     protected function classifyLinkedLocal(Asset $asset, string $muxId, Collection $videosById, Collection $attributed): LocalAssetRecord
     {
@@ -410,8 +378,7 @@ class Reconciler
         $aspectMatches = $localAspect === null || $remoteAspect === null
             || abs($localAspect - $remoteAspect) / max($localAspect, $remoteAspect) <= self::ASPECT_TOLERANCE;
 
-        // The local file may be the short placeholder clip that replaced the
-        // master after upload. That is a match, not a mismatch.
+        // A local file that is the short placeholder clip of the master is a match, not a mismatch.
         $proxyLength = (float) config('mux.storage.placeholder_length', 10);
         $isProxySource = $localDuration !== null && $remoteDuration !== null
             && abs($localDuration - $proxyLength) <= $this->durationTolerance($proxyLength)
@@ -439,10 +406,7 @@ class Reconciler
         return min(2.0, max(1.0, $duration / 1800));
     }
 
-    /**
-     * A proxy with no creation timestamp is treated as in flight, so an
-     * incomplete upload is never pruned out from under itself.
-     */
+    /** Missing creation timestamp counts as in flight, so incomplete uploads are never pruned. */
     protected function proxyIsInFlight(RemoteVideo $video): bool
     {
         $createdAt = $video->createdAt();

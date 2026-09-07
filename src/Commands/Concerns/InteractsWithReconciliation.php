@@ -13,15 +13,10 @@ use Illuminate\Support\Collection;
 use Statamic\Facades\AssetContainer;
 
 /**
- * Shared plan loading and reporting for the reconciliation commands. Execution
- * loops live in {@see ReconciliationRunner}, interactive decisions and
- * command-specific report sections in the commands themselves.
+ * Shared plan loading and reporting for the reconciliation commands.
  */
 trait InteractsWithReconciliation
 {
-    /**
-     * Check the command's preconditions and fetch a plan, or report why not.
-     */
     protected function buildPlan(Reconciler $reconciler, ?string $container = null): ?ReconciliationPlan
     {
         if (! MirrorField::configured()) {
@@ -58,12 +53,6 @@ trait InteractsWithReconciliation
         }
     }
 
-    /**
-     * Outcomes worth a line of output: a skipped record was never attempted.
-     *
-     * @param  Collection<int, mixed>  $outcomes
-     * @return Collection<int, mixed>
-     */
     protected function reportable(Collection $outcomes): Collection
     {
         return $outcomes->where('status', '!==', ReconciliationRunner::SKIPPED)->values();
@@ -74,39 +63,21 @@ trait InteractsWithReconciliation
         return $outcome['status'] === ReconciliationRunner::SUCCESS;
     }
 
-    /**
-     * @param  Collection<int, mixed>  $outcomes
-     * @return Collection<int, mixed>
-     */
     protected function succeeded(Collection $outcomes): Collection
     {
         return $outcomes->where('status', ReconciliationRunner::SUCCESS)->values();
     }
 
-    /**
-     * @param  Collection<int, mixed>  $outcomes
-     * @return Collection<int, mixed>
-     */
     protected function failures(Collection $outcomes): Collection
     {
         return $outcomes->where('status', ReconciliationRunner::FAILURE)->values();
     }
 
-    /**
-     * Mux IDs touched successfully, for downstream steps to skip.
-     *
-     * @param  Collection<int, mixed>  $outcomes
-     * @return Collection<int, mixed>
-     */
     protected function succeededMuxIds(Collection $outcomes): Collection
     {
         return $this->succeeded($outcomes)->pluck('mux_id')->filter()->values();
     }
 
-    /**
-     * Warnings that apply to any command reading a plan: files pointing at an
-     * encoding that never became ready, and encodings claimed by several files.
-     */
     protected function renderDiagnostics(ReconciliationPlan $plan): void
     {
         $nonReady = $plan->local(ReconciliationState::NonReadyLinked);
@@ -133,9 +104,6 @@ trait InteractsWithReconciliation
         }
     }
 
-    /**
-     * Loud warning for orphans that are the only encoding of a file still in use.
-     */
     protected function renderDestructiveWarning(Collection $destructive, string $verb): void
     {
         if ($destructive->isEmpty()) {
@@ -163,8 +131,6 @@ trait InteractsWithReconciliation
     }
 
     /**
-     * One line per non-empty state, using the given label map.
-     *
      * @param  array<string, string>  $labels  state value => description
      */
     protected function renderStateCounts(Collection $records, array $labels): void

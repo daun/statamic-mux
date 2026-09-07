@@ -9,12 +9,7 @@ use Daun\StatamicMux\Support\Queue;
 use Illuminate\Support\Collection;
 
 /**
- * Executes the three reconciliation steps. Commands decide which steps to run
- * and how to report them; the loops, the sync-vs-queue split and the failure
- * bookkeeping live here so mirror, relink, upload and prune share one path.
- *
- * Each step returns one outcome per record. A queued outcome means the job was
- * dispatched, never that Mux finished it.
+ * A queued outcome means the job was dispatched, never that Mux finished it.
  *
  * @phpstan-type Outcome array{action: string, status: string, record: LocalAssetRecord|RemoteAssetRecord, mux_id: ?string, error: ?string, reupload?: bool, queued?: bool}
  */
@@ -31,8 +26,6 @@ class ReconciliationRunner
     ) {}
 
     /**
-     * Point local assets at existing Mux encodings.
-     *
      * @param  iterable<LocalAssetRecord>  $records
      * @return Collection<int, Outcome>
      */
@@ -72,8 +65,6 @@ class ReconciliationRunner
     }
 
     /**
-     * Upload local assets to Mux, clearing stale IDs first.
-     *
      * @param  iterable<LocalAssetRecord>  $records
      * @return Collection<int, Outcome>
      */
@@ -117,8 +108,6 @@ class ReconciliationRunner
     }
 
     /**
-     * Delete remote encodings no local file needs.
-     *
      * @param  iterable<RemoteAssetRecord>  $records
      * @return Collection<int, Outcome>
      */

@@ -19,10 +19,7 @@ class RelinkToAsset extends Action
         return __('Re-link to local asset');
     }
 
-    /**
-     * Advisory only: eligibility is derived once per batch when the items are
-     * built, and re-validated against a fresh plan before running.
-     */
+    /** Advisory only: eligibility is re-validated against a fresh plan in run(). */
     public function visibleTo($item)
     {
         return $item instanceof MuxLibraryItem && $item->isRelinkable();

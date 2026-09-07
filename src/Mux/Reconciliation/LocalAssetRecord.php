@@ -6,12 +6,7 @@ use Daun\StatamicMux\Mux\Enums\ReconciliationState;
 use Illuminate\Support\Collection;
 use Statamic\Assets\Asset;
 
-/**
- * A local Statamic asset with its reconciliation state and re-link candidates.
- *
- * Candidates are the finalized remote records attributed to this asset, so a
- * candidate and its remote listing row always report the same state.
- */
+/** A local Statamic asset with its reconciliation state and re-link candidates. */
 readonly class LocalAssetRecord
 {
     public function __construct(
@@ -24,9 +19,6 @@ readonly class LocalAssetRecord
         public bool $proxySource = false,
     ) {}
 
-    /**
-     * Candidates that were evaluated but not selected.
-     */
     public function alternatives(): Collection
     {
         return $this->candidates

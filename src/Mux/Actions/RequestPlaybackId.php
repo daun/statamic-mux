@@ -18,9 +18,6 @@ class RequestPlaybackId
         protected MuxService $service,
     ) {}
 
-    /**
-     * Request a playback id for a video asset and store it on the asset.
-     */
     public function handle(Asset $asset, ?MuxPlaybackPolicy $policy = null): ?MuxPlaybackId
     {
         if (! $this->shouldHandle($asset)) {

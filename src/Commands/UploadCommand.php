@@ -96,10 +96,6 @@ class UploadCommand extends Command
         return self::SUCCESS;
     }
 
-    /**
-     * Uploading an asset that already has an attributable encoding on Mux creates
-     * a duplicate. Standalone upload keeps that behaviour, but says so.
-     */
     protected function warnAboutReplacements($uploads): void
     {
         $candidates = $uploads->filter(

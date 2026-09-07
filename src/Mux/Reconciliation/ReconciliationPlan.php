@@ -13,9 +13,6 @@ readonly class ReconciliationPlan
         public ?string $container = null,
     ) {}
 
-    /**
-     * Local records in any of the given states, within the plan's container scope.
-     */
     public function local(ReconciliationState ...$states): Collection
     {
         return $this->scopedLocals()
@@ -23,9 +20,6 @@ readonly class ReconciliationPlan
             ->values();
     }
 
-    /**
-     * Remote records in any of the given states, within the plan's container scope.
-     */
     public function remote(ReconciliationState ...$states): Collection
     {
         return $this->scopedRemotes()
@@ -62,9 +56,7 @@ readonly class ReconciliationPlan
         return $this->scopedRemotes()->filter->isPrunable()->values();
     }
 
-    /**
-     * Prunable remotes whose deletion would destroy the only encoding of a live file.
-     */
+    /** Prunable remotes whose deletion would destroy the only encoding of a live file. */
     public function destructive(): Collection
     {
         return $this->prunable()
@@ -72,9 +64,7 @@ readonly class ReconciliationPlan
             ->values();
     }
 
-    /**
-     * Remotes that could not be attributed to a container, so --container can't judge them.
-     */
+    /** Remotes with no resolvable container, which --container cannot judge. */
     public function unscopable(): Collection
     {
         if (! $this->container) {

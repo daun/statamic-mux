@@ -6,10 +6,7 @@ use Daun\StatamicMux\Support\Attribution;
 use Illuminate\Support\Carbon;
 use MuxPhp\Models\Asset;
 
-/**
- * Thin adapter over a Mux SDK asset (the authoritative remote data), exposing
- * its awkward getters as normalized values.
- */
+/** Thin adapter normalizing the Mux SDK asset getters. */
 class RemoteVideo
 {
     public function __construct(
@@ -100,9 +97,7 @@ class RemoteVideo
         return Attribution::proxyParentId($this->passthrough());
     }
 
-    /**
-     * Display aspect ratio as a single number. The SDK reports it as "16:9".
-     */
+    /** The SDK reports the aspect ratio as a string like "16:9". */
     public function aspectRatio(): ?float
     {
         $value = $this->asset->getAspectRatio();
@@ -120,9 +115,6 @@ class RemoteVideo
         return null;
     }
 
-    /**
-     * Raw aspect ratio string, for display.
-     */
     public function aspectRatioLabel(): ?string
     {
         return $this->asset->getAspectRatio();
@@ -130,9 +122,7 @@ class RemoteVideo
 
     public function playbackIds(): array
     {
-        // An errored asset never produced a usable playback, so we expose none.
-        // This removes its public playback URLs, thumbnail and player/embed
-        // actions everywhere the row is rendered.
+        // Errored assets have no usable playback, so hide URLs, thumbnails and player actions.
         if ($this->status() === Asset::STATUS_ERRORED) {
             return [];
         }
@@ -152,9 +142,7 @@ class RemoteVideo
         return $value !== null ? (string) $value : null;
     }
 
-    /**
-     * The SDK may hand us a policy as a backed enum, a value object, or a string.
-     */
+    /** The SDK may return the policy as a backed enum, a value object, or a string. */
     protected static function normalizePolicy(mixed $policy): ?string
     {
         if ($policy === null) {

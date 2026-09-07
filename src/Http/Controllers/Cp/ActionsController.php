@@ -63,9 +63,6 @@ class ActionsController extends ActionController
     }
 
     /**
-     * Classify the cached snapshot once for the whole batch. A cold cache stays
-     * conservative rather than triggering a full remote walk for visibility.
-     *
      * @return Collection<int, mixed>
      */
     protected function relinkableMuxIds(Collection $cached): Collection

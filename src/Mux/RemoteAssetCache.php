@@ -5,13 +5,7 @@ namespace Daun\StatamicMux\Mux;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
-/**
- * Caches the full list of remote Mux assets.
- *
- * The list is stored forever and a separate short-lived validity key decides
- * when to refetch, so a cold validity key still serves stale data rather than
- * blocking a request on a full paginated API walk.
- */
+/** Stored forever with a separate short-lived validity key, so a cold cache serves stale data instead of blocking on a full paginated API walk. */
 class RemoteAssetCache
 {
     protected const CACHE_KEY = 'mux.remote_assets';
@@ -24,9 +18,6 @@ class RemoteAssetCache
         protected MuxApi $api,
     ) {}
 
-    /**
-     * Get remote Mux assets, fetching from the API if stale.
-     */
     public function get(): Collection
     {
         if (! Cache::has(self::CACHE_VALIDITY_KEY)) {
@@ -36,18 +27,11 @@ class RemoteAssetCache
         return Cache::get(self::CACHE_KEY) ?? $this->fetchAll();
     }
 
-    /**
-     * Get cached remote assets without triggering a fetch.
-     * Returns whatever is cached, even if stale, or an empty collection.
-     */
     public function getIfAvailable(): Collection
     {
         return Cache::get(self::CACHE_KEY) ?? collect();
     }
 
-    /**
-     * Seed the cache from a complete, freshly fetched list.
-     */
     public function seed(Collection $assets): Collection
     {
         $assets = $assets->values();
@@ -58,9 +42,6 @@ class RemoteAssetCache
         return $assets;
     }
 
-    /**
-     * Refresh the cache from the API and return the fresh list.
-     */
     public function refresh(): Collection
     {
         $this->invalidate();
@@ -68,17 +49,11 @@ class RemoteAssetCache
         return $this->get();
     }
 
-    /**
-     * Mark the cache stale without refetching. The next get() fetches fresh data.
-     */
     public function invalidate(): void
     {
         Cache::forget(self::CACHE_VALIDITY_KEY);
     }
 
-    /**
-     * Drop a single asset from the cached list by Mux ID.
-     */
     public function forget(string $muxId): void
     {
         $cached = Cache::get(self::CACHE_KEY);
@@ -94,10 +69,6 @@ class RemoteAssetCache
         }
     }
 
-    /**
-     * Look up individual Mux assets by ID, keyed by Mux ID.
-     * Only calls the API for IDs missing from the cached list.
-     */
     public function only(Collection $muxIds): Collection
     {
         if ($muxIds->isEmpty()) {
@@ -120,9 +91,7 @@ class RemoteAssetCache
         return $index;
     }
 
-    /**
-     * Fetches every page with no cap. May time out for very large Mux accounts.
-     */
+    // Fetches every page with no cap: may time out for very large Mux accounts.
     protected function fetchAll(): Collection
     {
         return $this->api->listAllAssets();
