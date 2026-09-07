@@ -110,3 +110,14 @@ class LogVideoDeletion
     }
 }
 ```
+
+## `AssetRelinkedToMux`
+
+**Dispatched after a local video has been reconnected to a video that already exists on Mux.**
+
+| Argument | Type | Description |
+| -------- | ---- | ----------- |
+| **`$event->asset`** | `Asset` | local video asset |
+| **`$event->muxId`** | `string` | id of the existing Mux video |
+
+Nothing is uploaded when this happens, so `AssetUploadedToMux` listeners do not run.
