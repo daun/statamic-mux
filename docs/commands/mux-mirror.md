@@ -1,16 +1,26 @@
 # `mux:mirror` <Badge type="info">Artisan Command</Badge>
 
-**Upload local videos to Mux, and remove orphaned Mux videos.**
+**Bring Mux in sync with your local videos.**
 
-Runs `mux:upload` and `mux:prune` in sequence.
+Mirror reads local and remote state once, prints a plan, then does three things in order:
+
+1. **Relink** local videos to videos that already exist on Mux
+2. **Upload** local videos that are not on Mux yet
+3. **Prune** videos on Mux that nothing uses anymore
 
 ```sh
-# Sync local assets to Mux
+# Relink, upload, then prune
 php artisan mux:mirror
 
-# Sync local assets to Mux, reupload existing videos
-php artisan mux:mirror --force
-
-# Perform a trial run and print a list of affected files
+# Print the full plan without making changes
 php artisan mux:mirror --dry-run
+
+# Only sync one asset container
+php artisan mux:mirror --container=videos
+
+# Upload fresh copies instead of reusing existing videos
+php artisan mux:mirror --force
 ```
+
+Running this on a schedule is a good safety net in case a queue worker goes down. When everything is
+already in sync, it does nothing and reports success.
