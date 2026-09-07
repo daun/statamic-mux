@@ -8,7 +8,8 @@ no-op and returns a success message.
 
 | Command | Description |
 |-------|-----------|
-| [**`mux:upload`**](/commands/mux-upload) | Upload local video assets to Mux |
+| [**`mux:mirror`**](/commands/mux-mirror) | Upload, prune and relink in a single operation |
+| [**`mux:upload`**](/commands/mux-upload) | Upload local videos to Mux |
 | [**`mux:prune`**](/commands/mux-prune) | Remove orphaned videos from Mux |
-| [**`mux:mirror`**](/commands/mux-mirror) | Upload local videos to Mux & remove orphaned Mux videos |
+| [**`mux:relink`**](/commands/mux-relink) | Reconnect local videos to existing videos on Mux |
 | [**`mux:debug`**](/commands/mux-debug) | Debug Mux configuration and setup |

@@ -57,6 +57,7 @@ export default defineConfig({
             link: '/commands',
             collapsed: true,
             items: [
+              { text: 'mux:relink', link: '/commands/mux-relink' },
               { text: 'mux:upload', link: '/commands/mux-upload' },
               { text: 'mux:prune', link: '/commands/mux-prune' },
               { text: 'mux:mirror', link: '/commands/mux-mirror' },
