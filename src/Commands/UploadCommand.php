@@ -37,17 +37,17 @@ class UploadCommand extends Command
             return self::FAILURE;
         }
 
+        if ($dryRun) {
+            $this->warn('Performing dry run: no videos will be uploaded');
+            $this->newLine();
+        }
+
         $locals = $plan->scopedLocals();
 
         if ($locals->isEmpty()) {
             $this->line('No videos found'.($container ? " in container: <name>{$container}</name>" : ''));
 
             return self::SUCCESS;
-        }
-
-        if ($dryRun) {
-            $this->warn('Performing dry run: no videos will be uploaded');
-            $this->newLine();
         }
 
         [$uploads, $skipped] = $locals->partition(function (LocalAssetRecord $record) use ($force) {

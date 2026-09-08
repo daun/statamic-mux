@@ -41,11 +41,14 @@ class MirrorCommand extends Command
 
         [$relinks, $uploads, $prunable] = $this->steps($plan, $force);
 
+        if ($dryRun) {
+            $this->warn('Performing dry run: no changes will be made');
+            $this->newLine();
+        }
+
         $this->renderPlan($plan, $relinks, $uploads, $prunable, $force);
 
         if ($dryRun) {
-            $this->warn('Performing dry run: no changes will be made');
-
             return self::SUCCESS;
         }
 

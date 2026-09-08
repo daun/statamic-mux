@@ -39,11 +39,14 @@ class RelinkCommand extends Command
         $reviewable = $safe->concat($mismatches)->values();
         $selected = $force ? $plan->relinkable(force: true) : $safe;
 
+        if ($dryRun) {
+            $this->warn('Performing dry run: no assets will be re-linked');
+            $this->newLine();
+        }
+
         $this->renderPlan($plan, $safe, $mismatches, $reviewable, $force);
 
         if ($dryRun) {
-            $this->warn('Performing dry run: no assets will be re-linked');
-
             return self::SUCCESS;
         }
 
