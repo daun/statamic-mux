@@ -214,7 +214,7 @@ it('classifies an existing source without a mux field as unmanaged', function ()
         ->and($plan->remote(ReconciliationState::MissingSource))->toBeEmpty();
 });
 
-it('reports a differently attributed local reference as shared', function () {
+it('treats a stale passthrough attribution as linked', function () {
     $owner = $this->uploadTestFileToTestContainer('test.mp4', 'owner.mp4', container: 'videos');
     $reference = $this->uploadTestFileToTestContainer('test.mp4', 'reference.mp4', container: 'videos');
     $reference->set('mux', ['id' => 'mux-id'])->saveQuietly();
@@ -223,8 +223,11 @@ it('reports a differently attributed local reference as shared', function () {
         reconciliationRemote('mux-id', ['passthrough' => "statamic::{$owner->id()}"]),
     ]);
 
-    expect($plan->remote(ReconciliationState::SharedReference))->toHaveCount(1)
-        ->and($plan->remote(ReconciliationState::Superseded))->toBeEmpty();
+    expect($plan->remote(ReconciliationState::Linked))->toHaveCount(1)
+        ->and($plan->remote(ReconciliationState::Linked)->first()->asset?->id())->toBe($reference->id())
+        ->and($plan->remote(ReconciliationState::SharedReference))->toBeEmpty()
+        ->and($plan->remote(ReconciliationState::Superseded))->toBeEmpty()
+        ->and($plan->prunable())->toBeEmpty();
 });
 
 it('reports a non-ready current encoding without relinking backwards', function () {

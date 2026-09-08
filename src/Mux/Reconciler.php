@@ -148,16 +148,16 @@ class Reconciler
             'references' => $references,
         ];
 
-        // A local file pointing here outranks whatever the passthrough claims.
-        if ($references->count() > 1
-            || ($references->count() === 1 && $attribution['asset_id'] && $references->first()->id() !== $attribution['asset_id'])) {
+        if ($references->count() > 1) {
             return $result(
                 ReconciliationState::SharedReference,
                 $references->first(),
-                'The Mux asset is referenced by multiple or differently attributed local assets.',
+                'The Mux asset is referenced by more than one local asset.',
             );
         }
 
+        // A single local file pointing here outranks whatever the passthrough claims:
+        // the passthrough goes stale whenever an asset is moved or renamed.
         if ($references->count() === 1) {
             return $state === ReconciliationState::AttributionConflict
                 ? $result($state, $references->first())
