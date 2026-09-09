@@ -3,95 +3,158 @@
 namespace Daun\StatamicMux\Commands;
 
 use Daun\StatamicMux\Commands\Concerns\InteractsWithReconciliation;
-use Daun\StatamicMux\Concerns\HasCommandOutputStyles;
+use Daun\StatamicMux\Console\Advisory;
+use Daun\StatamicMux\Console\CommandOutput;
+use Daun\StatamicMux\Console\CommandReport;
+use Daun\StatamicMux\Console\ReportFailure;
+use Daun\StatamicMux\Console\ReportRecord;
 use Daun\StatamicMux\Data\MuxAsset;
+use Daun\StatamicMux\Mux\Enums\ReconciliationAction;
 use Daun\StatamicMux\Mux\Enums\ReconciliationState;
+use Daun\StatamicMux\Mux\Enums\Side;
 use Daun\StatamicMux\Mux\Reconciler;
 use Daun\StatamicMux\Mux\Reconciliation\LocalAssetRecord;
 use Daun\StatamicMux\Mux\Reconciliation\ReconciliationPlan;
 use Daun\StatamicMux\Mux\Reconciliation\ReconciliationRunner;
 use Daun\StatamicMux\Mux\Reconciliation\RemoteAssetRecord;
-use Daun\StatamicMux\Support\Queue;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Statamic\Console\RunsInPlease;
 
 class MirrorCommand extends Command
 {
-    use HasCommandOutputStyles;
     use InteractsWithReconciliation;
     use RunsInPlease;
 
     protected $signature = 'mux:mirror
                         {--container= : Limit the command to a specific asset container}
                         {--force : Reupload videos to Mux even if they already exist}
-                        {--dry-run : Perform a trial run with no uploads and print a list of affected files}';
+                        {--dry-run : Perform a trial run with no uploads and print a list of affected files}
+                        {--json : Output a single machine-readable JSON object}';
 
     protected $description = 'Mirror local video assets with Mux';
 
     public function handle(Reconciler $reconciler, ReconciliationRunner $runner): int
     {
+        $output = CommandOutput::for($this);
+        $container = $this->option('container');
         $force = (bool) $this->option('force');
         $dryRun = (bool) $this->option('dry-run');
-        $sync = Queue::isSync();
+        $report = $output->report($dryRun);
 
-        if (! $plan = $this->buildPlan($reconciler, $this->option('container'))) {
-            return self::FAILURE;
+        if (! $plan = $this->buildPlan($reconciler, $report, $container)) {
+            return $output->finish($report);
         }
+
+        $this->describeScope($report, $plan, $container);
 
         [$relinks, $uploads, $prunable] = $this->steps($plan, $force);
 
-        if ($dryRun) {
-            $this->warn('Performing dry run: no changes will be made');
-            $this->newLine();
+        /** @var Collection<int, ReportRecord> $records */
+        $records = collect();
+
+        foreach ($relinks as $record) {
+            $records[spl_object_id($record)] = $this->localRecord($record, ReconciliationAction::Relink);
         }
 
-        $this->renderPlan($plan, $relinks, $uploads, $prunable, $force);
+        foreach ($uploads as $record) {
+            $records[spl_object_id($record)] = $this->localRecord(
+                $record,
+                filled($record->muxId) ? ReconciliationAction::Reupload : ReconciliationAction::Upload,
+            );
+        }
+
+        // An encoding a pending re-link points at is kept, never pruned.
+        $reserved = $relinks->map(fn (LocalAssetRecord $record) => $record->selected?->id())->filter();
+
+        foreach ($prunable as $record) {
+            $records[spl_object_id($record)] = $reserved->contains($record->id())
+                ? $this->remoteRecord($record, ReconciliationAction::Keep, 'kept for the asset it is re-linked to')
+                : $this->remoteRecord($record, ReconciliationAction::Prune);
+        }
+
+        foreach ($this->remainingLocals($plan, $relinks, $uploads) as $record) {
+            $records[spl_object_id($record)] = $this->localRecord($record, $this->localAction($record));
+        }
+
+        foreach ($this->remainingRemotes($plan, $prunable) as $record) {
+            $records[spl_object_id($record)] = $this->remoteRecord($record, ...$this->remoteAction($record));
+        }
+
+        foreach ($this->addUnscopableAdvisory($report, $plan, $container) as $record) {
+            $records[spl_object_id($record)] = $this->remoteRecord($record, ReconciliationAction::Skip);
+        }
+
+        $this->addAdvisories($report, $plan, $relinks, $force);
 
         if ($dryRun) {
-            return self::SUCCESS;
+            $report->recordMany($records->values());
+
+            return $output->finish($report);
         }
 
         $relinked = $runner->relink($relinks);
 
         foreach ($relinked as $outcome) {
-            $this->isSuccess($outcome)
-                ? $this->line("Re-linked <name>{$outcome['record']->path()}</name> to <name>{$outcome['mux_id']}</name>")
-                : $this->error("Failed to re-link {$outcome['record']->path()}: {$outcome['error']}");
+            $key = spl_object_id($outcome['record']);
+
+            if ($this->isSuccess($outcome)) {
+                $records[$key] = $records[$key]->succeeded();
+            } else {
+                $records[$key] = $records[$key]->failed($outcome['error']);
+                $report->failure(ReportFailure::make($outcome['error'], ReconciliationAction::Relink, $outcome['record']->path()));
+            }
         }
 
         $uploaded = $runner->upload($uploads, $force);
 
         foreach ($uploaded as $outcome) {
-            $this->isSuccess($outcome)
-                ? $this->line(($sync ? ($outcome['reupload'] ? 'Reuploaded' : 'Uploaded') : 'Queued upload of')." <name>{$outcome['record']->path()}</name>")
-                : $this->error("Failed to upload {$outcome['record']->path()}: {$outcome['error']}");
+            $key = spl_object_id($outcome['record']);
+
+            if ($this->isSuccess($outcome)) {
+                $records[$key] = $records[$key]->succeeded();
+            } else {
+                $records[$key] = $records[$key]->failed($outcome['error']);
+                $report->failure(ReportFailure::make($outcome['error'], $records[$key]->action, $outcome['record']->path()));
+            }
         }
 
         // Pruning an encoding a file still needs is unrecoverable, so a failed re-link aborts the prune.
         if ($this->failures($relinked)->isNotEmpty()) {
-            $this->error('Prune aborted because one or more local assets could not be re-linked.');
+            foreach ($prunable as $record) {
+                $key = spl_object_id($record);
 
-            return self::FAILURE;
+                if ($records[$key]->action === ReconciliationAction::Prune) {
+                    $records[$key] = $records[$key]->withAction(ReconciliationAction::Hold, 'prune aborted after a failed re-link');
+                }
+            }
+
+            $report->recordMany($records->values());
+            $report->abort('Prune aborted — '.$this->pluralize($this->failures($relinked)->count(), 'asset', 'assets').' could not be re-linked.');
+
+            return $output->finish($report);
         }
 
         $relinkedIds = $this->succeededMuxIds($relinked);
-        $pruned = $runner->prune(
-            $prunable->reject(fn (RemoteAssetRecord $record) => $relinkedIds->contains($record->id()))
-        );
+        $pruned = $runner->prune($prunable->reject(fn (RemoteAssetRecord $record) => $relinkedIds->contains($record->id())));
 
-        foreach ($this->reportable($pruned) as $outcome) {
-            $this->isSuccess($outcome)
-                ? $this->line(($sync ? 'Removed' : 'Queued removal of')." <name>{$outcome['mux_id']}</name>")
-                : $this->error("Failed to prune {$outcome['mux_id']}: {$outcome['error']}");
+        foreach ($pruned as $outcome) {
+            $key = spl_object_id($outcome['record']);
+
+            $records[$key] = match ($outcome['status']) {
+                ReconciliationRunner::SUCCESS => $records[$key]->succeeded(),
+                ReconciliationRunner::SKIPPED => $records[$key]->withAction(ReconciliationAction::Skip),
+                default => $records[$key]->failed($outcome['error']),
+            };
+
+            if ($outcome['status'] === ReconciliationRunner::FAILURE) {
+                $report->failure(ReportFailure::make($outcome['error'], ReconciliationAction::Prune, $outcome['mux_id']));
+            }
         }
 
-        $this->newLine();
-        $this->info('<success>✓ Mirror reconciliation complete</success>');
+        $report->recordMany($records->values());
 
-        return $this->failures($uploaded)->isEmpty() && $this->failures($pruned)->isEmpty()
-            ? self::SUCCESS
-            : self::FAILURE;
+        return $output->finish($report);
     }
 
     /**
@@ -118,85 +181,64 @@ class MirrorCommand extends Command
         return [$relinks, $uploads, $prunable];
     }
 
-    protected function renderPlan(ReconciliationPlan $plan, Collection $relinks, Collection $uploads, Collection $prunable, bool $force): void
+    protected function remainingLocals(ReconciliationPlan $plan, Collection $relinks, Collection $uploads): Collection
     {
-        $reuploads = $uploads->filter(fn (LocalAssetRecord $record) => filled($record->muxId))->count();
+        $handled = $relinks->concat($uploads);
 
-        $this->line("Plan for {$plan->locals->count()} local videos and {$plan->remotes->count()} Mux assets");
-        $this->newLine();
-        $this->line(sprintf('  %3d re-link    existing ready Mux encoding found', $relinks->count()));
-        $this->line(sprintf('  %3d upload     local assets requiring an upload', $uploads->count() - $reuploads));
-        $this->line(sprintf('  %3d re-upload  linked or stale local assets', $reuploads));
-        $this->line(sprintf(
-            '  %3d prune      %d superseded · %d source deleted',
-            $prunable->count(),
-            $prunable->where('state', ReconciliationState::Superseded)->count(),
-            $prunable->where('state', ReconciliationState::MissingSource)->count(),
-        ));
-        $this->line(sprintf('  %3d ignore     ownership or attribution is not safe', $plan->countRemote(
-            ReconciliationState::Foreign,
-            ReconciliationState::Unattributable,
-            ReconciliationState::AttributionConflict,
-        )));
-        $this->line(sprintf('  %3d skip       proxy placeholders in flight', $plan->countRemote(ReconciliationState::ProxyInFlight)));
+        return $plan->scopedLocals()->reject(fn (LocalAssetRecord $record) => $handled->containsStrict($record))->values();
+    }
 
-        $holds = [
-            ...$this->holdCounts($plan, 'local', [
-                ReconciliationState::Preparing,
-                ReconciliationState::MediaMismatch,
-                ReconciliationState::UnknownStatus,
-                ReconciliationState::NonReadyLinked,
-            ]),
-            ...$this->holdCounts($plan, 'remote', [
-                ReconciliationState::AttributionConflict,
-                ReconciliationState::Unattributable,
-                ReconciliationState::SharedReference,
-            ]),
-        ];
+    protected function remainingRemotes(ReconciliationPlan $plan, Collection $prunable): Collection
+    {
+        return $plan->scopedRemotes()->reject(fn (RemoteAssetRecord $record) => $prunable->containsStrict($record))->values();
+    }
 
-        foreach ($holds as $label => $count) {
-            $this->line(sprintf('  %3d hold       %s', $count, $label));
-        }
+    protected function localAction(LocalAssetRecord $record): ReconciliationAction
+    {
+        return MuxAsset::fromAsset($record->asset)->isProxy()
+            ? ReconciliationAction::Skip
+            : $this->actionFor($record->state, Side::Local);
+    }
 
+    /**
+     * A prunable encoding kept out of this run is held, not pruned: force mode
+     * retains the old encoding until its replacement upload has succeeded.
+     *
+     * @return array{0: ReconciliationAction, 1: ?string}
+     */
+    protected function remoteAction(RemoteAssetRecord $record): array
+    {
+        return $record->state->isPrunable()
+            ? [ReconciliationAction::Hold, 'retained until the replacement upload succeeds']
+            : [$this->actionFor($record->state, Side::Remote), null];
+    }
+
+    protected function addAdvisories(CommandReport $report, ReconciliationPlan $plan, Collection $relinks, bool $force): void
+    {
         $proxySources = $plan->local(ReconciliationState::ProxySource);
 
         if ($proxySources->isNotEmpty()) {
-            $this->newLine();
-            $this->warn('⚠ '.$this->pluralize($proxySources->count(), 'local placeholder clip has', 'local placeholder clips have').' a full Mux encoding. Uploading the clips would replace the masters.');
-            foreach ($proxySources as $record) {
-                $this->line("  {$record->path()} → {$record->selected?->id()}");
-            }
+            $report->advisory(Advisory::warn(
+                'proxy-source-conflict',
+                $this->pluralize($proxySources->count(), 'local placeholder clip has', 'local placeholder clips have').' a full Mux encoding. Uploading the clips would replace the masters.',
+                $proxySources->map(fn (LocalAssetRecord $record) => "{$record->path()} → {$this->shortMuxId($record->selected?->id())}")->values()->all(),
+            ));
         }
 
         if ($relinks->isNotEmpty()) {
-            $this->newLine();
-            $this->warn("⚠ Re-linking runs before uploading. Without it these {$relinks->count()} encodings would be recreated.");
+            $report->advisory(Advisory::info(
+                'relink-first',
+                "Re-linking runs before uploading. Without it these {$relinks->count()} encodings would be recreated.",
+            ));
         }
 
         if ($force) {
-            $this->newLine();
-            $this->warn('Force mode skips ordinary re-linking. Placeholder sources are repaired; other encodings are retained until replacements succeed.');
+            $report->advisory(Advisory::warn(
+                'force-mirror',
+                'Force mode skips ordinary re-linking. Placeholder sources are repaired; other encodings are retained until replacements succeed.',
+            ));
         }
 
-        $this->renderDiagnostics($plan);
-
-        if ($this->getOutput()->isVerbose()) {
-            $this->renderRecordList('Re-link', $relinks);
-            $this->renderRecordList('Upload', $uploads);
-            $this->renderRecordList('Prune', $prunable);
-        }
-
-        $this->newLine();
-    }
-
-    /** @return array<string, int> */
-    protected function holdCounts(ReconciliationPlan $plan, string $side, array $states): array
-    {
-        return collect($states)
-            ->mapWithKeys(fn (ReconciliationState $state) => [
-                $state->value => $side === 'local' ? $plan->countLocal($state) : $plan->countRemote($state),
-            ])
-            ->filter()
-            ->all();
+        $this->addDiagnosticAdvisories($report, $plan);
     }
 }

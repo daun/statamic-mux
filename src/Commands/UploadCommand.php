@@ -3,54 +3,50 @@
 namespace Daun\StatamicMux\Commands;
 
 use Daun\StatamicMux\Commands\Concerns\InteractsWithReconciliation;
-use Daun\StatamicMux\Concerns\HasCommandOutputStyles;
+use Daun\StatamicMux\Console\Advisory;
+use Daun\StatamicMux\Console\CommandOutput;
+use Daun\StatamicMux\Console\CommandReport;
+use Daun\StatamicMux\Console\ReportFailure;
+use Daun\StatamicMux\Console\ReportRecord;
 use Daun\StatamicMux\Data\MuxAsset;
+use Daun\StatamicMux\Mux\Enums\ReconciliationAction;
 use Daun\StatamicMux\Mux\Enums\ReconciliationState;
+use Daun\StatamicMux\Mux\Enums\Side;
 use Daun\StatamicMux\Mux\Reconciler;
 use Daun\StatamicMux\Mux\Reconciliation\LocalAssetRecord;
 use Daun\StatamicMux\Mux\Reconciliation\ReconciliationRunner;
-use Daun\StatamicMux\Support\Queue;
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Statamic\Console\RunsInPlease;
 
 class UploadCommand extends Command
 {
-    use HasCommandOutputStyles;
     use InteractsWithReconciliation;
     use RunsInPlease;
 
     protected $signature = 'mux:upload
                         {--container= : Limit the command to a specific asset container}
                         {--force : Reupload videos to Mux even if they already exist}
-                        {--dry-run : Perform a trial run with no uploads and print a list of affected files}';
+                        {--dry-run : Perform a trial run with no uploads and print a list of affected files}
+                        {--json : Output a single machine-readable JSON object}';
 
     protected $description = 'Upload local video assets to Mux';
 
     public function handle(Reconciler $reconciler, ReconciliationRunner $runner): int
     {
+        $output = CommandOutput::for($this);
         $container = $this->option('container');
         $force = (bool) $this->option('force');
         $dryRun = (bool) $this->option('dry-run');
-        $sync = Queue::isSync();
+        $report = $output->report($dryRun);
 
-        if (! $plan = $this->buildPlan($reconciler, $container)) {
-            return self::FAILURE;
+        if (! $plan = $this->buildPlan($reconciler, $report, $container)) {
+            return $output->finish($report);
         }
 
-        if ($dryRun) {
-            $this->warn('Performing dry run: no videos will be uploaded');
-            $this->newLine();
-        }
+        $this->describeScope($report, $plan, $container);
 
-        $locals = $plan->scopedLocals();
-
-        if ($locals->isEmpty()) {
-            $this->line('No videos found'.($container ? " in container: <name>{$container}</name>" : ''));
-
-            return self::SUCCESS;
-        }
-
-        [$uploads, $skipped] = $locals->partition(function (LocalAssetRecord $record) use ($force) {
+        [$uploads, $skipped] = $plan->scopedLocals()->partition(function (LocalAssetRecord $record) use ($force) {
             if (MuxAsset::fromAsset($record->asset)->isProxy()) {
                 return false;
             }
@@ -58,62 +54,96 @@ class UploadCommand extends Command
             return $force || ! $record->muxId || $record->isStale();
         });
 
-        $this->warnAboutReplacements($uploads);
+        foreach ($skipped as $record) {
+            $report->record($this->localRecord($record, $this->skippedAction($record)));
+        }
 
-        if ($dryRun) {
-            foreach ($uploads as $record) {
-                $verb = $force && filled($record->muxId) && ! $record->isStale() ? 'reupload' : 'upload';
-                $this->line("Would {$verb} <name>{$record->path()}</name>");
-            }
-        } else {
+        $this->addAdvisories($report, $plan, $uploads, $force);
+
+        /** @var Collection<string, ReportRecord> $records */
+        $records = $uploads->mapWithKeys(fn (LocalAssetRecord $record) => [
+            $record->path() => $this->localRecord($record, $this->uploadAction($record)),
+        ]);
+
+        if (! $dryRun) {
             foreach ($runner->upload($uploads, $force) as $outcome) {
-                if (! $this->isSuccess($outcome)) {
-                    $this->error("Failed to upload {$outcome['record']->path()}: {$outcome['error']}");
+                $id = $outcome['record']->path();
+
+                if ($this->isSuccess($outcome)) {
+                    $records[$id] = $records[$id]->succeeded();
 
                     continue;
                 }
 
-                $verb = $sync ? ($outcome['reupload'] ? 'Reuploaded' : 'Uploaded') : 'Queued '.($outcome['reupload'] ? 'reupload' : 'upload').' of';
-                $this->line("{$verb} <name>{$outcome['record']->path()}</name>");
+                $records[$id] = $records[$id]->failed($outcome['error']);
+                $report->failure(ReportFailure::make($outcome['error'], $records[$id]->action, $id));
             }
         }
 
-        if ($this->getOutput()->isVerbose()) {
-            foreach ($skipped as $record) {
-                $this->line(($dryRun ? 'Would skip' : 'Skipped')." <name>{$record->path()}</name>");
-            }
-        }
+        $report->recordMany($records->values());
 
-        $summary = match (true) {
-            $dryRun => "Would have uploaded {$uploads->count()} videos",
-            $sync => "Uploaded {$uploads->count()} videos",
-            default => "Queued {$uploads->count()} videos for background upload",
-        };
-
-        $this->newLine();
-        $this->info("<success>✓ {$summary}, skipped {$skipped->count()} videos</success>");
-
-        return self::SUCCESS;
+        return $output->finish($report);
     }
 
-    protected function warnAboutReplacements($uploads): void
+    protected function uploadAction(LocalAssetRecord $record): ReconciliationAction
     {
-        $candidates = $uploads->filter(
+        return filled($record->muxId) ? ReconciliationAction::Reupload : ReconciliationAction::Upload;
+    }
+
+    /** Proxy placeholder clips are never uploaded, not even with --force. */
+    protected function skippedAction(LocalAssetRecord $record): ReconciliationAction
+    {
+        return MuxAsset::fromAsset($record->asset)->isProxy()
+            ? ReconciliationAction::Skip
+            : $this->actionFor($record->state, Side::Local);
+    }
+
+    protected function addAdvisories(CommandReport $report, $plan, Collection $uploads, bool $force): void
+    {
+        $replacements = $uploads->filter(
             fn (LocalAssetRecord $record) => ! $record->muxId && $record->candidates->isNotEmpty()
         );
 
-        if ($candidates->isEmpty()) {
-            return;
+        if ($replacements->isNotEmpty()) {
+            $count = $replacements->count();
+
+            $report->advisory(Advisory::warn(
+                'upload-replacement',
+                "{$count} ".($count === 1 ? 'asset already has' : 'assets already have').' attributable Mux encodings. Uploading will create replacements.',
+                $replacements->map(fn (LocalAssetRecord $record) => "{$record->path()} → {$this->shortMuxId($record->selected?->id() ?? $record->candidates->first()?->id())}")->values()->all(),
+                'Re-use them instead: php artisan mux:relink',
+            ));
         }
 
-        $count = $candidates->count();
-        $this->warn("{$count} ".($count === 1 ? 'asset already has' : 'assets already have').' attributable Mux encodings; upload will create replacements.');
-        $this->line('Use mux:relink or mux:mirror to reuse them instead.');
+        $proxySources = $uploads->filter(
+            fn (LocalAssetRecord $record) => $record->state === ReconciliationState::ProxySource
+        );
 
-        if ($candidates->contains(fn (LocalAssetRecord $record) => $record->state === ReconciliationState::ProxySource)) {
-            $this->warn('A placeholder source is included. Uploading it would replace the full master with the short placeholder clip.');
+        if ($proxySources->isNotEmpty()) {
+            $report->advisory(Advisory::warn(
+                'proxy-source-conflict',
+                $this->pluralize($proxySources->count(), 'local placeholder clip has', 'local placeholder clips have').' a full Mux encoding. Uploading would replace the full master with the short placeholder clip.',
+                $proxySources->map(fn (LocalAssetRecord $record) => "{$record->path()} → {$this->shortMuxId($record->selected?->id())}")->values()->all(),
+                'Re-link them first: php artisan mux:relink',
+            ));
         }
 
-        $this->newLine();
+        if ($force) {
+            $report->advisory(Advisory::info(
+                'force-upload',
+                'Force mode re-uploads linked assets. Placeholder clips are never re-uploaded.',
+            ));
+        }
+
+        // Encodings a re-link could still reuse are not orphans.
+        $orphans = $plan->prunable()->count() - $plan->destructive()->count();
+
+        if ($orphans > 0) {
+            $report->advisory(Advisory::info(
+                'orphaned-encodings',
+                "{$orphans} orphaned Mux ".($orphans === 1 ? 'encoding is' : 'encodings are').' no longer needed.',
+                hint: 'Remove them: php artisan mux:prune',
+            ));
+        }
     }
 }

@@ -3,121 +3,114 @@
 namespace Daun\StatamicMux\Commands;
 
 use Daun\StatamicMux\Commands\Concerns\InteractsWithReconciliation;
-use Daun\StatamicMux\Concerns\HasCommandOutputStyles;
-use Daun\StatamicMux\Mux\Enums\ReconciliationState;
+use Daun\StatamicMux\Console\Advisory;
+use Daun\StatamicMux\Console\CommandOutput;
+use Daun\StatamicMux\Console\CommandReport;
+use Daun\StatamicMux\Console\ReportFailure;
+use Daun\StatamicMux\Console\ReportRecord;
+use Daun\StatamicMux\Mux\Enums\ReconciliationAction;
+use Daun\StatamicMux\Mux\Enums\Side;
 use Daun\StatamicMux\Mux\Reconciler;
 use Daun\StatamicMux\Mux\Reconciliation\ReconciliationRunner;
+use Daun\StatamicMux\Mux\Reconciliation\RemoteAssetRecord;
 use Daun\StatamicMux\Support\Queue;
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Statamic\Console\RunsInPlease;
 
 class PruneCommand extends Command
 {
-    use HasCommandOutputStyles;
     use InteractsWithReconciliation;
     use RunsInPlease;
 
     protected $signature = 'mux:prune
                         {--container= : Limit the command to a specific asset container}
-                        {--dry-run : Perform a trial run with no removals and print a list of affected files}';
+                        {--dry-run : Perform a trial run with no removals and print a list of affected files}
+                        {--json : Output a single machine-readable JSON object}';
 
     protected $description = 'Remove orphaned videos from Mux';
 
-    protected const COUNT_LABELS = [
-        'superseded' => 'superseded by a newer upload            safe to remove',
-        'missing-source' => 'local asset no longer exists            safe to remove',
-        'unlinked' => 'local asset exists but is unlinked      destructive unless re-linked first',
-        'proxy-source' => 'placeholder clip source is unlinked     destructive unless re-linked first',
-        'unmanaged-source' => 'local asset has no Mux field            cannot re-link',
-        'errored' => 'errored unlinked encodings              safe to remove',
-        'expired-proxy' => 'expired proxy placeholders              safe to remove',
-        'orphaned-proxy' => 'proxies whose parent is gone            safe to remove',
-        'foreign' => 'not created by this addon               ignored',
-        'attribution-conflict' => 'attribution conflicts                   held',
-        'unattributable' => 'unattributable addon assets             held',
-        'shared-reference' => 'shared local references                 kept for review',
-        'proxy-in-flight' => 'proxy placeholders in flight            skipped',
-    ];
-
     public function handle(Reconciler $reconciler, ReconciliationRunner $runner): int
     {
+        $output = CommandOutput::for($this);
         $container = $this->option('container');
         $dryRun = (bool) $this->option('dry-run');
-        $sync = Queue::isSync();
+        $report = $output->report($dryRun);
 
-        if (! $plan = $this->buildPlan($reconciler, $container)) {
-            return self::FAILURE;
+        if (! $plan = $this->buildPlan($reconciler, $report, $container)) {
+            return $output->finish($report);
         }
 
-        $remotes = $plan->scopedRemotes();
+        $this->describeScope($report, $plan, $container);
+
         $prunable = $plan->prunable();
         $destructive = $plan->destructive();
-        $unscopable = $plan->unscopable();
 
-        if ($dryRun) {
-            $this->warn('Performing dry run: no videos will be deleted');
-            $this->newLine();
+        /** @var Collection<int, ReportRecord> $records */
+        $records = $plan->scopedRemotes()->mapWithKeys(fn (RemoteAssetRecord $record) => [
+            spl_object_id($record) => $this->remoteRecord($record, $this->actionFor($record->state, Side::Remote)),
+        ]);
+
+        foreach ($this->addUnscopableAdvisory($report, $plan, $container) as $record) {
+            $records[spl_object_id($record)] = $this->remoteRecord($record, ReconciliationAction::Skip);
         }
 
-        $this->renderDestructiveWarning($destructive, $dryRun ? 'would' : 'will');
-        $this->renderStateCounts($remotes, self::COUNT_LABELS);
-        $this->renderDiagnostics($plan);
+        $this->addDestructiveAdvisory($report, $destructive, $dryRun);
 
-        if ($unscopable->isNotEmpty()) {
-            $this->warn("{$unscopable->count()} orphans could not be scoped to --container={$container} and were skipped");
-            $this->line('Run without --container to review them.');
-            $this->newLine();
-        }
+        if (! $dryRun) {
+            foreach ($runner->prune($prunable) as $outcome) {
+                $key = spl_object_id($outcome['record']);
 
-        if ($dryRun) {
-            if ($this->getOutput()->isVerbose()) {
-                foreach ($prunable->reject(fn ($r) => $destructive->containsStrict($r)) as $record) {
-                    $this->line("Would remove <name>{$record->id()}</name> <comment>({$record->state->value})</comment>");
+                $records[$key] = match ($outcome['status']) {
+                    ReconciliationRunner::SUCCESS => $records[$key]->succeeded(),
+                    ReconciliationRunner::SKIPPED => $records[$key]->withAction(ReconciliationAction::Skip),
+                    default => $records[$key]->failed($outcome['error']),
+                };
+
+                if ($outcome['status'] === ReconciliationRunner::FAILURE) {
+                    $report->failure(ReportFailure::make($outcome['error'], ReconciliationAction::Prune, $outcome['mux_id']));
                 }
             }
 
-            $this->summarize($plan, $prunable->count(), 'would be removed', $unscopable->count());
-
-            return self::SUCCESS;
+            $this->addDestructiveOutcomeAdvisory($report, $destructive);
         }
 
-        if ($destructive->isNotEmpty()) {
-            $this->warn('Prune will now remove the only ready Mux encodings of the live assets listed above.');
-            $this->newLine();
-        }
+        $report->recordMany($records->values());
 
-        $outcomes = $runner->prune($prunable);
-
-        foreach ($this->succeeded($outcomes) as $outcome) {
-            $this->line(($sync ? 'Removed' : 'Queued removal of')." <name>{$outcome['mux_id']}</name>");
-        }
-
-        $this->summarize($plan, $this->succeeded($outcomes)->count(), $sync ? 'removed' : 'queued for removal', $unscopable->count());
-
-        if ($destructive->isNotEmpty()) {
-            $this->warn("{$destructive->count()} unlinked encodings were ".($sync ? 'removed.' : 'queued for removal.'));
-        }
-
-        return $this->failures($outcomes)->isEmpty() ? self::SUCCESS : self::FAILURE;
+        return $output->finish($report);
     }
 
-    protected function summarize($plan, int $removed, string $action, int $unscopable): void
+    protected function addDestructiveAdvisory(CommandReport $report, Collection $destructive, bool $dryRun): void
     {
-        $kept = $plan->countRemote(ReconciliationState::Linked, ReconciliationState::SharedReference);
-        $ignored = $plan->countRemote(
-            ReconciliationState::Foreign,
-            ReconciliationState::Unattributable,
-            ReconciliationState::AttributionConflict,
-        );
-        $skipped = $plan->countRemote(
-            ReconciliationState::ProxyInFlight,
-            ReconciliationState::Preparing,
-            ReconciliationState::UnknownStatus,
-            ReconciliationState::MediaMismatch,
-            ReconciliationState::SharedReference,
-        ) + $unscopable;
+        if ($destructive->isEmpty()) {
+            return;
+        }
 
-        $this->newLine();
-        $this->info("<success>✓ {$kept} kept · {$removed} {$action} · {$ignored} ignored · {$skipped} skipped</success>");
+        $files = $destructive->pluck('attributedAssetId')->filter()->unique()->count();
+
+        $report->advisory(Advisory::warn(
+            'destructive-prune',
+            "{$destructive->count()} orphans are the only Mux encoding of {$this->pluralize($files, 'local asset', 'local assets')} still in your containers. Prune ".($dryRun ? 'would' : 'will').' delete them.',
+            $destructive->map(fn (RemoteAssetRecord $record) => sprintf(
+                '%s  %s  %s  %s',
+                $record->attributedAssetId ?? $record->asset?->id() ?? 'unknown source',
+                $this->shortMuxId($record->id()),
+                $record->remote->resolutionTier() ?? 'unknown',
+                $this->shortDate($record),
+            ))->values()->all(),
+            'Re-link them first: php artisan mux:relink',
+        ));
+    }
+
+    protected function addDestructiveOutcomeAdvisory(CommandReport $report, Collection $destructive): void
+    {
+        if ($destructive->isEmpty()) {
+            return;
+        }
+
+        $report->advisory(Advisory::warn(
+            'destructive-pruned',
+            "{$destructive->count()} unlinked encodings were ".(Queue::isSync() ? 'removed.' : 'queued for removal.'),
+        ));
     }
 }

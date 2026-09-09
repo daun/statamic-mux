@@ -3,169 +3,200 @@
 namespace Daun\StatamicMux\Commands;
 
 use Daun\StatamicMux\Commands\Concerns\InteractsWithReconciliation;
-use Daun\StatamicMux\Concerns\HasCommandOutputStyles;
+use Daun\StatamicMux\Console\Advisory;
+use Daun\StatamicMux\Console\CommandOutput;
+use Daun\StatamicMux\Console\CommandReport;
+use Daun\StatamicMux\Console\ReportFailure;
+use Daun\StatamicMux\Console\ReportRecord;
+use Daun\StatamicMux\Mux\Enums\ReconciliationAction;
 use Daun\StatamicMux\Mux\Enums\ReconciliationState;
 use Daun\StatamicMux\Mux\Reconciler;
 use Daun\StatamicMux\Mux\Reconciliation\LocalAssetRecord;
 use Daun\StatamicMux\Mux\Reconciliation\ReconciliationPlan;
 use Daun\StatamicMux\Mux\Reconciliation\ReconciliationRunner;
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Statamic\Console\RunsInPlease;
+use Symfony\Component\Console\Formatter\OutputFormatter;
 
 class RelinkCommand extends Command
 {
-    use HasCommandOutputStyles;
     use InteractsWithReconciliation;
     use RunsInPlease;
 
     protected $signature = 'mux:relink
                         {--container= : Limit the command to a specific asset container}
                         {--force : Relink candidates that failed media validation}
-                        {--dry-run : Perform a trial run with no changes and print a list of affected files}';
+                        {--dry-run : Perform a trial run with no changes and print a list of affected files}
+                        {--json : Output a single machine-readable JSON object}';
 
     protected $description = 'Re-link local video assets to existing Mux encodings';
 
     public function handle(Reconciler $reconciler, ReconciliationRunner $runner): int
     {
+        $output = CommandOutput::for($this);
+        $container = $this->option('container');
         $force = (bool) $this->option('force');
         $dryRun = (bool) $this->option('dry-run');
+        $report = $output->report($dryRun);
 
-        if (! $plan = $this->buildPlan($reconciler, $this->option('container'))) {
-            return self::FAILURE;
+        if (! $plan = $this->buildPlan($reconciler, $report, $container)) {
+            return $output->finish($report);
         }
+
+        $this->describeScope($report, $plan, $container);
 
         $safe = $plan->relinkable();
         $mismatches = $plan->local(ReconciliationState::MediaMismatch);
-        $reviewable = $safe->concat($mismatches)->values();
         $selected = $force ? $plan->relinkable(force: true) : $safe;
 
-        if ($dryRun) {
-            $this->warn('Performing dry run: no assets will be re-linked');
-            $this->newLine();
+        /** @var Collection<int, ReportRecord> $records */
+        $records = collect();
+
+        foreach ($safe as $record) {
+            $records[spl_object_id($record)] = $this->localRecord($record, ReconciliationAction::Relink);
         }
 
-        $this->renderPlan($plan, $safe, $mismatches, $reviewable, $force);
-
-        if ($dryRun) {
-            return self::SUCCESS;
-        }
-
-        if ($reviewable->isEmpty()) {
-            $this->info('<success>✓ Nothing to re-link</success>');
-
-            return self::SUCCESS;
-        }
-
-        if (! $force && $this->isInteractiveTerminal()) {
-            $mode = $this->choice(
-                "How should these {$reviewable->count()} assets be handled?",
-                ['a' => 'Relink all safe matches', 'e' => 'Review individually', 'n' => 'Cancel'],
-                'n',
+        foreach ($mismatches as $record) {
+            $records[spl_object_id($record)] = $this->localRecord(
+                $record,
+                $force && $record->selected ? ReconciliationAction::Relink : ReconciliationAction::Hold,
             );
+        }
 
-            if ($mode === 'Cancel') {
-                return self::SUCCESS;
+        foreach ($this->heldRemotes($plan) as $record) {
+            $records[spl_object_id($record)] = $this->remoteRecord($record, ReconciliationAction::Hold);
+        }
+
+        $this->addAdvisories($report, $plan, $force);
+
+        if ($dryRun) {
+            $report->recordMany($records->values());
+
+            return $output->finish($report);
+        }
+
+        if (! $force && ! $output->wantsJson() && $this->isInteractiveTerminal()) {
+            $reviewable = $safe->concat($mismatches)->values();
+
+            if ($reviewable->isNotEmpty()) {
+                [$selected, $cancelled] = $this->review($reviewable, $selected);
+
+                if ($cancelled) {
+                    foreach ($reviewable as $record) {
+                        $records[spl_object_id($record)] = $records[spl_object_id($record)]
+                            ->withAction(ReconciliationAction::Hold, 'review cancelled');
+                    }
+
+                    $report->recordMany($records->values());
+
+                    return $output->finish($report);
+                }
+
+                foreach ($reviewable as $record) {
+                    $key = spl_object_id($record);
+
+                    $records[$key] = $selected->containsStrict($record)
+                        ? $records[$key]->withAction(ReconciliationAction::Relink)
+                        : $records[$key]->withAction(ReconciliationAction::Hold, 'held during review');
+                }
+            }
+        }
+
+        foreach ($runner->relink($selected) as $outcome) {
+            $key = spl_object_id($outcome['record']);
+
+            if ($this->isSuccess($outcome)) {
+                $records[$key] = $records[$key]->succeeded();
+
+                continue;
             }
 
-            if ($mode === 'Review individually') {
-                $selected = $reviewable->filter(fn (LocalAssetRecord $record) => $this->confirmRecord($record))->values();
-            }
+            $records[$key] = $records[$key]->failed($outcome['error']);
+            $report->failure(ReportFailure::make($outcome['error'], ReconciliationAction::Relink, $outcome['record']->path()));
         }
 
-        if ($selected->isEmpty()) {
-            $this->info('<success>✓ Nothing to re-link</success>');
+        $report->recordMany($records->values());
 
-            return self::SUCCESS;
-        }
-
-        $outcomes = $runner->relink($selected);
-
-        foreach ($outcomes as $outcome) {
-            $this->isSuccess($outcome)
-                ? $this->line("Re-linked <name>{$outcome['record']->path()}</name> to <name>{$outcome['mux_id']}</name>")
-                : $this->error("Failed to re-link {$outcome['record']->path()}: {$outcome['error']}");
-        }
-
-        $this->info('<success>✓ Re-linked '.$this->succeeded($outcomes)->count().' assets</success>');
-
-        return $this->failures($outcomes)->isEmpty() ? self::SUCCESS : self::FAILURE;
+        return $output->finish($report);
     }
 
-    protected function renderPlan(ReconciliationPlan $plan, $safe, $mismatches, $reviewable, bool $force): void
+    protected function heldRemotes(ReconciliationPlan $plan): Collection
     {
-        $this->line('Re-link plan for '.$reviewable->count().' '.($reviewable->count() === 1 ? 'asset' : 'assets'));
-        $this->line(sprintf('  %3d safe matches', $safe->count()));
-
-        if ($mismatches->isNotEmpty()) {
-            $this->line(sprintf('  %3d media mismatches held%s', $mismatches->count(), $force ? ' — overridden by --force' : ''));
-        }
-
-        $held = [
-            'still preparing' => $plan->countLocal(ReconciliationState::Preparing),
-            'unknown processing status' => $plan->countLocal(ReconciliationState::UnknownStatus),
-            'attribution conflict' => $plan->countRemote(ReconciliationState::AttributionConflict),
-            'unattributable' => $plan->countRemote(ReconciliationState::Unattributable),
-            'source has no Mux field' => $plan->countRemote(ReconciliationState::UnmanagedSource),
-            'shared between assets' => $plan->countRemote(ReconciliationState::SharedReference),
-        ];
-
-        foreach (array_filter($held) as $label => $count) {
-            $this->line(sprintf('  %3d held — %s', $count, $label));
-        }
-
-        foreach ($reviewable as $record) {
-            $this->renderRecord($record, $this->getOutput()->isVerbose());
-        }
+        return $plan->remote(
+            ReconciliationState::AttributionConflict,
+            ReconciliationState::Unattributable,
+            ReconciliationState::UnmanagedSource,
+            ReconciliationState::SharedReference,
+        );
     }
 
-    protected function renderRecord(LocalAssetRecord $record, bool $verbose): void
+    /**
+     * @return array{0: Collection, 1: bool} the selected records and whether the run was cancelled
+     */
+    protected function review(Collection $reviewable, Collection $selected): array
     {
-        if (! $selected = $record->selected) {
-            return;
+        $mode = $this->components->choice(
+            "How should these {$reviewable->count()} assets be handled?",
+            ['a' => 'Relink all safe matches', 'e' => 'Review individually', 'n' => 'Cancel'],
+            'n',
+        );
+
+        if ($mode === 'Cancel') {
+            return [collect(), true];
         }
 
-        $suffix = $record->proxySource ? ' <comment>(placeholder source)</comment>' : '';
-        $this->line("  <name>{$record->path()}</name> → {$this->shortMuxId($selected->id())}{$suffix}");
-
-        if (! $verbose) {
-            return;
+        if ($mode === 'Review individually') {
+            return [$reviewable->filter(fn (LocalAssetRecord $record) => $this->confirmRecord($record))->values(), false];
         }
 
-        $asset = $record->asset;
-        $dimensions = $asset->width() && $asset->height() ? "{$asset->width()}×{$asset->height()}" : 'unknown';
-        $duration = $asset->duration() !== null ? "{$asset->duration()}s" : 'unknown duration';
-        $this->line("      Local     {$dimensions}  {$duration}");
-
-        foreach ($record->candidates as $candidate) {
-            $video = $candidate->remote;
-            $role = $candidate === $selected ? 'Selected ' : 'Discarded';
-            $reason = $candidate->reason ? "  {$candidate->reason}" : '';
-            $this->line(sprintf(
-                '      %s %s  %ss  %s  %s  %s  %s%s',
-                $role,
-                $candidate->id(),
-                $video->duration(),
-                $video->aspectRatioLabel() ?? 'unknown',
-                $video->resolutionTier() ?? 'unknown',
-                $video->status() ?? 'unknown',
-                $video->createdAt()?->format('Y-m-d') ?? 'unknown date',
-                $reason,
-            ));
-        }
+        return [$selected, false];
     }
 
     protected function confirmRecord(LocalAssetRecord $record): bool
     {
-        $this->newLine();
-        $this->renderRecord($record, true);
+        $this->components->twoColumnDetail(
+            OutputFormatter::escape($record->path()).' <fg=gray>'.OutputFormatter::escape($record->state->reason()).'</>',
+            OutputFormatter::escape($this->shortMuxId($record->selected?->id())),
+        );
 
         if ($record->state === ReconciliationState::MediaMismatch) {
-            $this->warn("Media validation failed: {$record->reason}");
-
-            return $this->confirm('Relink despite the media mismatch?', false);
+            return $this->components->confirm("Relink despite the media mismatch? ({$record->reason})", false);
         }
 
-        return $this->confirm('Relink this asset?', false);
+        return $this->components->confirm('Relink this asset?', false);
+    }
+
+    protected function addAdvisories(CommandReport $report, ReconciliationPlan $plan, bool $force): void
+    {
+        $mismatches = $plan->countLocal(ReconciliationState::MediaMismatch);
+
+        if ($force && $mismatches) {
+            $report->advisory(Advisory::warn(
+                'force-relink',
+                "Force mode re-links {$mismatches} candidates that failed media validation.",
+            ));
+        }
+
+        $proxySources = $plan->local(ReconciliationState::ProxySource);
+
+        if ($proxySources->isNotEmpty()) {
+            $report->advisory(Advisory::info(
+                'proxy-source-relink',
+                $this->pluralize($proxySources->count(), 'placeholder clip is', 'placeholder clips are').' re-linked to their full Mux encoding.',
+                $proxySources->map(fn (LocalAssetRecord $record) => "{$record->path()} → {$this->shortMuxId($record->selected?->id())}")->values()->all(),
+            ));
+        }
+
+        $this->addDiagnosticAdvisories($report, $plan);
+
+        if (($uploads = $plan->uploadable()->count()) > 0) {
+            $report->advisory(Advisory::info(
+                'uploadable-assets',
+                "{$uploads} local ".($uploads === 1 ? 'video has' : 'videos have').' no Mux encoding to re-link to.',
+                hint: 'Upload them: php artisan mux:upload',
+            ));
+        }
     }
 
     protected function isInteractiveTerminal(): bool

@@ -2,6 +2,8 @@
 
 namespace Daun\StatamicMux\Mux\Enums;
 
+use LogicException;
+
 use function Statamic\trans as __;
 
 enum ReconciliationState: string
@@ -46,6 +48,71 @@ enum ReconciliationState: string
     public function isDestructiveToPrune(): bool
     {
         return in_array($this, [self::Unlinked, self::ProxySource], true);
+    }
+
+    /**
+     * A few states read differently per side: a proxy source is re-linkable
+     * locally, but its old encoding is a prune candidate remotely.
+     *
+     * @throws LogicException if the state cannot occur on the given side
+     */
+    public function action(Side $side): ReconciliationAction
+    {
+        return $side->isLocal() ? $this->localAction() : $this->remoteAction();
+    }
+
+    public function reason(): string
+    {
+        return match ($this) {
+            self::Linked => __('linked to a ready Mux encoding'),
+            self::SharedReference => __('shared between multiple local assets'),
+            self::Upload => __('local videos not yet on Mux'),
+            self::Reupload => __('linked encoding is missing or stale'),
+            self::Unlinked => __('local asset exists but is unlinked'),
+            self::ProxySource => __('placeholder clip source is unlinked'),
+            self::Preparing => __('still preparing'),
+            self::Errored => __('encoding errored'),
+            self::UnknownStatus => __('unknown processing status'),
+            self::MediaMismatch => __('media validation failed'),
+            self::NonReadyLinked => __('linked encoding did not become ready'),
+            self::Superseded => __('superseded by a newer upload'),
+            self::MissingSource => __('local asset no longer exists'),
+            self::UnmanagedSource => __('local asset has no Mux field'),
+            self::AttributionConflict => __('attribution conflict'),
+            self::Unattributable => __('unattributable addon asset'),
+            self::Foreign => __('not created by this addon'),
+            self::ProxyInFlight => __('placeholder clip still in flight'),
+            self::ExpiredProxy => __('expired placeholder clip'),
+            self::OrphanedProxy => __('placeholder parent is gone'),
+        };
+    }
+
+    protected function localAction(): ReconciliationAction
+    {
+        return match ($this) {
+            self::Linked => ReconciliationAction::Keep,
+            self::Upload => ReconciliationAction::Upload,
+            self::Reupload => ReconciliationAction::Reupload,
+            self::Unlinked, self::ProxySource => ReconciliationAction::Relink,
+            self::MediaMismatch, self::NonReadyLinked, self::UnknownStatus => ReconciliationAction::Hold,
+            self::Preparing => ReconciliationAction::Skip,
+            default => throw new LogicException("Reconciliation state [{$this->value}] cannot occur on the local side."),
+        };
+    }
+
+    protected function remoteAction(): ReconciliationAction
+    {
+        return match ($this) {
+            self::Linked => ReconciliationAction::Keep,
+            self::Superseded, self::MissingSource, self::Unlinked, self::ProxySource,
+            self::Errored, self::UnmanagedSource, self::ExpiredProxy,
+            self::OrphanedProxy => ReconciliationAction::Prune,
+            self::SharedReference, self::AttributionConflict, self::MediaMismatch,
+            self::UnknownStatus => ReconciliationAction::Hold,
+            self::Foreign, self::Unattributable => ReconciliationAction::Ignore,
+            self::Preparing, self::ProxyInFlight => ReconciliationAction::Skip,
+            default => throw new LogicException("Reconciliation state [{$this->value}] cannot occur on the remote side."),
+        };
     }
 
     public function group(): string

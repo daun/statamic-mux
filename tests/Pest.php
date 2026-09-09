@@ -5,6 +5,7 @@ use Daun\StatamicMux\Mux\Reconciliation\LocalAssetRecord;
 use Daun\StatamicMux\Mux\Reconciliation\ReconciliationPlan;
 use Daun\StatamicMux\Mux\Reconciliation\RemoteAssetRecord;
 use Daun\StatamicMux\Mux\RemoteVideo;
+use Illuminate\Support\Facades\Artisan;
 use MuxPhp\Models\Asset;
 use Statamic\Facades\Role;
 use Statamic\Facades\User;
@@ -162,4 +163,21 @@ function muxPlan(array $locals = [], array $remotes = [], ?string $container = n
         collect($remotes),
         $container,
     );
+}
+
+/**
+ * Run a Mux command with `--json` and decode its single object.
+ *
+ * @return array<string, mixed>
+ */
+function muxCommandJson(string $command, array $arguments = []): array
+{
+    $code = Artisan::call($command, [...$arguments, '--json' => true]);
+    $output = trim(Artisan::output());
+    $json = json_decode($output, true);
+
+    expect($json)->toBeArray("Expected one JSON object from {$command}, got: {$output}");
+    expect($json['exit_code'])->toBe($code);
+
+    return $json;
 }
