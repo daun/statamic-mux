@@ -2,6 +2,7 @@
 
 namespace Daun\StatamicMux\Concerns;
 
+use Daun\StatamicMux\Support\Attribution;
 use Statamic\Assets\Asset;
 
 trait GeneratesAssetData
@@ -38,7 +39,7 @@ trait GeneratesAssetData
     {
         $meta = [
             'title' => $asset->title(),
-            'creator_id' => 'statamic-mux',
+            'creator_id' => Attribution::CREATOR_ID,
             'external_id' => $asset->id(),
         ];
 

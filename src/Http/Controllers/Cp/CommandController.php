@@ -40,10 +40,11 @@ class CommandController extends Controller
 
         if (MuxQueue::isSync()) {
             $status = 'called';
-            Artisan::call($definition['command']);
+            // The CP never renders ANSI: keep the command output plain.
+            Artisan::call($definition['command'], ['--no-ansi' => true]);
         } else {
             $status = 'dispatched';
-            Artisan::queue($definition['command'])
+            Artisan::queue($definition['command'], ['--no-ansi' => true])
                 ->onConnection(MuxQueue::connection())
                 ->onQueue(MuxQueue::queue());
         }

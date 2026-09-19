@@ -18,9 +18,6 @@ class RequestPlaybackId
         protected MuxService $service,
     ) {}
 
-    /**
-     * Request a new playback id for a video asset.
-     */
     public function handle(Asset $asset, ?MuxPlaybackPolicy $policy = null): ?MuxPlaybackId
     {
         if (! $this->shouldHandle($asset)) {
@@ -29,32 +26,15 @@ class RequestPlaybackId
 
         $muxId = $this->service->getMuxId($asset);
 
-        try {
-            if ($result = $this->get($muxId, $policy)) {
-                Log::info(
-                    'Reused existing playback id from Mux asset',
-                    ['asset' => $asset->id(), 'mux_id' => $muxId, 'playback_id' => $result->getId(), 'policy' => $result->getPolicy()],
-                );
-            } elseif ($result = $this->create($muxId, $policy)) {
-                Log::info(
-                    'Created new playback id for Mux asset',
-                    ['asset' => $asset->id(), 'mux_id' => $muxId, 'playback_id' => $result->getId(), 'policy' => $result->getPolicy()],
-                );
-            } else {
-                return null;
-            }
-        } catch (\Throwable $th) {
-            Log::error(
-                "Error generating playback id for Mux asset: {$th->getMessage()}",
-                ['asset' => $asset->id(), 'mux_id' => $muxId, 'exception' => $th],
-            );
+        $result = $this->request($muxId, $policy, ['asset' => $asset->id()]);
 
-            throw new \Exception("Error generating playback id for Mux asset: {$th->getMessage()}", previous: $th);
+        if (! $result) {
+            return null;
         }
 
         try {
             $muxAsset = MuxAsset::fromAsset($asset);
-            $playbackId = $muxAsset->addPlaybackId($result->getId(), (string) $result->getPolicy());
+            $playbackId = $muxAsset->addPlaybackId($result->id(), $result->policy());
             $muxAsset->save();
         } catch (\Throwable $th) {
             Log::error(
@@ -64,6 +44,38 @@ class RequestPlaybackId
         }
 
         return $playbackId ?? null;
+    }
+
+    public function request(?string $muxId, ?MuxPlaybackPolicy $policy = null, array $context = []): ?MuxPlaybackId
+    {
+        if (! $muxId) {
+            return null;
+        }
+
+        try {
+            if ($result = $this->get($muxId, $policy)) {
+                Log::info(
+                    'Reused existing playback id from Mux asset',
+                    [...$context, 'mux_id' => $muxId, 'playback_id' => $result->getId(), 'policy' => $result->getPolicy()],
+                );
+            } elseif ($result = $this->create($muxId, $policy)) {
+                Log::info(
+                    'Created new playback id for Mux asset',
+                    [...$context, 'mux_id' => $muxId, 'playback_id' => $result->getId(), 'policy' => $result->getPolicy()],
+                );
+            } else {
+                return null;
+            }
+        } catch (\Throwable $th) {
+            Log::error(
+                "Error generating playback id for Mux asset: {$th->getMessage()}",
+                [...$context, 'mux_id' => $muxId, 'exception' => $th],
+            );
+
+            throw new \Exception("Error generating playback id for Mux asset: {$th->getMessage()}", previous: $th);
+        }
+
+        return MuxPlaybackId::make($result->getId(), (string) $result->getPolicy());
     }
 
     /**

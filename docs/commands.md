@@ -8,7 +8,44 @@ no-op and returns a success message.
 
 | Command | Description |
 |-------|-----------|
-| [**`mux:upload`**](/commands/mux-upload) | Upload local video assets to Mux |
+| [**`mux:mirror`**](/commands/mux-mirror) | Upload, prune and relink in a single operation |
+| [**`mux:upload`**](/commands/mux-upload) | Upload local videos to Mux |
 | [**`mux:prune`**](/commands/mux-prune) | Remove orphaned videos from Mux |
-| [**`mux:mirror`**](/commands/mux-mirror) | Upload local videos to Mux & remove orphaned Mux videos |
+| [**`mux:relink`**](/commands/mux-relink) | Reconnect local videos to existing videos on Mux |
 | [**`mux:debug`**](/commands/mux-debug) | Debug Mux configuration and setup |
+
+## Output
+
+### Verbosity
+
+Every command accepts a `-v` flag to control verbosity.
+
+| Flag | Output |
+| --- | --- |
+| `-q` | Nothing. The exit code is the result. |
+| (default) | Advisories, plan and summary. No per-record lines. |
+| `-v` | Lists every affected record with reason and status. |
+| `-vv` | Adds full Mux IDs, candidate comparisons, resolutions and statuses. |
+
+### JSON {#json-output}
+
+Every command accepts `--json` to write a single object to stdout.
+
+```json
+{
+  "command": "mux:mirror",
+  "dry_run": true,
+  "tense": "planned",
+  "scope": { "containers": ["videos"], "locals": 11, "remotes": 453 },
+  "context": { "Queue": "redis (background)" },
+  "plan": { "relink": 0, "upload": 3, "re-upload": 0, "prune": 442, "keep": 8, "hold": 0, "ignore": 3, "skip": 7 },
+  "records": [
+    { "action": "upload", "id": "videos::trailer.mp4", "state": "upload", "reason": null }
+  ],
+  "advisories": [
+    { "level": "warn", "code": "proxy-source-conflict", "records": ["videos::trailer.mp4"] }
+  ],
+  "failures": [],
+  "exit_code": 0
+}
+```

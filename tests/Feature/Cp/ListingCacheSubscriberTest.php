@@ -1,10 +1,13 @@
 <?php
 
 use Daun\StatamicMux\Data\MuxPlaybackId;
+use Daun\StatamicMux\Events\AssetRelinkedToMux;
 use Daun\StatamicMux\Events\AssetUploadedToMux;
 use Daun\StatamicMux\Http\Controllers\Cp\ListingReconciler;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
+use Daun\StatamicMux\Mux\Reconciler;
+use Daun\StatamicMux\Mux\RemoteAssetCache;
 use Daun\StatamicMux\Subscribers\ListingCacheSubscriber;
 use Daun\StatamicMux\Thumbnails\ThumbnailService;
 use Illuminate\Support\Facades\Cache;
@@ -62,7 +65,8 @@ beforeEach(function () {
     $this->app->instance(MuxService::class, $muxService);
     $this->app->instance('mux.service', $muxService);
 
-    $this->reconciler = new ListingReconciler($muxApi, $muxService, $thumbnails);
+    $this->cache = new RemoteAssetCache($muxApi);
+    $this->reconciler = new ListingReconciler($muxApi, $muxService, $thumbnails, $this->cache, $this->app->make(Reconciler::class));
 });
 
 test('subscriber listens to AssetUploadedToMux', function () {
@@ -74,7 +78,7 @@ test('subscriber listens to AssetUploadedToMux', function () {
 
 test('dispatching AssetUploadedToMux invalidates remote listing cache', function () {
     // Populate cache
-    $this->reconciler->getCachedRemoteAssets();
+    $this->cache->get();
     expect(Cache::has('mux.remote_assets'))->toBeTrue();
     expect(Cache::has('mux.remote_assets.valid'))->toBeTrue();
 
@@ -86,12 +90,33 @@ test('dispatching AssetUploadedToMux invalidates remote listing cache', function
     expect(Cache::has('mux.remote_assets'))->toBeTrue();
 });
 
-test('invalidateRemoteAssets clears validity key without refetching', function () {
+test('subscriber listens to AssetRelinkedToMux', function () {
+    $subscriber = $this->app->make(ListingCacheSubscriber::class);
+    $events = $subscriber->subscribe();
+
+    expect($events)->toHaveKey(AssetRelinkedToMux::class);
+});
+
+test('dispatching AssetRelinkedToMux invalidates remote listing cache', function () {
     // Populate cache
-    $this->reconciler->getCachedRemoteAssets();
+    $this->cache->get();
+    expect(Cache::has('mux.remote_assets'))->toBeTrue();
     expect(Cache::has('mux.remote_assets.valid'))->toBeTrue();
 
-    $this->reconciler->invalidateRemoteAssets();
+    // Dispatch event
+    AssetRelinkedToMux::dispatch($this->mp4, 'mux-asset-relinked');
+
+    // Validity key gone, data still cached
+    expect(Cache::has('mux.remote_assets.valid'))->toBeFalse();
+    expect(Cache::has('mux.remote_assets'))->toBeTrue();
+});
+
+test('invalidateRemoteAssets clears validity key without refetching', function () {
+    // Populate cache
+    $this->cache->get();
+    expect(Cache::has('mux.remote_assets.valid'))->toBeTrue();
+
+    $this->cache->invalidate();
 
     expect(Cache::has('mux.remote_assets.valid'))->toBeFalse();
     expect(Cache::has('mux.remote_assets'))->toBeTrue();

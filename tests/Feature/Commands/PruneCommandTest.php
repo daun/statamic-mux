@@ -2,407 +2,247 @@
 
 use Daun\StatamicMux\Commands\PruneCommand;
 use Daun\StatamicMux\Jobs\DeleteMuxAssetJob;
+use Daun\StatamicMux\Mux\Enums\ReconciliationState;
 use Daun\StatamicMux\Mux\MuxService;
+use Daun\StatamicMux\Mux\Reconciler;
+use Daun\StatamicMux\Mux\RemoteAssetCache;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Queue;
 use Statamic\Facades\Stache;
 
 beforeEach(function () {
     Stache::clear();
-
-    config(['mux.credentials.token_id' => 'test-token-id']);
-    config(['mux.credentials.token_secret' => 'test-token-secret']);
-    config(['mux.mirror.enabled' => true]);
-    config(['queue.default' => 'sync']);
+    config([
+        'mux.credentials.token_id' => 'test-token-id',
+        'mux.credentials.token_secret' => 'test-token-secret',
+        'mux.mirror.enabled' => false,
+        'queue.default' => 'database',
+    ]);
+    $this->createAssetContainer('videos');
+    $this->addMirrorFieldToAssetBlueprint(container: 'videos');
 });
 
-// Configuration validation tests
+function bindPrunePlan(array $remotes, ?string $container = null): array
+{
+    config(['mux.mirror.enabled' => true]);
+    $reconciler = Mockery::mock(Reconciler::class);
+    $reconciler->shouldReceive('plan')->with($container)->once()->andReturn(muxPlan([], $remotes, $container));
+    app()->instance(Reconciler::class, $reconciler);
 
-it('shows error when mux is not configured', function () {
-    config(['mux.credentials.token_id' => null]);
-    config(['mux.credentials.token_secret' => null]);
+    $service = Mockery::mock(MuxService::class);
+    $service->shouldReceive('configured')->andReturn(true);
+    app()->instance(MuxService::class, $service);
+
+    $cache = Mockery::mock(RemoteAssetCache::class);
+    app()->instance(RemoteAssetCache::class, $cache);
+
+    return [$service, $cache];
+}
+
+it('returns failure for missing configuration and a disabled mirror', function (array $config, string $message) {
+    config($config);
 
     $this->artisan(PruneCommand::class)
-        ->expectsOutput('Mux is not configured. Please add valid Mux credentials in your .env file.')
-        ->assertSuccessful();
-});
+        ->expectsOutputToContain($message)
+        ->assertFailed();
+})->with([
+    [['mux.credentials.token_id' => null, 'mux.credentials.token_secret' => null], 'Mux is not configured'],
+    [['mux.mirror.enabled' => false], 'mirror feature is currently disabled'],
+]);
 
-it('shows error when mirror feature is disabled', function () {
+it('emits one json object when the mirror feature is disabled', function () {
     config(['mux.mirror.enabled' => false]);
 
-    $this->artisan(PruneCommand::class)
-        ->expectsOutput('The mirror feature is currently disabled.')
-        ->assertSuccessful();
+    $json = muxCommandJson('mux:prune');
+
+    expect($json['exit_code'])->toBe(1);
+    expect($json['failures'][0])->toBe([
+        'action' => null,
+        'id' => null,
+        'error' => 'The mirror feature is currently disabled.',
+    ]);
+    expect($json['plan']['prune'])->toBe(0);
 });
 
-// No videos scenarios
-
-it('shows message when no videos found on Mux', function () {
-    $service = Mockery::mock(MuxService::class);
-    $service->shouldReceive('configured')->andReturn(true);
-    $service->shouldReceive('listMuxAssets')->andReturn(collect([]));
-    app()->instance(MuxService::class, $service);
-
-    $this->artisan(PruneCommand::class)
-        ->expectsOutput('No videos found on Mux')
-        ->assertSuccessful();
-});
-
-// Prune scenarios
-
-it('removes orphaned videos from Mux', function () {
+it('warns about unlinked live files and queues their deletion', function () {
     Queue::fake();
-
-    $this->createAssetContainer('videos');
-    $this->addMirrorFieldToAssetBlueprint(container: 'videos');
-
-    $localVideo = $this->uploadTestFileToTestContainer('test.mp4', container: 'videos');
-    $localVideo->set('mux', ['id' => 'local-mux-id']);
-    $localVideo->save();
-
-    $service = Mockery::mock(MuxService::class);
-    $service->shouldReceive('configured')->andReturn(true);
-    $service->shouldReceive('listMuxAssets')->andReturn(collect([
-        (object) ['id' => 'local-mux-id'],
-        (object) ['id' => 'orphan-mux-id'],
-    ]));
-    $service->shouldReceive('getMuxId')->andReturnUsing(function ($asset) {
-        return $asset->get('mux')['id'] ?? null;
-    });
-    app()->instance(MuxService::class, $service);
-
-    config(['queue.default' => 'database']);
+    $video = $this->uploadTestFileToTestContainer('test.mp4', container: 'videos');
+    bindPrunePlan([
+        muxRemoteRecord('mux-one', ReconciliationState::Unlinked, $video),
+        muxRemoteRecord('mux-two', ReconciliationState::Unlinked, $video),
+    ]);
 
     $this->artisan(PruneCommand::class)
-        ->expectsOutputToContain('Queued removal of orphan-mux-id')
-        ->expectsOutputToContain('Keeping local-mux-id')
-        ->expectsOutputToContain('✓ Queued 1 videos for removal, kept 1 videos')
+        ->expectsOutputToContain('2 orphans are the only Mux encoding')
+        ->expectsOutputToContain($video->id())
+        ->expectsOutputToContain('php artisan mux:relink')
+        ->expectsOutputToContain('2 unlinked encodings were queued for removal')
+        ->expectsOutputToContain('Prune complete — 2 queued for removal.')
         ->assertSuccessful();
 
-    Queue::assertPushed(DeleteMuxAssetJob::class, function ($job) {
-        $class = new ReflectionClass($job);
-        $asset = $class->getProperty('asset')->getValue($job);
-
-        return $asset === 'orphan-mux-id';
-    });
+    Queue::assertPushed(DeleteMuxAssetJob::class, 2);
 });
 
-it('removes orphaned videos in sync mode', function () {
+it('keeps unsafe ownership states out of removal counts', function () {
     Queue::fake();
+    bindPrunePlan([
+        muxRemoteRecord('foreign', ReconciliationState::Foreign),
+        muxRemoteRecord('conflict', ReconciliationState::AttributionConflict),
+        muxRemoteRecord('unattributable', ReconciliationState::Unattributable),
+    ]);
 
-    $this->createAssetContainer('videos');
-    $this->addMirrorFieldToAssetBlueprint(container: 'videos');
+    $json = muxCommandJson('mux:prune', ['--dry-run' => true]);
 
-    $localVideo = $this->uploadTestFileToTestContainer('test.mp4', container: 'videos');
-    $localVideo->set('mux', ['id' => 'local-mux-id']);
-    $localVideo->save();
-
-    $service = Mockery::mock(MuxService::class);
-    $service->shouldReceive('configured')->andReturn(true);
-    $service->shouldReceive('listMuxAssets')->andReturn(collect([
-        (object) ['id' => 'local-mux-id'],
-        (object) ['id' => 'orphan-mux-id'],
-    ]));
-    $service->shouldReceive('getMuxId')->andReturnUsing(function ($asset) {
-        return $asset->get('mux')['id'] ?? null;
-    });
-    $service->shouldReceive('deleteMuxAsset')->with('orphan-mux-id')->once();
-    app()->instance(MuxService::class, $service);
-
-    config(['queue.default' => 'sync']);
-
-    $this->artisan(PruneCommand::class)
-        ->expectsOutputToContain('Removed orphan-mux-id')
-        ->expectsOutputToContain('Keeping local-mux-id')
-        ->expectsOutputToContain('✓ Removed 1 videos, kept 1 videos')
-        ->assertSuccessful();
+    expect($json['plan']['prune'])->toBe(0);
+    expect($json['plan']['ignore'])->toBe(2);
+    expect($json['plan']['hold'])->toBe(1);
 
     Queue::assertNotPushed(DeleteMuxAssetJob::class);
 });
 
-it('keeps all videos when no orphans found', function () {
+it('omits zero-count buckets from the plan block', function () {
     Queue::fake();
-
-    $this->createAssetContainer('videos');
-    $this->addMirrorFieldToAssetBlueprint(container: 'videos');
-
-    $localVideo1 = $this->uploadTestFileToTestContainer('test.mp4', 'video1.mp4', container: 'videos');
-    $localVideo1->set('mux', ['id' => 'mux-id-1']);
-    $localVideo1->save();
-
-    $localVideo2 = $this->uploadTestFileToTestContainer('test.mp4', 'video2.mp4', container: 'videos');
-    $localVideo2->set('mux', ['id' => 'mux-id-2']);
-    $localVideo2->save();
-
-    $service = Mockery::mock(MuxService::class);
-    $service->shouldReceive('configured')->andReturn(true);
-    $service->shouldReceive('listMuxAssets')->andReturn(collect([
-        (object) ['id' => 'mux-id-1'],
-        (object) ['id' => 'mux-id-2'],
-    ]));
-    $service->shouldReceive('getMuxId')->andReturnUsing(function ($asset) {
-        return $asset->get('mux')['id'] ?? null;
-    });
-    $service->shouldNotReceive('deleteMuxAsset');
-    app()->instance(MuxService::class, $service);
-
-    config(['queue.default' => 'sync']);
-
-    $this->artisan(PruneCommand::class)
-        ->expectsOutputToContain('Keeping mux-id-1')
-        ->expectsOutputToContain('Keeping mux-id-2')
-        ->expectsOutputToContain('✓ Removed 0 videos, kept 2 videos')
-        ->assertSuccessful();
-
-    Queue::assertNotPushed(DeleteMuxAssetJob::class);
-});
-
-it('removes multiple orphaned videos', function () {
-    Queue::fake();
-
-    $this->createAssetContainer('videos');
-    $this->addMirrorFieldToAssetBlueprint(container: 'videos');
-
-    $localVideo = $this->uploadTestFileToTestContainer('test.mp4', container: 'videos');
-    $localVideo->set('mux', ['id' => 'local-mux-id']);
-    $localVideo->save();
-
-    $service = Mockery::mock(MuxService::class);
-    $service->shouldReceive('configured')->andReturn(true);
-    $service->shouldReceive('listMuxAssets')->andReturn(collect([
-        (object) ['id' => 'local-mux-id'],
-        (object) ['id' => 'orphan-1'],
-        (object) ['id' => 'orphan-2'],
-        (object) ['id' => 'orphan-3'],
-    ]));
-    $service->shouldReceive('getMuxId')->andReturnUsing(function ($asset) {
-        return $asset->get('mux')['id'] ?? null;
-    });
-    $service->shouldReceive('deleteMuxAsset')->times(3);
-    app()->instance(MuxService::class, $service);
-
-    config(['queue.default' => 'sync']);
-
-    $this->artisan(PruneCommand::class)
-        ->expectsOutputToContain('Removed orphan-1')
-        ->expectsOutputToContain('Removed orphan-2')
-        ->expectsOutputToContain('Removed orphan-3')
-        ->expectsOutputToContain('Keeping local-mux-id')
-        ->expectsOutputToContain('✓ Removed 3 videos, kept 1 videos')
-        ->assertSuccessful();
-
-    Queue::assertNotPushed(DeleteMuxAssetJob::class);
-});
-
-// Dry-run tests
-
-it('performs dry-run without removing videos', function () {
-    Queue::fake();
-
-    $this->createAssetContainer('videos');
-    $this->addMirrorFieldToAssetBlueprint(container: 'videos');
-
-    $localVideo = $this->uploadTestFileToTestContainer('test.mp4', container: 'videos');
-    $localVideo->set('mux', ['id' => 'local-mux-id']);
-    $localVideo->save();
-
-    $service = Mockery::mock(MuxService::class);
-    $service->shouldReceive('configured')->andReturn(true);
-    $service->shouldReceive('listMuxAssets')->andReturn(collect([
-        (object) ['id' => 'local-mux-id'],
-        (object) ['id' => 'orphan-mux-id'],
-    ]));
-    $service->shouldReceive('getMuxId')->andReturnUsing(function ($asset) {
-        return $asset->get('mux')['id'] ?? null;
-    });
-    $service->shouldNotReceive('deleteMuxAsset');
-    app()->instance(MuxService::class, $service);
-
-    config(['queue.default' => 'database']);
+    bindPrunePlan([muxRemoteRecord('foreign', ReconciliationState::Foreign)]);
 
     $this->artisan(PruneCommand::class, ['--dry-run' => true])
-        ->expectsOutput('Performing dry run: no videos will be deleted')
-        ->expectsOutputToContain('Would remove orphan-mux-id')
-        ->expectsOutputToContain('Would keep local-mux-id')
-        ->expectsOutputToContain('✓ Would have removed 1 videos, kept 1 videos')
+        ->expectsOutputToContain('not created by this addon')
+        ->expectsOutputToContain('1 ignored pending.')
+        ->doesntExpectOutputToContain('keep')
+        ->doesntExpectOutputToContain('hold')
+        ->doesntExpectOutputToContain('skip')
+        ->assertSuccessful();
+});
+
+it('keeps in-flight proxy placeholders and prunes expired ones', function () {
+    Queue::fake();
+    bindPrunePlan([
+        muxRemoteRecord('in-flight', ReconciliationState::ProxyInFlight),
+        muxRemoteRecord('expired', ReconciliationState::ExpiredProxy),
+        muxRemoteRecord('orphaned', ReconciliationState::OrphanedProxy),
+    ]);
+
+    $this->artisan(PruneCommand::class)
+        ->expectsOutputToContain('2 queued for removal')
+        ->doesntExpectOutputToContain('in-flight')
+        ->assertSuccessful();
+
+    Queue::assertPushed(DeleteMuxAssetJob::class, 2);
+});
+
+it('reports in-flight placeholders in json but never in human output', function () {
+    Queue::fake();
+    bindPrunePlan([muxRemoteRecord('in-flight', ReconciliationState::ProxyInFlight)]);
+
+    $json = muxCommandJson('mux:prune', ['-vv' => true]);
+
+    expect($json['plan']['skip'])->toBe(1);
+    expect($json['records'])->toBe([[
+        'action' => 'skip',
+        'id' => 'in-flight',
+        'state' => 'proxy-in-flight',
+        'reason' => null,
+    ]]);
+});
+
+it('prunes safe groups synchronously', function () {
+    config(['queue.default' => 'sync']);
+    $video = $this->uploadTestFileToTestContainer('test.mp4', container: 'videos');
+    $record = muxRemoteRecord('old-mux', ReconciliationState::Superseded, $video);
+    [$service] = bindPrunePlan([$record]);
+    $service->shouldReceive('deleteMuxAsset')->with($record->remote->asset())->once()->andReturnTrue();
+
+    $this->artisan(PruneCommand::class, ['-v' => true])
+        ->expectsOutputToContain('PRUNED')
+        ->expectsOutputToContain('Prune complete — 1 pruned.')
+        ->assertSuccessful();
+});
+
+it('identifies the pruned encoding in json', function () {
+    config(['queue.default' => 'sync']);
+    $video = $this->uploadTestFileToTestContainer('test.mp4', container: 'videos');
+    $record = muxRemoteRecord('old-mux', ReconciliationState::Superseded, $video);
+    [$service] = bindPrunePlan([$record]);
+    $service->shouldReceive('deleteMuxAsset')->with($record->remote->asset())->once()->andReturnTrue();
+
+    $json = muxCommandJson('mux:prune', ['-vv' => true]);
+
+    expect($json['exit_code'])->toBe(0);
+    expect($json['plan']['prune'])->toBe(1);
+    expect($json['records'][0]['action'])->toBe('prune');
+    expect($json['records'][0]['id'])->toBe('old-mux');
+});
+
+it('reports failure when a synchronous delete fails', function () {
+    config(['queue.default' => 'sync']);
+    $record = muxRemoteRecord('stuck', ReconciliationState::MissingSource, attributes: ['attributedAssetId' => 'gone::file.mp4']);
+    [$service] = bindPrunePlan([$record]);
+    $service->shouldReceive('deleteMuxAsset')->once()->andReturnFalse();
+
+    $this->artisan(PruneCommand::class)
+        ->expectsOutputToContain('The Mux asset could not be deleted')
+        ->expectsOutputToContain('Prune finished with 1 failure')
+        ->assertFailed();
+});
+
+it('holds unscopable remote assets when container filtered', function () {
+    Queue::fake();
+    $container = $this->getAssetContainer('videos')->handle();
+    bindPrunePlan([
+        muxRemoteRecord('gone', ReconciliationState::MissingSource, attributes: ['attributedAssetId' => 'gone::file.mp4']),
+    ], $container);
+
+    $this->artisan(PruneCommand::class, ['--container' => $container])
+        ->expectsOutputToContain("could not be scoped to --container={$container}")
+        ->expectsOutputToContain('No assets found.')
         ->assertSuccessful();
 
     Queue::assertNotPushed(DeleteMuxAssetJob::class);
 });
 
-it('shows dry-run output for multiple orphans', function () {
+it('dry run never queues or deletes assets', function () {
     Queue::fake();
-
-    $this->createAssetContainer('videos');
-    $this->addMirrorFieldToAssetBlueprint(container: 'videos');
-
-    $service = Mockery::mock(MuxService::class);
-    $service->shouldReceive('configured')->andReturn(true);
-    $service->shouldReceive('listMuxAssets')->andReturn(collect([
-        (object) ['id' => 'orphan-1'],
-        (object) ['id' => 'orphan-2'],
-    ]));
+    $record = muxRemoteRecord('gone', ReconciliationState::MissingSource, attributes: ['attributedAssetId' => 'gone::file.mp4']);
+    [$service] = bindPrunePlan([$record]);
     $service->shouldNotReceive('deleteMuxAsset');
-    app()->instance(MuxService::class, $service);
 
     $this->artisan(PruneCommand::class, ['--dry-run' => true])
-        ->expectsOutput('Performing dry run: no videos will be deleted')
-        ->expectsOutputToContain('Would remove orphan-1')
-        ->expectsOutputToContain('Would remove orphan-2')
-        ->expectsOutputToContain('✓ Would have removed 2 videos, kept 0 videos')
+        ->expectsOutputToContain('Dry run')
+        ->expectsOutputToContain('local asset no longer exists')
+        ->expectsOutputToContain('1 prune pending.')
         ->assertSuccessful();
 
     Queue::assertNotPushed(DeleteMuxAssetJob::class);
 });
 
-it('shows dry-run output when no orphans found', function () {
+it('renders multiple prune reasons on separate plan rows', function () {
     Queue::fake();
-
-    $this->createAssetContainer('videos');
-    $this->addMirrorFieldToAssetBlueprint(container: 'videos');
-
-    $localVideo = $this->uploadTestFileToTestContainer('test.mp4', container: 'videos');
-    $localVideo->set('mux', ['id' => 'local-mux-id']);
-    $localVideo->save();
-
-    $service = Mockery::mock(MuxService::class);
-    $service->shouldReceive('configured')->andReturn(true);
-    $service->shouldReceive('listMuxAssets')->andReturn(collect([
-        (object) ['id' => 'local-mux-id'],
-    ]));
-    $service->shouldReceive('getMuxId')->andReturnUsing(function ($asset) {
-        return $asset->get('mux')['id'] ?? null;
-    });
-    app()->instance(MuxService::class, $service);
+    bindPrunePlan([
+        muxRemoteRecord('a', ReconciliationState::Superseded),
+        muxRemoteRecord('b', ReconciliationState::Superseded),
+        muxRemoteRecord('c', ReconciliationState::MissingSource),
+    ]);
 
     $this->artisan(PruneCommand::class, ['--dry-run' => true])
-        ->expectsOutput('Performing dry run: no videos will be deleted')
-        ->expectsOutputToContain('Would keep local-mux-id')
-        ->expectsOutputToContain('✓ Would have removed 0 videos, kept 1 videos')
+        ->expectsOutputToContain('superseded by a newer upload')
+        ->expectsOutputToContain('local asset no longer exists')
+        ->doesntExpectOutputToContain(' · ')
         ->assertSuccessful();
-
-    Queue::assertNotPushed(DeleteMuxAssetJob::class);
 });
 
-// Proxy asset scenarios
-
-it('keeps in-flight proxy assets younger than the grace period', function () {
+it('prints nothing when quiet', function () {
     Queue::fake();
+    bindPrunePlan([muxRemoteRecord('gone', ReconciliationState::MissingSource)]);
 
-    $this->createAssetContainer('videos');
-    $this->addMirrorFieldToAssetBlueprint(container: 'videos');
+    Artisan::call('mux:prune', ['--dry-run' => true, '-q' => true]);
 
-    $localVideo = $this->uploadTestFileToTestContainer('test.mp4', container: 'videos');
-    $localVideo->set('mux', ['id' => 'local-mux-id']);
-    $localVideo->save();
-
-    $service = Mockery::mock(MuxService::class);
-    $service->shouldReceive('configured')->andReturn(true);
-    $service->shouldReceive('listMuxAssets')->andReturn(collect([
-        (object) ['id' => 'local-mux-id'],
-        (object) [
-            'id' => 'proxy-mux-id',
-            'passthrough' => 'statamic-proxy::local-mux-id',
-            'created_at' => (string) now()->subHours(2)->timestamp,
-        ],
-    ]));
-    $service->shouldReceive('getMuxId')->andReturnUsing(function ($asset) {
-        return $asset->get('mux')['id'] ?? null;
-    });
-    $service->shouldNotReceive('deleteMuxAsset');
-    app()->instance(MuxService::class, $service);
-
-    config(['queue.default' => 'sync']);
-
-    $this->artisan(PruneCommand::class)
-        ->expectsOutputToContain('Skipping in-flight proxy proxy-mux-id')
-        ->expectsOutputToContain('Keeping local-mux-id')
-        ->expectsOutputToContain('✓ Removed 0 videos, kept 1 videos')
-        ->assertSuccessful();
-
-    Queue::assertNotPushed(DeleteMuxAssetJob::class);
+    expect(Artisan::output())->toBe('');
 });
-
-it('removes proxy assets older than the grace period', function () {
-    Queue::fake();
-
-    $this->createAssetContainer('videos');
-    $this->addMirrorFieldToAssetBlueprint(container: 'videos');
-
-    $localVideo = $this->uploadTestFileToTestContainer('test.mp4', container: 'videos');
-    $localVideo->set('mux', ['id' => 'local-mux-id']);
-    $localVideo->save();
-
-    $service = Mockery::mock(MuxService::class);
-    $service->shouldReceive('configured')->andReturn(true);
-    $service->shouldReceive('listMuxAssets')->andReturn(collect([
-        (object) ['id' => 'local-mux-id'],
-        (object) [
-            'id' => 'proxy-mux-id',
-            'passthrough' => 'statamic-proxy::local-mux-id',
-            'created_at' => (string) now()->subHours(48)->timestamp,
-        ],
-    ]));
-    $service->shouldReceive('getMuxId')->andReturnUsing(function ($asset) {
-        return $asset->get('mux')['id'] ?? null;
-    });
-    $service->shouldReceive('deleteMuxAsset')->with('proxy-mux-id')->once();
-    app()->instance(MuxService::class, $service);
-
-    config(['queue.default' => 'sync']);
-
-    $this->artisan(PruneCommand::class)
-        ->expectsOutputToContain('Removed proxy-mux-id')
-        ->expectsOutputToContain('Keeping local-mux-id')
-        ->expectsOutputToContain('✓ Removed 1 videos, kept 1 videos')
-        ->assertSuccessful();
-
-    Queue::assertNotPushed(DeleteMuxAssetJob::class);
-});
-
-it('removes non-proxy orphans regardless of age', function () {
-    Queue::fake();
-
-    $this->createAssetContainer('videos');
-    $this->addMirrorFieldToAssetBlueprint(container: 'videos');
-
-    $localVideo = $this->uploadTestFileToTestContainer('test.mp4', container: 'videos');
-    $localVideo->set('mux', ['id' => 'local-mux-id']);
-    $localVideo->save();
-
-    $service = Mockery::mock(MuxService::class);
-    $service->shouldReceive('configured')->andReturn(true);
-    $service->shouldReceive('listMuxAssets')->andReturn(collect([
-        (object) ['id' => 'local-mux-id'],
-        (object) [
-            'id' => 'orphan-mux-id',
-            'passthrough' => 'statamic::local-asset-id',
-            'created_at' => (string) now()->subMinutes(5)->timestamp,
-        ],
-    ]));
-    $service->shouldReceive('getMuxId')->andReturnUsing(function ($asset) {
-        return $asset->get('mux')['id'] ?? null;
-    });
-    $service->shouldReceive('deleteMuxAsset')->with('orphan-mux-id')->once();
-    app()->instance(MuxService::class, $service);
-
-    config(['queue.default' => 'sync']);
-
-    $this->artisan(PruneCommand::class)
-        ->expectsOutputToContain('Removed orphan-mux-id')
-        ->expectsOutputToContain('✓ Removed 1 videos, kept 1 videos')
-        ->assertSuccessful();
-
-    Queue::assertNotPushed(DeleteMuxAssetJob::class);
-});
-
-// Command name test
 
 it('can be called by command name', function () {
-    $service = Mockery::mock(MuxService::class);
-    $service->shouldReceive('configured')->andReturn(true);
-    $service->shouldReceive('listMuxAssets')->andReturn(collect([]));
-    app()->instance(MuxService::class, $service);
+    Queue::fake();
+    bindPrunePlan([]);
 
-    $this->artisan('mux:prune')
+    $this->artisan('mux:prune', ['--dry-run' => true])
+        ->expectsOutputToContain('No assets found.')
         ->assertSuccessful();
 });

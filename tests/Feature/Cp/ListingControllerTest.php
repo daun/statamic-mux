@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Queue;
 use MuxPhp\Api\AssetsApi;
 use MuxPhp\ApiException;
 use MuxPhp\Models\Asset;
+use MuxPhp\Models\AssetMetadata;
 use MuxPhp\Models\PlaybackID;
 use Statamic\Exceptions\AuthorizationException;
 use Statamic\Facades\CP\Nav;
@@ -52,8 +53,10 @@ beforeEach(function () {
     $remoteAsset->shouldReceive('getTest')->andReturn(false);
     $remoteAsset->shouldReceive('getCreatedAt')->andReturn('1717200000');
     $remoteAsset->shouldReceive('getAspectRatio')->andReturn('16:9');
-    $meta = Mockery::mock();
+    $meta = Mockery::mock(AssetMetadata::class);
     $meta->shouldReceive('getTitle')->andReturn('Test Video');
+    $meta->shouldReceive('getCreatorId')->andReturn(null);
+    $meta->shouldReceive('getExternalId')->andReturn(null);
     $remoteAsset->shouldReceive('getMeta')->andReturn($meta);
     $playbackId = Mockery::mock(PlaybackID::class);
     $playbackId->shouldReceive('getId')->andReturn('playback-mux-asset-001');
@@ -411,7 +414,7 @@ test('remote api includes filter definitions', function () {
     expect($json['meta']['filters'])->not->toBeEmpty();
     $handles = collect($json['meta']['filters'])->pluck('handle')->toArray();
     expect($handles)->toContain('processing_status');
-    expect($handles)->toContain('match_status');
+    expect($handles)->toContain('match_group');
     expect($handles)->toContain('resolution_tier');
     expect($handles)->toContain('is_test');
 });
@@ -508,7 +511,7 @@ test('listing endpoints tolerate malformed query params', function (string $meth
 ]);
 
 test('remote api parses filters parameter', function () {
-    $filters = base64_encode(json_encode(['match_status' => 'mirrored', 'is_test' => '0'], JSON_THROW_ON_ERROR));
+    $filters = base64_encode(json_encode(['match_status' => 'linked', 'is_test' => '0'], JSON_THROW_ON_ERROR));
 
     $controller = $this->app->make(ApiListingController::class);
     $request = Request::create('/mux/listing/remote', 'GET', ['filters' => $filters]);
@@ -517,5 +520,5 @@ test('remote api parses filters parameter', function () {
 
     expect($response->getStatusCode())->toBe(200);
     expect($json['data'])->toHaveCount(1);
-    expect($json['data'][0]['match_status'])->toBe('mirrored');
+    expect($json['data'][0]['match_status'])->toBe('linked');
 });

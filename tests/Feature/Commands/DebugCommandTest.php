@@ -1,158 +1,180 @@
 <?php
 
 use Daun\StatamicMux\Commands\DebugCommand;
+use Illuminate\Support\Facades\Artisan;
 use Statamic\Facades\Stache;
 
 beforeEach(function () {
     Stache::clear();
+    config([
+        'mux.credentials.token_id' => 'test-token-id',
+        'mux.credentials.token_secret' => 'test-token-secret',
+        'mux.mirror.enabled' => true,
+        'mux.queue.connection' => null,
+        'queue.default' => 'database',
+    ]);
 });
 
-it('warns about missing credentials', function () {
-    config(['mux.credentials.token_id' => null]);
-    config(['mux.credentials.token_secret' => null]);
+/** A container that is actually set up for mirroring. */
+$mirroredContainer = function (string $handle = 'videos'): string {
+    $this->createAssetContainer($handle);
+    $this->addMirrorFieldToAssetBlueprint(container: $handle);
+
+    return $this->getAssetContainer($handle)->handle();
+};
+
+it('succeeds and summarizes a healthy setup', function () use ($mirroredContainer) {
+    $mirroredContainer->call($this);
 
     $this->artisan(DebugCommand::class)
-        ->expectsOutput('✗ Mux is not configured. Please add valid Mux credentials in your .env file.')
+        ->expectsOutputToContain('Debug complete — the Mux setup looks good.')
         ->assertSuccessful();
 });
 
-it('confirms valid credentials are configured', function () {
-    config(['mux.credentials.token_id' => 'test-token-id']);
-    config(['mux.credentials.token_secret' => 'test-token-secret']);
+it('reports the setup as context rows', function () use ($mirroredContainer) {
+    $handle = $mirroredContainer->call($this);
 
-    $this->artisan(DebugCommand::class)
-        ->expectsOutputToContain('✓ Mux is configured with credentials')
-        ->assertSuccessful();
+    $json = muxCommandJson('mux:debug');
+
+    expect($json['exit_code'])->toBe(0);
+    expect($json['context'])->toBe([
+        'Credentials' => 'OK',
+        'Queue' => 'database (background)',
+        'Mirror feature' => 'ON',
+        'Containers' => $handle,
+        'Signed playback' => 'OFF',
+    ]);
+    expect($json['failures'])->toBe([]);
+    expect($json['advisories'])->toBe([]);
 });
 
-it('warns when queue is synchronous', function () {
+it('lists every mirroring container as context', function () use ($mirroredContainer) {
+    $videos = $mirroredContainer->call($this, 'videos');
+    $media = $mirroredContainer->call($this, 'media');
+    $this->createAssetContainer('images'); // without a mirror field
+
+    $json = muxCommandJson('mux:debug');
+
+    expect($json['context']['Containers'])->toContain($videos);
+    expect($json['context']['Containers'])->toContain($media);
+    expect($json['context']['Containers'])->not->toContain('images');
+});
+
+it('fails when the setup is broken', function (array $config, string $message) use ($mirroredContainer) {
+    $mirroredContainer->call($this);
+    config($config);
+
+    $this->artisan(DebugCommand::class)
+        ->expectsOutputToContain($message)
+        ->assertFailed();
+})->with([
+    'missing credentials' => [
+        ['mux.credentials.token_id' => null, 'mux.credentials.token_secret' => null],
+        'Mux is not configured',
+    ],
+    'partial credentials' => [
+        ['mux.credentials.token_secret' => null],
+        'Mux is not configured',
+    ],
+    'disabled mirror' => [
+        ['mux.mirror.enabled' => false],
+        'The mirror feature is globally disabled',
+    ],
+]);
+
+it('fails when no container is configured for mirroring', function () {
+    $this->createAssetContainer('images');
+
+    $this->artisan(DebugCommand::class)
+        ->expectsOutputToContain('No asset containers found to mirror')
+        ->assertFailed();
+});
+
+it('warns about a synchronous queue without failing a healthy setup', function () use ($mirroredContainer) {
+    $mirroredContainer->call($this);
     config(['queue.default' => 'sync']);
 
     $this->artisan(DebugCommand::class)
-        ->expectsOutputToContain('synchronous mode')
+        ->expectsOutputToContain('The queue is synchronous.')
         ->assertSuccessful();
 });
 
-it('confirms queue uses background worker', function () {
-    config(['queue.default' => 'database']);
+it('warns about a synchronous mux queue connection', function () use ($mirroredContainer) {
+    $mirroredContainer->call($this);
+    config(['queue.default' => 'database', 'mux.queue.connection' => 'sync']);
 
-    $this->artisan(DebugCommand::class)
-        ->expectsOutputToContain('✓ The queue is configured to use a background worker')
-        ->assertSuccessful();
+    $json = muxCommandJson('mux:debug');
+
+    expect($json['exit_code'])->toBe(0);
+    expect($json['context']['Queue'])->toBe('sync (not recommended)');
+    expect(collect($json['advisories'])->pluck('code'))->toContain('sync-queue');
 });
 
-it('respects custom mux queue connection', function () {
-    config(['queue.default' => 'database']);
-    config(['mux.queue.connection' => 'sync']);
+it('warns about signed playback without a signing key', function () use ($mirroredContainer) {
+    $mirroredContainer->call($this);
+    config([
+        'mux.playback_policy' => 'signed',
+        'mux.signing_key.key_id' => null,
+        'mux.signing_key.private_key' => null,
+    ]);
 
-    $this->artisan(DebugCommand::class)
-        ->expectsOutputToContain('✗ The queue is set to synchronous mode')
-        ->assertSuccessful();
+    $json = muxCommandJson('mux:debug');
+
+    expect($json['exit_code'])->toBe(0);
+    expect($json['context']['Signed playback'])->toBe('ON');
+    expect(collect($json['advisories'])->pluck('code'))->toContain('signing-key');
 });
 
-it('warns when mirror feature is globally disabled', function () {
-    config(['mux.mirror.enabled' => false]);
+it('emits one glyph-free json object on success', function () use ($mirroredContainer) {
+    $mirroredContainer->call($this);
 
-    $this->artisan(DebugCommand::class)
-        ->expectsOutputToContain('✗ The mirror feature is globally disabled from the config flag')
-        ->assertSuccessful();
+    Artisan::call('mux:debug', ['--json' => true]);
+    $output = trim(Artisan::output());
+
+    foreach (['✓', '✗', '⚠'] as $glyph) {
+        expect($output)->not->toContain($glyph);
+    }
+
+    $json = json_decode($output, true);
+    expect($json['command'])->toBe('mux:debug');
+    expect($json['exit_code'])->toBe(0);
+    expect($json['records'])->toBe([]);
+    expect($json['failures'])->toBe([]);
 });
 
-it('confirms mirror feature is globally enabled', function () {
-    config(['mux.mirror.enabled' => true]);
+it('emits one glyph-free json object listing every failed check', function () {
+    $this->createAssetContainer('images');
+    config([
+        'mux.credentials.token_id' => null,
+        'mux.credentials.token_secret' => null,
+        'mux.mirror.enabled' => false,
+        'queue.default' => 'sync',
+    ]);
 
-    $this->artisan(DebugCommand::class)
-        ->expectsOutputToContain('✓ The mirror feature is globally enabled')
-        ->assertSuccessful();
+    Artisan::call('mux:debug', ['--json' => true]);
+    $output = trim(Artisan::output());
+
+    foreach (['✓', '✗', '⚠'] as $glyph) {
+        expect($output)->not->toContain($glyph);
+    }
+
+    $json = json_decode($output, true);
+    expect($json['exit_code'])->toBe(1);
+    expect($json['context'])->toMatchArray([
+        'Credentials' => 'MISSING',
+        'Mirror feature' => 'OFF',
+        'Containers' => 'NONE',
+    ]);
+    expect(collect($json['failures'])->pluck('error')->all())->toBe([
+        'Mux is not configured. Please add valid Mux credentials in your .env file.',
+        'The mirror feature is globally disabled from the config flag.',
+        'No asset containers found to mirror. Please add a `mux_mirror` field to at least one of your asset blueprints.',
+    ]);
+    expect(collect($json['advisories'])->pluck('code')->all())->toBe(['setup', 'setup', 'setup', 'sync-queue']);
 });
 
-it('warns when no asset containers have mirror field', function () {
-    $this->createAssetContainer('test');
-    $this->createAssetContainer('another');
+it('can be called by command name', function () use ($mirroredContainer) {
+    $mirroredContainer->call($this);
 
-    $this->artisan(DebugCommand::class)
-        ->expectsOutputToContain('No asset containers found')
-        ->assertSuccessful();
-});
-
-it('lists single asset container with mirror field', function () {
-    $this->createAssetContainer('videos');
-    $this->addMirrorFieldToAssetBlueprint(container: 'videos');
-
-    $this->artisan(DebugCommand::class)
-        ->expectsOutputToContain('Found 1 asset container')
-        ->assertSuccessful();
-});
-
-it('lists multiple asset containers with mirror field', function () {
-    $this->createAssetContainer('videos');
-    $this->createAssetContainer('media');
-    $this->createAssetContainer('images'); // without mirror field
-
-    $this->addMirrorFieldToAssetBlueprint(container: 'videos');
-    $this->addMirrorFieldToAssetBlueprint(container: 'media');
-
-    $this->artisan(DebugCommand::class)
-        ->expectsOutputToContain('Found 2 asset container')
-        ->assertSuccessful();
-});
-
-it('shows all checks passing with optimal configuration', function () {
-    config(['mux.credentials.token_id' => 'test-token-id']);
-    config(['mux.credentials.token_secret' => 'test-token-secret']);
-    config(['queue.default' => 'database']);
-    config(['mux.mirror.enabled' => true]);
-
-    $this->createAssetContainer('videos');
-    $this->addMirrorFieldToAssetBlueprint(container: 'videos');
-
-    $this->artisan(DebugCommand::class)
-        ->expectsOutputToContain('✓ Mux is configured with credentials')
-        ->expectsOutputToContain('✓ The queue is configured to use a background worker')
-        ->expectsOutputToContain('✓ The mirror feature is globally enabled')
-        ->expectsOutputToContain('✓ Found 1 asset container(s) configured for mirroring')
-        ->doesntExpectOutputToContain('✗')
-        ->assertSuccessful();
-});
-
-it('shows all checks failing with problematic configuration', function () {
-    config(['mux.credentials.token_id' => null]);
-    config(['mux.credentials.token_secret' => null]);
-    config(['queue.default' => 'sync']);
-    config(['mux.mirror.enabled' => false]);
-
-    $this->createAssetContainer('test');
-
-    $this->artisan(DebugCommand::class)
-        ->expectsOutputToContain('✗ Mux is not configured')
-        ->expectsOutputToContain('✗ The queue is set to synchronous mode')
-        ->expectsOutputToContain('✗ The mirror feature is globally disabled')
-        ->expectsOutputToContain('✗ No asset containers found to mirror')
-        ->doesntExpectOutputToContain('✓')
-        ->assertSuccessful();
-});
-
-it('returns zero exit code on success', function () {
-    config(['mux.credentials.token_id' => 'test-token-id']);
-    config(['mux.credentials.token_secret' => 'test-token-secret']);
-
-    $this->artisan(DebugCommand::class)
-        ->assertSuccessful();
-});
-
-it('can be called by command name', function () {
-    config(['mux.credentials.token_id' => 'test-token-id']);
-    config(['mux.credentials.token_secret' => 'test-token-secret']);
-
-    $this->artisan('mux:debug')
-        ->assertSuccessful();
-});
-
-it('handles partial configuration correctly', function () {
-    config(['mux.credentials.token_id' => 'test-token-id']);
-    config(['mux.credentials.token_secret' => null]);
-
-    $this->artisan(DebugCommand::class)
-        ->expectsOutputToContain('✗ Mux is not configured')
-        ->assertSuccessful();
+    $this->artisan('mux:debug')->assertSuccessful();
 });

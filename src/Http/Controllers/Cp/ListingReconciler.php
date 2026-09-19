@@ -5,15 +5,16 @@ namespace Daun\StatamicMux\Http\Controllers\Cp;
 use Daun\StatamicMux\Data\MuxAsset;
 use Daun\StatamicMux\Data\MuxPlaybackId;
 use Daun\StatamicMux\Facades\Log;
-use Daun\StatamicMux\Http\Controllers\Cp\Listing\RemoteVideoSource;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
+use Daun\StatamicMux\Mux\Reconciler;
+use Daun\StatamicMux\Mux\RemoteAssetCache;
+use Daun\StatamicMux\Mux\RemoteVideo;
 use Daun\StatamicMux\Support\MirrorField;
 use Daun\StatamicMux\Thumbnails\ThumbnailService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Statamic\Assets\Asset;
 use Statamic\Facades\User;
 use Statamic\Support\Str;
@@ -24,16 +25,12 @@ class ListingReconciler
 
     protected const CopyThumbnailSize = 400;
 
-    protected const CACHE_KEY = 'mux.remote_assets';
-
-    protected const CACHE_VALIDITY_KEY = 'mux.remote_assets.valid';
-
-    protected const CACHE_TTL = 6000; // 1 hour
-
     public function __construct(
         protected MuxApi $api,
         protected MuxService $service,
         protected ThumbnailService $thumbnails,
+        protected RemoteAssetCache $cache,
+        protected Reconciler $reconciler,
     ) {}
 
     /**
@@ -82,107 +79,6 @@ class ListingReconciler
     }
 
     /**
-     * Refresh cached remote assets. Returns fresh list.
-     */
-    public function refreshRemoteAssets(): Collection
-    {
-        $this->invalidateRemoteAssets();
-
-        return $this->getCachedRemoteAssets();
-    }
-
-    /**
-     * Invalidate the remote assets cache without refetching.
-     * Next call to getCachedRemoteAssets() will trigger a fresh fetch.
-     */
-    public function invalidateRemoteAssets(): void
-    {
-        Cache::forget(self::CACHE_VALIDITY_KEY);
-    }
-
-    /**
-     * Remove a single asset from the remote cache by Mux ID.
-     */
-    public function forgetRemoteAsset(string $muxId): void
-    {
-        $cached = Cache::get(self::CACHE_KEY);
-
-        if (! $cached) {
-            return;
-        }
-
-        $filtered = $cached->reject(fn ($asset) => $asset->getId() === $muxId);
-
-        if ($filtered->count() < $cached->count()) {
-            Cache::forever(self::CACHE_KEY, $filtered);
-        }
-    }
-
-    /**
-     * Get remote Mux assets, fetching from API if stale.
-     * Data is cached forever; a separate freshness key controls when to refetch.
-     */
-    public function getCachedRemoteAssets(): Collection
-    {
-        if (! Cache::has(self::CACHE_VALIDITY_KEY)) {
-            $assets = $this->fetchAllRemoteAssets();
-            Cache::forever(self::CACHE_KEY, $assets);
-            Cache::put(self::CACHE_VALIDITY_KEY, true, self::CACHE_TTL);
-
-            return $assets;
-        }
-
-        return Cache::get(self::CACHE_KEY) ?? $this->fetchAllRemoteAssets();
-    }
-
-    /**
-     * Get cached remote assets without triggering a fetch.
-     * Returns whatever is in cache, even if stale. Empty collection if cache is cold.
-     */
-    public function getCachedRemoteAssetsIfAvailable(): Collection
-    {
-        return Cache::get(self::CACHE_KEY) ?? collect();
-    }
-
-    /**
-     * Fetch all remote Mux assets across all pages.
-     *
-     * Note: fetches all pages with no cap. May time out for very large Mux accounts.
-     */
-    protected function fetchAllRemoteAssets(): Collection
-    {
-        return $this->api->listAllAssets();
-    }
-
-    /**
-     * Fetch individual Mux assets by their IDs. Returns collection keyed by Mux ID.
-     * Only makes API calls for IDs not found in the remote cache.
-     */
-    protected function fetchMuxAssetsByIds(Collection $muxIds): Collection
-    {
-        if ($muxIds->isEmpty()) {
-            return collect();
-        }
-
-        // Check the remote cache first to avoid unnecessary API calls
-        $cached = Cache::get(self::CACHE_KEY);
-        $index = collect();
-        $uncached = $muxIds;
-
-        if ($cached) {
-            $cachedIndex = $cached->keyBy(fn ($asset) => $asset->getId());
-            $index = $cachedIndex->only($muxIds->all());
-            $uncached = $muxIds->diff($index->keys());
-        }
-
-        if ($uncached->isNotEmpty()) {
-            $index = $index->merge($this->api->getAssets($uncached));
-        }
-
-        return $index;
-    }
-
-    /**
      * Enrich paginated local rows with remote Mux data.
      *
      * Remote is authoritative: when an asset still exists on Mux, its remote
@@ -193,14 +89,14 @@ class ListingReconciler
     protected function enrichLocalRowsWithRemoteData(array $rows): array
     {
         $muxIds = collect($rows)->pluck('mux_id')->filter()->unique()->values();
-        $remoteIndex = $this->fetchMuxAssetsByIds($muxIds);
+        $remoteIndex = $this->cache->only($muxIds);
 
         return collect($rows)->map(function (array $row) use ($remoteIndex) {
             $muxId = $row['mux_id'];
             $remote = $muxId ? $remoteIndex->get($muxId) : null;
 
             if ($remote) {
-                $remoteRow = $this->normalizeRow(new RemoteVideoSource($remote));
+                $remoteRow = $this->normalizeRow(RemoteVideo::make($remote));
                 $row = array_merge($row, Arr::only($remoteRow, [
                     'processing_status',
                     'duration',
@@ -233,7 +129,7 @@ class ListingReconciler
      */
     protected function getRemoteAssetsIndex(): Collection
     {
-        return $this->getCachedRemoteAssets()->keyBy(fn ($asset) => $asset->getId());
+        return $this->cache->get()->keyBy(fn ($asset) => $asset->getId());
     }
 
     /**
@@ -313,35 +209,40 @@ class ListingReconciler
         $user = User::current();
         $dashboardUrl = $user?->can('open mux dashboard') ? $this->api->dashboardUrl() : null; // @phpstan-ignore method.notFound
 
-        return $this->getCachedRemoteAssets()
-            ->map(function ($muxAsset) use ($localIndex, $dashboardUrl) {
-                $source = new RemoteVideoSource($muxAsset);
+        $remoteAssets = $this->cache->get();
+        $records = $this->reconciler->fromRemoteAssets($remoteAssets)->remotes->keyBy->id();
+
+        return $remoteAssets
+            ->map(function ($muxAsset) use ($localIndex, $dashboardUrl, $records) {
+                $source = RemoteVideo::make($muxAsset);
                 $row = $this->normalizeRow($source);
                 $muxId = $row['mux_id'];
                 $playbackId = $row['playback_id'];
                 $localAssets = $localIndex->get($muxId, collect());
                 $localAsset = $localAssets->first();
 
-                $matchStatus = match (true) {
-                    $source->isProxy() => 'proxy',
-                    $localAssets->count() === 0 => 'orphaned',
-                    $localAssets->count() > 1 => 'duplicated',
-                    default => 'mirrored',
-                };
+                $record = $muxId ? $records->get($muxId) : null;
+                $resolvedAsset = $record !== null && $record->asset !== null
+                    ? $record->asset
+                    : ($localAsset['asset'] ?? null);
 
                 return [
                     ...$row,
                     'id' => $muxId,
-                    'title' => $muxAsset->getMeta()?->getTitle() ?: $muxId,
+                    'title' => $source->title() ?: $muxId,
                     'dashboard_url' => $this->dashboardAssetUrl($muxId, $dashboardUrl),
-                    'match_status' => $matchStatus,
-                    'local_matches' => $localAssets->count(),
-                    'resolution_tier' => $muxAsset->getResolutionTier(),
-                    'max_resolution_tier' => $muxAsset->getMaxResolutionTier(),
-                    'is_test' => (bool) $muxAsset->getTest(),
+                    'match_status' => $record?->state->value,
+                    'match_group' => $record?->state->group(),
+                    'local_matches' => $record?->references->count() ?? $localAssets->count(),
+                    'local_asset_id' => $resolvedAsset?->id(),
+                    'path' => $resolvedAsset?->path(),
+                    'container' => $resolvedAsset?->containerHandle(),
+                    'resolution_tier' => $source->resolutionTier(),
+                    'max_resolution_tier' => $source->maxResolutionTier(),
+                    'is_test' => $source->isTest(),
                     'thumbnail_url' => $row['thumbnail_url'],
                     'thumbnail_copy_url' => $row['thumbnail_copy_url'],
-                    'aspect_ratio' => $muxAsset->getAspectRatio(),
+                    'aspect_ratio' => $source->aspectRatioLabel(),
                 ];
             });
     }
@@ -362,7 +263,7 @@ class ListingReconciler
      * Shape Mux SDK data into the row fields shared by the remote tab and the
      * local tab's enrichment. The single place remote video data is normalized.
      */
-    protected function normalizeRow(RemoteVideoSource $source): array
+    protected function normalizeRow(RemoteVideo $source): array
     {
         $duration = $source->duration();
         $playbackIds = $source->playbackIds();
@@ -374,7 +275,7 @@ class ListingReconciler
 
         return [
             'mux_id' => $source->id(),
-            'processing_status' => $source->processingStatus(),
+            'processing_status' => $source->status(),
             'duration' => $duration,
             'duration_formatted' => $this->formatDuration($duration),
             'playback_ids' => $playbackIds,
@@ -385,7 +286,7 @@ class ListingReconciler
             'player_url' => $playerUrl,
             'stream_url' => $playback ? $this->service->getPlaybackUrl($playback) : null,
             'embed_code' => $playback ? $this->service->getEmbedCode($playback) : null,
-            'created_at' => $source->createdAt(),
+            'created_at' => $source->createdAt()?->toIso8601String(),
             'is_proxy' => $source->isProxy(),
         ];
     }
@@ -486,7 +387,7 @@ class ListingReconciler
             $items = match ($field) {
                 'duration_range' => $this->filterDurationRange($items, $value),
                 'is_test' => $items->where('is_test', filter_var($value, FILTER_VALIDATE_BOOLEAN)),
-                'processing_status', 'match_status', 'playback_policy', 'resolution_tier' => is_array($value)
+                'processing_status', 'match_status', 'match_group', 'playback_policy', 'resolution_tier' => is_array($value)
                     ? $items->whereIn($field, $value)
                     : $items->where($field, $value),
                 default => $items,

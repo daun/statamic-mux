@@ -34,7 +34,7 @@ reuploading, and deleting the selected videos on Mux.
 ### Mux Library
 
 Lists all videos in the connected Mux account, including any that were not uploaded through this addon. Use
-it to review the full Mux library and reconcile it with your local assets. The library list is cached. The
+it to review the full Mux library and compare it against your local assets. The library list is cached: the
 **Clear cache and reload** menu item fetches fresh data from the Mux API.
 
 Clicking an asset opens it in the connected Mux dashboard, if granted permission.

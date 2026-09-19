@@ -80,6 +80,7 @@ class MuxAsset implements Augmentable
         if ($this->asset && $this->field) {
             $data = $this->asset->get($this->field);
             $this->data = collect($data ?? []);
+            $this->playbackIds = null;
         }
 
         return $this;
@@ -88,6 +89,7 @@ class MuxAsset implements Augmentable
     public function clear(): self
     {
         $this->data = collect([]);
+        $this->playbackIds = null;
 
         return $this;
     }

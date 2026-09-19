@@ -8,6 +8,7 @@ use Daun\StatamicMux\Events\AssetDeletingFromMux;
 use Daun\StatamicMux\Facades\Log;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
+use Daun\StatamicMux\Mux\RemoteAssetCache;
 use Daun\StatamicMux\Support\Attribution;
 use Daun\StatamicMux\Support\MirrorField;
 use MuxPhp\ApiException;
@@ -19,6 +20,7 @@ class DeleteMuxAsset
     public function __construct(
         protected MuxApi $api,
         protected MuxService $service,
+        protected RemoteAssetCache $cache,
     ) {}
 
     /**
@@ -69,6 +71,8 @@ class DeleteMuxAsset
             $remoteAsset ??= $this->api->getAsset($muxId);
 
             if (! $remoteAsset) {
+                $this->cache->forget($muxId);
+
                 return true;
             }
 
@@ -82,6 +86,7 @@ class DeleteMuxAsset
             }
 
             $this->api->assets()->deleteAsset($muxId);
+            $this->cache->forget($muxId);
 
             Log::info(
                 'Deleted asset from Mux',
@@ -91,6 +96,8 @@ class DeleteMuxAsset
             return true;
         } catch (ApiException $e) {
             if ($e->getCode() === 404) {
+                $this->cache->forget($muxId);
+
                 return true;
             }
 
@@ -171,6 +178,9 @@ class DeleteMuxAsset
             ['passthrough' => $passthrough],
         );
 
-        return Attribution::createdByAddon($passthrough);
+        $metadata = $asset->getMeta();
+
+        return Attribution::createdByAddon($passthrough)
+            || ($metadata?->getCreatorId() === Attribution::CREATOR_ID && filled($metadata->getExternalId()));
     }
 }

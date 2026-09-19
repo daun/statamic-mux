@@ -13,11 +13,17 @@ class MuxLibraryItem
         protected string $muxId,
         protected ?MuxApiAssetModel $apiAsset = null,
         protected ?string $dashboardBaseUrl = null,
+        protected bool $relinkable = false,
     ) {}
 
     public function id(): string
     {
         return $this->muxId;
+    }
+
+    public function isRelinkable(): bool
+    {
+        return $this->relinkable;
     }
 
     public function apiAsset(): ?MuxApiAssetModel

@@ -2,127 +2,115 @@
 
 namespace Daun\StatamicMux\Commands;
 
-use Daun\StatamicMux\Concerns\HasCommandOutputStyles;
-use Daun\StatamicMux\Jobs\DeleteMuxAssetJob;
-use Daun\StatamicMux\Mux\MuxService;
-use Daun\StatamicMux\Support\Attribution;
-use Daun\StatamicMux\Support\MirrorField;
+use Daun\StatamicMux\Commands\Concerns\InteractsWithReconciliation;
+use Daun\StatamicMux\Console\Advisory;
+use Daun\StatamicMux\Console\CommandOutput;
+use Daun\StatamicMux\Console\CommandReport;
+use Daun\StatamicMux\Console\ReportFailure;
+use Daun\StatamicMux\Console\ReportRecord;
+use Daun\StatamicMux\Mux\Enums\ReconciliationAction;
+use Daun\StatamicMux\Mux\Enums\Side;
+use Daun\StatamicMux\Mux\Reconciler;
+use Daun\StatamicMux\Mux\Reconciliation\ReconciliationRunner;
+use Daun\StatamicMux\Mux\Reconciliation\RemoteAssetRecord;
 use Daun\StatamicMux\Support\Queue;
 use Illuminate\Console\Command;
-use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Statamic\Console\RunsInPlease;
 
 class PruneCommand extends Command
 {
-    use HasCommandOutputStyles;
+    use InteractsWithReconciliation;
     use RunsInPlease;
 
-    protected const PROXY_GRACE_PERIOD_HOURS = 24;
-
     protected $signature = 'mux:prune
-                        {--dry-run : Perform a trial run with no removals and print a list of affected files}';
+                        {--container= : Limit the command to a specific asset container}
+                        {--dry-run : Perform a trial run with no removals and print a list of affected files}
+                        {--json : Output a single machine-readable JSON object}';
 
     protected $description = 'Remove orphaned videos from Mux';
 
-    protected $dryrun;
-
-    protected $sync;
-
-    public function handle(MuxService $service): void
+    public function handle(Reconciler $reconciler, ReconciliationRunner $runner): int
     {
-        $this->dryrun = $this->option('dry-run');
-        $this->sync = Queue::isSync();
+        $output = CommandOutput::for($this);
+        $container = $this->option('container');
+        $dryRun = (bool) $this->option('dry-run');
+        $report = $output->report($dryRun);
 
-        if (! MirrorField::configured()) {
-            $this->error('Mux is not configured. Please add valid Mux credentials in your .env file.');
-
-            return;
+        if (! $plan = $this->buildPlan($reconciler, $report, $container)) {
+            return $output->finish($report);
         }
 
-        if (! MirrorField::enabled()) {
-            $this->error('The mirror feature is currently disabled.');
+        $this->describeScope($report, $plan, $container);
 
-            return;
+        $prunable = $plan->prunable();
+        $destructive = $plan->destructive();
+
+        /** @var Collection<int, ReportRecord> $records */
+        $records = $plan->scopedRemotes()->mapWithKeys(fn (RemoteAssetRecord $record) => [
+            spl_object_id($record) => $this->remoteRecord($record, $this->actionFor($record->state, Side::Remote)),
+        ]);
+
+        foreach ($this->addUnscopableAdvisory($report, $plan, $container) as $record) {
+            $records[spl_object_id($record)] = $this->remoteRecord($record, ReconciliationAction::Skip);
         }
 
-        if ($this->dryrun) {
-            $this->warn('Performing dry run: no videos will be deleted');
-            $this->newLine();
-        }
+        $this->addDestructiveAdvisory($report, $destructive, $dryRun);
 
-        $muxAssets = $service->listMuxAssets(limit: 0);
-        $actualMuxIds = $muxAssets->pluck('id');
+        if (! $dryRun) {
+            foreach ($runner->prune($prunable) as $outcome) {
+                $key = spl_object_id($outcome['record']);
 
-        if ($actualMuxIds->isEmpty()) {
-            $this->line('No videos found on Mux');
+                $records[$key] = match ($outcome['status']) {
+                    ReconciliationRunner::SUCCESS => $records[$key]->succeeded(),
+                    ReconciliationRunner::SKIPPED => $records[$key]->withAction(ReconciliationAction::Skip),
+                    default => $records[$key]->failed($outcome['error']),
+                };
 
-            return;
-        }
-
-        $assets = MirrorField::assets();
-
-        $localMuxIds = $assets->map(fn ($asset) => $service->getMuxId($asset))->filter();
-
-        $muxAssetsById = $muxAssets->keyBy('id');
-
-        $orphans = $actualMuxIds->diff($localMuxIds);
-
-        $pending = $orphans->filter(fn ($muxId) => $this->isPendingProxy($muxAssetsById->get($muxId)))->values();
-        $orphans = $orphans->diff($pending)->values();
-
-        $pending->each(function ($muxId) {
-            $this->line("Skipping in-flight proxy <name>{$muxId}</name>");
-        })->whenNotEmpty(function () {
-            $this->newLine();
-        });
-
-        $orphans->each(function ($muxId) use ($service) {
-            if ($this->dryrun) {
-                $this->line("Would remove <name>{$muxId}</name>");
-            } elseif ($this->sync) {
-                $service->deleteMuxAsset($muxId);
-                $this->line("Removed <name>{$muxId}</name>");
-            } else {
-                DeleteMuxAssetJob::dispatch($muxId);
-                $this->line("Queued removal of <name>{$muxId}</name>");
+                if ($outcome['status'] === ReconciliationRunner::FAILURE) {
+                    $report->failure(ReportFailure::make($outcome['error'], ReconciliationAction::Prune, $outcome['mux_id']));
+                }
             }
-        })->whenNotEmpty(function () {
-            $this->newLine();
-        });
 
-        $found = $actualMuxIds->intersect($localMuxIds);
-        $found->each(function ($muxId) {
-            if ($this->dryrun) {
-                $this->line("Would keep <name>{$muxId}</name>");
-            } else {
-                $this->line("Keeping <name>{$muxId}</name>");
-            }
-        });
-
-        $this->newLine();
-
-        if ($this->dryrun) {
-            $this->info("<success>✓ Would have removed {$orphans->count()} videos, kept {$found->count()} videos</success>");
-        } elseif ($this->sync) {
-            $this->info("<success>✓ Removed {$orphans->count()} videos, kept {$found->count()} videos</success>");
-        } else {
-            $this->info("<success>✓ Queued {$orphans->count()} videos for removal, kept {$found->count()} videos</success>");
+            $this->addDestructiveOutcomeAdvisory($report, $destructive);
         }
+
+        $report->recordMany($records->values());
+
+        return $output->finish($report);
     }
 
-    protected function isPendingProxy($muxAsset): bool
+    protected function addDestructiveAdvisory(CommandReport $report, Collection $destructive, bool $dryRun): void
     {
-        if (! Attribution::isProxy(data_get($muxAsset, 'passthrough'))) {
-            return false;
+        if ($destructive->isEmpty()) {
+            return;
         }
 
-        $createdAt = data_get($muxAsset, 'created_at');
+        $files = $destructive->pluck('attributedAssetId')->filter()->unique()->count();
 
-        if (blank($createdAt)) {
-            return true;
+        $report->advisory(Advisory::warn(
+            'destructive-prune',
+            "{$destructive->count()} orphans are the only Mux encoding of {$this->pluralize($files, 'local asset', 'local assets')} still in your containers. Prune ".($dryRun ? 'would' : 'will').' delete them.',
+            $destructive->map(fn (RemoteAssetRecord $record) => sprintf(
+                '%s  %s  %s  %s',
+                $record->attributedAssetId ?? $record->asset?->id() ?? 'unknown source',
+                $this->shortMuxId($record->id()),
+                $record->remote->resolutionTier() ?? 'unknown',
+                $this->shortDate($record),
+            ))->values()->all(),
+            'Re-link them first: php artisan mux:relink',
+        ));
+    }
+
+    protected function addDestructiveOutcomeAdvisory(CommandReport $report, Collection $destructive): void
+    {
+        if ($destructive->isEmpty()) {
+            return;
         }
 
-        return Carbon::createFromTimestamp((int) $createdAt)
-            ->greaterThan(now()->subHours(self::PROXY_GRACE_PERIOD_HOURS));
+        $report->advisory(Advisory::warn(
+            'destructive-pruned',
+            "{$destructive->count()} unlinked encodings were ".(Queue::isSync() ? 'removed.' : 'queued for removal.'),
+        ));
     }
 }

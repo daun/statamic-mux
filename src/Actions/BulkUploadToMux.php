@@ -3,8 +3,8 @@
 namespace Daun\StatamicMux\Actions;
 
 use Daun\StatamicMux\Data\MuxAsset;
-use Daun\StatamicMux\Http\Controllers\Cp\ListingReconciler;
 use Daun\StatamicMux\Jobs\CreateMuxAssetJob;
+use Daun\StatamicMux\Mux\RemoteAssetCache;
 use Statamic\Actions\Action;
 
 use function Statamic\trans as __;
@@ -65,8 +65,8 @@ class BulkUploadToMux extends Action
     {
         $forceReupload = (bool) ($values['force_reupload'] ?? false);
 
-        $cached = app(ListingReconciler::class)
-            ->getCachedRemoteAssetsIfAvailable()
+        $cached = app(RemoteAssetCache::class)
+            ->getIfAvailable()
             ->keyBy(fn ($remote) => $remote->getId());
 
         $queued = 0;

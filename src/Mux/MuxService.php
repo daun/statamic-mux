@@ -8,6 +8,7 @@ use Daun\StatamicMux\Data\MuxPlaybackId;
 use Daun\StatamicMux\Facades\Log;
 use Daun\StatamicMux\Mux\Actions\CreateMuxAsset;
 use Daun\StatamicMux\Mux\Actions\DeleteMuxAsset;
+use Daun\StatamicMux\Mux\Actions\RelinkMuxAsset;
 use Daun\StatamicMux\Mux\Actions\RequestPlaybackId;
 use Daun\StatamicMux\Mux\Actions\UpdateMuxAsset;
 use Daun\StatamicMux\Mux\Enums\MuxAudience;
@@ -16,6 +17,7 @@ use Daun\StatamicMux\Support\URL;
 use Daun\StatamicMux\Thumbnails\PlaceholderService;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Arr;
+use MuxPhp\Models\Asset as MuxApiAsset;
 use Statamic\Assets\Asset;
 use Statamic\Facades\Asset as Assets;
 
@@ -95,9 +97,17 @@ class MuxService
     }
 
     /**
+     * Relink a local asset to an existing remote Mux asset.
+     */
+    public function relinkMuxAsset(Asset $asset, MuxApiAsset $remote, bool $proxySource = false): bool
+    {
+        return $this->app->make(RelinkMuxAsset::class)->handle($asset, $remote, $proxySource);
+    }
+
+    /**
      * Delete a video asset from Mux.
      */
-    public function deleteMuxAsset(Asset|string $asset): bool
+    public function deleteMuxAsset(Asset|MuxApiAsset|string $asset): bool
     {
         if (! $asset) {
             return false;

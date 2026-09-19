@@ -2,8 +2,10 @@
 
 namespace Daun\StatamicMux\Http\Controllers\Cp;
 
+use Daun\StatamicMux\Mux\Enums\ReconciliationState;
 use Daun\StatamicMux\Mux\MuxApi;
 use Daun\StatamicMux\Mux\MuxService;
+use Daun\StatamicMux\Mux\RemoteAssetCache;
 use Daun\StatamicMux\Support\CpAssets;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,6 +19,7 @@ class ListingController extends CpController
         protected ListingReconciler $listing,
         protected MuxService $service,
         protected MuxApi $api,
+        protected RemoteAssetCache $cache,
     ) {}
 
     public function index()
@@ -122,7 +125,7 @@ class ListingController extends CpController
     {
         $this->authorize('trigger mux sync');
 
-        $assets = $this->listing->refreshRemoteAssets();
+        $assets = $this->cache->refresh();
 
         return response()->json([
             'message' => __('Mux Library refreshed'),
@@ -230,15 +233,12 @@ class ListingController extends CpController
                 ],
             ],
             [
-                'handle' => 'match_status',
+                // Filters on the coarse group; the row still carries the precise
+                // state, which the Status column renders as a badge.
+                'handle' => 'match_group',
                 'label' => __('Sync Status'),
                 'type' => 'select',
-                'options' => [
-                    'mirrored' => __('Mirrored'),
-                    'proxy' => __('Placeholder'),
-                    'orphaned' => __('Orphaned'),
-                    'duplicated' => __('Duplicated'),
-                ],
+                'options' => ReconciliationState::groupOptions(),
             ],
             [
                 'handle' => 'playback_policy',

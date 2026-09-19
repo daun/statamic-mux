@@ -2,163 +2,148 @@
 
 namespace Daun\StatamicMux\Commands;
 
-use Daun\StatamicMux\Concerns\HasCommandOutputStyles;
+use Daun\StatamicMux\Commands\Concerns\InteractsWithReconciliation;
+use Daun\StatamicMux\Console\Advisory;
+use Daun\StatamicMux\Console\CommandOutput;
+use Daun\StatamicMux\Console\CommandReport;
+use Daun\StatamicMux\Console\ReportFailure;
+use Daun\StatamicMux\Console\ReportRecord;
 use Daun\StatamicMux\Data\MuxAsset;
-use Daun\StatamicMux\Jobs\CreateMuxAssetJob;
-use Daun\StatamicMux\Mux\MuxService;
-use Daun\StatamicMux\Support\MirrorField;
-use Daun\StatamicMux\Support\Queue;
+use Daun\StatamicMux\Mux\Enums\ReconciliationAction;
+use Daun\StatamicMux\Mux\Enums\ReconciliationState;
+use Daun\StatamicMux\Mux\Enums\Side;
+use Daun\StatamicMux\Mux\Reconciler;
+use Daun\StatamicMux\Mux\Reconciliation\LocalAssetRecord;
+use Daun\StatamicMux\Mux\Reconciliation\ReconciliationRunner;
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Statamic\Console\RunsInPlease;
-use Statamic\Facades\Asset;
-use Statamic\Facades\AssetContainer;
 
 class UploadCommand extends Command
 {
-    use HasCommandOutputStyles;
+    use InteractsWithReconciliation;
     use RunsInPlease;
 
     protected $signature = 'mux:upload
-                        {--container= : Limit the upload to a specific asset container}
+                        {--container= : Limit the command to a specific asset container}
                         {--force : Reupload videos to Mux even if they already exist}
-                        {--dry-run : Perform a trial run with no uploads and print a list of affected files}';
+                        {--dry-run : Perform a trial run with no uploads and print a list of affected files}
+                        {--json : Output a single machine-readable JSON object}';
 
     protected $description = 'Upload local video assets to Mux';
 
-    protected $container;
-
-    protected $force;
-
-    protected $dryrun;
-
-    protected $sync;
-
-    protected $containers;
-
-    public function handle(MuxService $service): void
+    public function handle(Reconciler $reconciler, ReconciliationRunner $runner): int
     {
-        $this->container = $this->option('container');
-        $this->force = $this->option('force');
-        $this->dryrun = $this->option('dry-run');
-        $this->sync = Queue::isSync();
+        $output = CommandOutput::for($this);
+        $container = $this->option('container');
+        $force = (bool) $this->option('force');
+        $dryRun = (bool) $this->option('dry-run');
+        $report = $output->report($dryRun);
 
-        if (! MirrorField::configured()) {
-            $this->error('Mux is not configured. Please add valid Mux credentials in your .env file.');
-
-            return;
+        if (! $plan = $this->buildPlan($reconciler, $report, $container)) {
+            return $output->finish($report);
         }
 
-        if (! MirrorField::enabled()) {
-            $this->error('The mirror feature is currently disabled.');
+        $this->describeScope($report, $plan, $container);
 
-            return;
+        [$uploads, $skipped] = $plan->scopedLocals()->partition(function (LocalAssetRecord $record) use ($force) {
+            if (MuxAsset::fromAsset($record->asset)->isProxy()) {
+                return false;
+            }
+
+            return $force || ! $record->muxId || $record->isStale();
+        });
+
+        foreach ($skipped as $record) {
+            $report->record($this->localRecord($record, $this->skippedAction($record)));
         }
 
-        $this->containers = MirrorField::containers();
-        if ($this->containers->isEmpty()) {
-            $this->error('No containers found to mirror.');
-            $this->newLine();
-            $this->line('Please add a `mux_mirror` field to at least one of your asset blueprints.');
+        $this->addAdvisories($report, $plan, $uploads, $force);
 
-            return;
-        }
+        /** @var Collection<string, ReportRecord> $records */
+        $records = $uploads->mapWithKeys(fn (LocalAssetRecord $record) => [
+            $record->path() => $this->localRecord($record, $this->uploadAction($record)),
+        ]);
 
-        if ($this->container) {
-            $container = AssetContainer::find($this->container);
-            if ($container) {
-                $this->containers = collect([$container]);
-            } else {
-                $this->error("Asset container '{$this->container}' not found");
+        if (! $dryRun) {
+            foreach ($runner->upload($uploads, $force) as $outcome) {
+                $id = $outcome['record']->path();
 
-                return;
+                if ($this->isSuccess($outcome)) {
+                    $records[$id] = $records[$id]->succeeded();
+
+                    continue;
+                }
+
+                $records[$id] = $records[$id]->failed($outcome['error']);
+                $report->failure(ReportFailure::make($outcome['error'], $records[$id]->action, $id));
             }
         }
 
-        if ($this->dryrun) {
-            $this->warn('Performing dry run: no videos will be uploaded');
-            $this->newLine();
-        }
+        $report->recordMany($records->values());
 
-        $assets = $this->containers->flatMap(
-            fn ($container) => Asset::whereContainer($container->handle())->filter(
-                fn ($asset) => MirrorField::shouldMirror($asset)
-            )
+        return $output->finish($report);
+    }
+
+    protected function uploadAction(LocalAssetRecord $record): ReconciliationAction
+    {
+        return filled($record->muxId) ? ReconciliationAction::Reupload : ReconciliationAction::Upload;
+    }
+
+    /** Proxy placeholder clips are never uploaded, not even with --force. */
+    protected function skippedAction(LocalAssetRecord $record): ReconciliationAction
+    {
+        return MuxAsset::fromAsset($record->asset)->isProxy()
+            ? ReconciliationAction::Skip
+            : $this->actionFor($record->state, Side::Local);
+    }
+
+    protected function addAdvisories(CommandReport $report, $plan, Collection $uploads, bool $force): void
+    {
+        $replacements = $uploads->filter(
+            fn (LocalAssetRecord $record) => ! $record->muxId && $record->candidates->isNotEmpty()
         );
 
-        if ($assets->isEmpty()) {
-            $this->line("No videos found in containers: <name>{$this->containers->map->handle()->implode(', ')}</name>");
+        if ($replacements->isNotEmpty()) {
+            $count = $replacements->count();
 
-            return;
+            $report->advisory(Advisory::warn(
+                'upload-replacement',
+                "{$count} ".($count === 1 ? 'asset already has' : 'assets already have').' attributable Mux encodings. Uploading will create replacements.',
+                $replacements->map(fn (LocalAssetRecord $record) => "{$record->path()} → {$this->shortMuxId($record->selected?->id() ?? $record->candidates->first()?->id())}")->values()->all(),
+                'Re-use them instead: php artisan mux:relink',
+            ));
         }
 
-        $assetGroups = $assets->mapToGroups(function ($asset) use ($service) {
-            $exists = $service->hasExistingMuxAsset($asset);
-            $proxy = MuxAsset::fromAsset($asset)->isProxy();
-            $action = ! $exists
-                ? 'upload'
-                : ($this->force && ! $proxy
-                    ? 'reupload'
-                    : 'skip'
-                );
+        $proxySources = $uploads->filter(
+            fn (LocalAssetRecord $record) => $record->state === ReconciliationState::ProxySource
+        );
 
-            return [$action => $asset];
-        });
+        if ($proxySources->isNotEmpty()) {
+            $report->advisory(Advisory::warn(
+                'proxy-source-conflict',
+                $this->pluralize($proxySources->count(), 'local placeholder clip has', 'local placeholder clips have').' a full Mux encoding. Uploading would replace the full master with the short placeholder clip.',
+                $proxySources->map(fn (LocalAssetRecord $record) => "{$record->path()} → {$this->shortMuxId($record->selected?->id())}")->values()->all(),
+                'Re-link them first: php artisan mux:relink',
+            ));
+        }
 
-        $assetsToUpload = $assetGroups->get('upload', collect());
-        $assetsToReupload = $assetGroups->get('reupload', collect());
-        $assetsToSkip = $assetGroups->get('skip', collect());
+        if ($force) {
+            $report->advisory(Advisory::info(
+                'force-upload',
+                'Force mode re-uploads linked assets. Placeholder clips are never re-uploaded.',
+            ));
+        }
 
-        $assetsToUpload->each(function ($asset) use ($service) {
-            if ($this->dryrun) {
-                $this->line("Would upload <name>{$asset->id()}</name>");
-            } else {
-                $service->clearMuxAsset($asset);
+        // Encodings a re-link could still reuse are not orphans.
+        $orphans = $plan->prunable()->count() - $plan->destructive()->count();
 
-                if ($this->sync) {
-                    $service->createMuxAsset($asset);
-                    $this->line("Uploaded <name>{$asset->id()}</name>");
-                } else {
-                    CreateMuxAssetJob::dispatch($asset);
-                    $this->line("Queued upload of <name>{$asset->id()}</name>");
-                }
-            }
-        })->whenNotEmpty(function () {
-            $this->newLine();
-        });
-
-        $assetsToReupload->each(function ($asset) use ($service) {
-            if ($this->dryrun) {
-                $this->line("Would reupload <name>{$asset->id()}</name>");
-            } elseif ($this->sync) {
-                $service->createMuxAsset($asset, true);
-                $this->line("Reuploaded <name>{$asset->id()}</name>");
-            } else {
-                CreateMuxAssetJob::dispatch($asset, true);
-                $this->line("Queued reupload of <name>{$asset->id()}</name>");
-            }
-        })->whenNotEmpty(function () {
-            $this->newLine();
-        });
-
-        $assetsToSkip->each(function ($asset) {
-            if ($this->dryrun) {
-                $this->line("Would skip <name>{$asset->id()}</name>");
-            } else {
-                $this->line("Skipped <name>{$asset->id()}</name>");
-            }
-        });
-
-        $this->newLine();
-
-        $uploaded = $assetsToUpload->count() + $assetsToReupload->count();
-        $skipped = $assetsToSkip->count();
-
-        if ($this->dryrun) {
-            $this->info("<success>✓ Would have uploaded {$uploaded} videos, skipped {$skipped} videos</success>");
-        } elseif ($this->sync) {
-            $this->info("<success>✓ Uploaded {$uploaded} videos, skipped {$skipped} videos</success>");
-        } else {
-            $this->info("<success>✓ Queued {$uploaded} videos for background upload, skipped {$skipped} videos</success>");
+        if ($orphans > 0) {
+            $report->advisory(Advisory::info(
+                'orphaned-encodings',
+                "{$orphans} orphaned Mux ".($orphans === 1 ? 'encoding is' : 'encodings are').' no longer needed.',
+                hint: 'Remove them: php artisan mux:prune',
+            ));
         }
     }
 }

@@ -4,7 +4,6 @@ namespace Daun\StatamicMux\Actions;
 
 use Daun\StatamicMux\Data\Actions\MuxLibraryItem;
 use Daun\StatamicMux\Data\MuxAsset;
-use Daun\StatamicMux\Http\Controllers\Cp\ListingReconciler;
 use Daun\StatamicMux\Mux\MuxService;
 use Daun\StatamicMux\Support\MirrorField;
 use Statamic\Actions\Action;
@@ -49,7 +48,6 @@ class DeleteFromMux extends Action
     public function run($items, $values)
     {
         $service = app(MuxService::class);
-        $reconciler = app(ListingReconciler::class);
         $failures = collect();
 
         foreach ($items as $item) {
@@ -69,9 +67,7 @@ class DeleteFromMux extends Action
                 continue;
             }
 
-            if ($deleted) {
-                $reconciler->forgetRemoteAsset($muxId);
-            } else {
+            if (! $deleted) {
                 $failures->push($muxId);
             }
         }
