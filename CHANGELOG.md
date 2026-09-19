@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.5.1]
+
+- Update fieldtype to remember expanded state of details section
+
 ## [3.5.0]
 
 - Add `mux:relink` artisan command for recovering orphaned Mux encodings of local assets
