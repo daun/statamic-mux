@@ -8,9 +8,9 @@ return [
                 'display' => 'Show details',
                 'instructions' => 'Display detailed Mux data in a collapsible section: asset id, playback url, embed code, etc.',
             ],
-            'expand_details' => [
-                'display' => 'Expand details by default',
-                'instructions' => 'Show the Mux details section expanded automatically, without requiring editors to click to reveal it.',
+            'remember_details' => [
+                'display' => 'Remember details state',
+                'instructions' => 'Remember and restore the expansion state of the collapsible data section.',
             ],
             'allow_reupload' => [
                 'display' => 'Allow reupload',

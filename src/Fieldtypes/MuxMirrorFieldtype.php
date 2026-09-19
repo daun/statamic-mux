@@ -33,9 +33,9 @@ class MuxMirrorFieldtype extends Fieldtype
                 'instructions' => __('statamic-mux::fieldtypes.mux_mirror.config.show_details.instructions'),
                 'type' => 'toggle',
             ],
-            'expand_details' => [
-                'display' => __('statamic-mux::fieldtypes.mux_mirror.config.expand_details.display'),
-                'instructions' => __('statamic-mux::fieldtypes.mux_mirror.config.expand_details.instructions'),
+            'remember_details' => [
+                'display' => __('statamic-mux::fieldtypes.mux_mirror.config.remember_details.display'),
+                'instructions' => __('statamic-mux::fieldtypes.mux_mirror.config.remember_details.instructions'),
                 'type' => 'toggle',
                 'if' => ['show_details' => 'equals true'],
             ],

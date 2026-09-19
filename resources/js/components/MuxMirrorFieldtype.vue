@@ -50,15 +50,23 @@
 </template>
 
 <script>
-import { FieldtypeMixin as Fieldtype } from '@statamic/cms';
+import { FieldtypeMixin as Fieldtype, HasPreferencesMixin as HasPreferences } from '@statamic/cms';
+
+const DETAILS_PREFERENCE_KEY = 'details_expanded';
 
 export default {
-    mixins: [Fieldtype],
+    mixins: [Fieldtype, HasPreferences],
     data() {
         return {
-            isInfoExpanded: !!this.config?.expand_details,
+            preferencesPrefix: 'mux',
+            isInfoExpanded: false,
             itemCopied: null,
             itemCopiedTimeout: null,
+        }
+    },
+    created() {
+        if (this.rememberDetails) {
+            this.isInfoExpanded = !!this.getPreference(DETAILS_PREFERENCE_KEY);
         }
     },
     mounted() {
@@ -84,6 +92,9 @@ export default {
         },
         showDetails() {
             return this.config?.show_details;
+        },
+        rememberDetails() {
+            return !!this.config?.remember_details;
         },
         isAsset() {
             return this.meta?.is_asset || false;
@@ -123,6 +134,16 @@ export default {
         },
         toggleInfo() {
             this.isInfoExpanded = !this.isInfoExpanded;
+
+            if (! this.rememberDetails) {
+                return;
+            }
+
+            const persist = this.isInfoExpanded
+                ? this.setPreference(DETAILS_PREFERENCE_KEY, true)
+                : this.removePreference(DETAILS_PREFERENCE_KEY);
+
+            persist.catch(() => {});
         },
         copy(value, key) {
             if (! value) {
