@@ -179,7 +179,7 @@ it('reports failure when a synchronous delete fails', function () {
     $service->shouldReceive('deleteMuxAsset')->once()->andReturnFalse();
 
     $this->artisan(PruneCommand::class)
-        ->expectsOutputToContain('stuck: The Mux asset could not be deleted')
+        ->expectsOutputToContain('The Mux asset could not be deleted')
         ->expectsOutputToContain('Prune finished with 1 failure')
         ->assertFailed();
 });
@@ -206,7 +206,7 @@ it('dry run never queues or deletes assets', function () {
     $service->shouldNotReceive('deleteMuxAsset');
 
     $this->artisan(PruneCommand::class, ['--dry-run' => true])
-        ->expectsOutputToContain('DRY RUN')
+        ->expectsOutputToContain('Dry run')
         ->expectsOutputToContain('local asset no longer exists')
         ->expectsOutputToContain('1 prune pending.')
         ->assertSuccessful();
@@ -244,6 +244,5 @@ it('can be called by command name', function () {
 
     $this->artisan('mux:prune', ['--dry-run' => true])
         ->expectsOutputToContain('No assets found.')
-        ->expectsOutputToContain('Prune — no assets found.')
         ->assertSuccessful();
 });

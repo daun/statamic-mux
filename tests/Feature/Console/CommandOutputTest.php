@@ -61,7 +61,7 @@ test('renders human output without the json flag', function () {
     Artisan::call('mux:reporting-test', ['--dry-run' => true]);
 
     expect(Artisan::output())
-        ->toContain('Plan')
+        ->toContain('Dry run')
         ->toContain('upload')
         ->not->toContain('"command"');
 });

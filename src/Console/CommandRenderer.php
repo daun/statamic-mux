@@ -4,18 +4,13 @@ namespace Daun\StatamicMux\Console;
 
 use Daun\StatamicMux\Mux\Enums\ReconciliationAction;
 use Illuminate\Console\OutputStyle;
-use Illuminate\Console\View\Components\Factory;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 
 final class CommandRenderer
 {
-    protected Factory $components;
-
     public function __construct(
         protected OutputStyle $output,
-    ) {
-        $this->components = new Factory($output);
-    }
+    ) {}
 
     public function render(CommandReport $report): void
     {
@@ -23,37 +18,96 @@ final class CommandRenderer
             return;
         }
 
+        $this->output->newLine();
+
+        if ($report->dryRun()) {
+            $this->callout('yellow', '<fg=yellow;options=bold>Dry run</> <fg=gray>— no changes will be made</>');
+            $this->output->newLine();
+        }
+
         $this->context($report);
+        $this->advisories($report);
         $this->plan($report);
         $this->details($report);
-        $this->advisories($report);
         $this->failures($report);
         $this->summary($report);
+        $this->output->newLine();
     }
 
+    /**
+     * Inventory commands summarize their scope in one dim line at -v; commands
+     * without an inventory (mux:debug) carry their content in context rows.
+     */
     protected function context(CommandReport $report): void
     {
+        if ($report->hasInventory()) {
+            if (! $this->output->isVerbose() || ($context = $this->contextSummary($report)) === '') {
+                return;
+            }
+
+            $this->output->writeln('  <fg=gray>'.$this->escape($context).'</>');
+            $this->output->newLine();
+
+            return;
+        }
+
+        $rows = $report->contextRows();
+
+        if ($rows === []) {
+            return;
+        }
+
+        $width = max(array_map(fn ($row) => mb_strlen($row['label']), $rows));
+
+        foreach ($rows as $row) {
+            $label = $this->escape(str_pad($row['label'], $width));
+            $value = $row['value'] === null ? '' : '  <options=bold>'.$this->escape($row['value']).'</>';
+
+            $this->output->writeln("  {$label}{$value}");
+        }
+
         $this->output->newLine();
-        $this->output->writeln('  <options=bold>'.$this->escape($report->command()).'</>');
-        $this->output->newLine();
+    }
+
+    protected function contextSummary(CommandReport $report): string
+    {
+        $parts = [];
 
         if ($containers = $report->containers()) {
-            $this->components->twoColumnDetail('Containers', implode(', ', array_map($this->escape(...), $containers)));
+            $parts[] = 'container: '.implode(', ', $containers);
         }
 
         if (($locals = $report->locals()) !== null) {
-            $this->components->twoColumnDetail('Local videos', (string) $locals);
+            $parts[] = "{$locals} local";
         }
 
         if (($remotes = $report->remotes()) !== null) {
-            $this->components->twoColumnDetail('Mux assets', (string) $remotes);
+            $parts[] = "{$remotes} on Mux";
         }
 
         foreach ($report->contextRows() as $row) {
-            $this->components->twoColumnDetail(
-                $this->escape($row['label']),
-                $row['value'] === null ? null : $this->escape($row['value']),
-            );
+            $parts[] = strtolower($row['label']).': '.($row['value'] ?? '—');
+        }
+
+        return implode(' · ', $parts);
+    }
+
+    protected function advisories(CommandReport $report): void
+    {
+        foreach ($report->advisories() as $advisory) {
+            $color = $this->levelColor($advisory->level);
+
+            $this->callout($color, $this->escape($advisory->message));
+
+            foreach ($advisory->records as $record) {
+                $this->callout($color, '<fg=gray>'.$this->escape($record).'</>');
+            }
+
+            if ($advisory->hint) {
+                $this->callout($color, '<fg=gray>'.$this->escape($advisory->hint).'</>');
+            }
+
+            $this->output->newLine();
         }
     }
 
@@ -63,44 +117,52 @@ final class CommandRenderer
             return;
         }
 
-        $this->heading('Plan', $report->dryRun() ? 'DRY RUN' : null);
+        $rows = [];
 
-        $counts = $report->visibleCounts();
+        foreach ($report->visibleCounts() as $value => $count) {
+            $action = ReconciliationAction::from($value);
 
-        if ($counts === []) {
+            $rows[] = ['action' => $action, 'count' => $count, 'breakdown' => $report->reasonBreakdown($action)];
+        }
+
+        if ($rows === []) {
             $this->output->writeln('  <fg=gray>'.$this->emptyState($report).'</>');
             $this->output->newLine();
 
             return;
         }
 
-        foreach ($counts as $value => $count) {
-            $action = ReconciliationAction::from($value);
-            $breakdown = $report->reasonBreakdown($action);
+        $verbWidth = max(array_map(fn ($row) => mb_strlen($row['action']->label()), $rows));
+        $countWidth = max(array_map(
+            fn ($row) => max([strlen((string) $row['count']), ...array_map(strlen(...), array_map(strval(...), $row['breakdown']))]),
+            $rows,
+        ));
 
-            if (count($breakdown) > 1) {
-                $this->components->twoColumnDetail($this->escape($action->label()), (string) $count);
+        foreach ($rows as $row) {
+            $verb = sprintf('<fg=%s;options=bold>%s</>', $this->verbColor($row['action']), $this->escape($row['action']->label()));
+            $pad = str_repeat(' ', $verbWidth - mb_strlen($row['action']->label()));
+            $count = sprintf('<options=bold>%'.$countWidth.'s</>', $row['count']);
 
-                foreach ($breakdown as $reason => $reasonCount) {
-                    // Termwind collapses ordinary leading spaces inside component content.
-                    $indent = str_repeat("\u{00A0}", 10);
+            if (count($row['breakdown']) > 1) {
+                $this->output->writeln("  {$verb}{$pad}  {$count}");
 
-                    $this->components->twoColumnDetail(
-                        '<fg=gray>'.$indent.$this->escape($reason).'</>',
-                        '<fg=gray>'.$reasonCount.'</>',
-                    );
+                foreach ($row['breakdown'] as $reason => $reasonCount) {
+                    $indent = str_repeat(' ', $verbWidth);
+                    $sub = sprintf('%'.$countWidth.'s', $reasonCount);
+
+                    $this->output->writeln("  <fg=gray>{$indent}  {$sub}  ".$this->escape($reason).'</>');
                 }
 
                 continue;
             }
 
-            $reason = (string) array_key_first($breakdown);
+            $reason = (string) array_key_first($row['breakdown']);
+            $suffix = $reason !== '' ? '  <fg=gray>'.$this->escape($reason).'</>' : '';
 
-            $this->components->twoColumnDetail(
-                str_pad($this->escape($action->label()), 10).($reason ? ' <fg=gray>'.$this->escape($reason).'</>' : ''),
-                (string) $count,
-            );
+            $this->output->writeln("  {$verb}{$pad}  {$count}{$suffix}");
         }
+
+        $this->output->newLine();
     }
 
     protected function details(CommandReport $report): void
@@ -119,51 +181,36 @@ final class CommandRenderer
                 continue;
             }
 
-            if (! $rendered) {
-                $this->heading('Detail');
-                $rendered = true;
-            }
+            $rendered = true;
 
-            $this->output->writeln(sprintf('  <fg=%s>%s</>', $action->color(), $action->label()));
+            $this->output->writeln(sprintf('  <fg=%s;options=bold>%s</>', $this->verbColor($action), $this->escape($action->label())));
 
             foreach ($records as $record) {
                 $reason = $record->reason();
+                $line = '    '.$this->escape($record->display($full));
 
-                $this->components->twoColumnDetail(
-                    $this->escape($record->display($full)).($reason ? ' <fg=gray>'.$this->escape($reason).'</>' : ''),
-                    sprintf('<fg=%s>%s</>', $this->tokenColor($record), $record->token($report->tense())),
-                );
+                if ($reason) {
+                    $line .= '  <fg=gray>'.$this->escape($reason).'</>';
+                }
+
+                $line .= sprintf('  <fg=%s>%s</>', $this->tokenColor($record), $record->token($report->tense()));
+
+                $this->output->writeln($line);
 
                 if ($record->error) {
-                    $this->output->writeln('    <fg=red>'.$this->escape($record->error).'</>');
+                    $this->output->writeln('      <fg=red>'.$this->escape($record->error).'</>');
                 }
 
                 if ($full) {
                     foreach ($record->diagnostics as $label => $value) {
-                        $this->output->writeln('    <fg=gray>'.$this->escape($label).': '.$this->escape($value).'</>');
+                        $this->output->writeln('      <fg=gray>'.$this->escape($label).': '.$this->escape($value).'</>');
                     }
                 }
             }
         }
-    }
 
-    protected function advisories(CommandReport $report): void
-    {
-        foreach ($report->advisories() as $advisory) {
-            match ($advisory->level) {
-                AdvisoryLevel::Info => $this->components->info($this->escape($advisory->message)),
-                AdvisoryLevel::Warn => $this->components->warn($this->escape($advisory->message)),
-                AdvisoryLevel::Error => $this->components->error($this->escape($advisory->message)),
-            };
-
-            if ($advisory->records !== []) {
-                $this->components->bulletList(array_map($this->escape(...), $advisory->records));
-            }
-
-            if ($advisory->hint) {
-                $this->output->writeln('   <fg=gray>'.$this->escape($advisory->hint).'</>');
-                $this->output->newLine();
-            }
+        if ($rendered) {
+            $this->output->newLine();
         }
     }
 
@@ -179,19 +226,23 @@ final class CommandRenderer
             return;
         }
 
-        $this->components->error(count($failures) === 1 ? '1 failure' : count($failures).' failures');
+        foreach ($failures as $failure) {
+            $this->callout('red', '<options=bold>'.$this->escape($failure->id).'</>  <fg=gray>'.$this->escape($failure->error).'</>');
+        }
 
-        $this->components->bulletList(array_map(
-            fn (ReportFailure $failure) => $this->escape($failure->id ? "{$failure->id}: {$failure->error}" : $failure->error),
-            $failures,
-        ));
+        $this->output->newLine();
     }
 
     protected function summary(CommandReport $report): void
     {
         if ($override = $report->summaryOverride()) {
-            $this->badge($override['level'], $override['message']);
+            $this->summaryLine($this->summaryColor($override['level']), $override['message']);
 
+            return;
+        }
+
+        // An empty plan already printed its own line — a summary would repeat it.
+        if ($report->hasPlan() && ! $report->hasVisibleActions() && $report->failures() === []) {
             return;
         }
 
@@ -203,19 +254,24 @@ final class CommandRenderer
                 ? "{$body} pending."
                 : "{$report->subject()} — {$body}.";
 
-            $this->badge($failures ? AdvisoryLevel::Warn : AdvisoryLevel::Info, $message);
+            $this->summaryLine($failures ? 'yellow' : 'cyan', $message);
 
             return;
         }
 
         if ($failures) {
             $noun = $failures === 1 ? 'failure' : 'failures';
-            $this->badge(AdvisoryLevel::Warn, "{$report->subject()} finished with {$failures} {$noun} — {$body}.");
+            $this->summaryLine('yellow', "{$report->subject()} finished with {$failures} {$noun} — {$body}.");
 
             return;
         }
 
-        $this->badge(AdvisoryLevel::Info, "{$report->subject()} complete — {$body}.");
+        $this->summaryLine('green', "{$report->subject()} complete — {$body}.");
+    }
+
+    protected function summaryLine(string $color, string $message): void
+    {
+        $this->output->writeln("  <fg={$color}>●</> <options=bold>".$this->escape($message).'</>');
     }
 
     protected function sentences(CommandReport $report): string
@@ -246,37 +302,44 @@ final class CommandRenderer
         return $report->inventoryIsEmpty() ? 'No assets found.' : 'No action needed.';
     }
 
+    /** Gray actions render as plain text in the plan and detail lists. */
+    protected function verbColor(ReconciliationAction $action): string
+    {
+        $color = $action->color();
+
+        return $color === 'gray' ? 'default' : $color;
+    }
+
     protected function tokenColor(ReportRecord $record): string
     {
         return $record->status->isFailed() ? 'red' : $record->action->color();
     }
 
-    protected function badge(AdvisoryLevel $level, string $message): void
+    protected function summaryColor(AdvisoryLevel $level): string
     {
-        $message = $this->escape($message);
-
-        match ($level) {
-            AdvisoryLevel::Info => $this->components->info($message),
-            AdvisoryLevel::Warn => $this->components->warn($message),
-            AdvisoryLevel::Error => $this->components->error($message),
+        return match ($level) {
+            AdvisoryLevel::Info => 'green',
+            AdvisoryLevel::Warn => 'yellow',
+            AdvisoryLevel::Error => 'red',
         };
+    }
+
+    protected function levelColor(AdvisoryLevel $level): string
+    {
+        return match ($level) {
+            AdvisoryLevel::Info => 'blue',
+            AdvisoryLevel::Warn => 'yellow',
+            AdvisoryLevel::Error => 'red',
+        };
+    }
+
+    protected function callout(string $color, string $line): void
+    {
+        $this->output->writeln("  <fg={$color}>▎</> {$line}");
     }
 
     protected function escape(string $value): string
     {
         return OutputFormatter::escape($value);
-    }
-
-    protected function heading(string $label, ?string $suffix = null): void
-    {
-        $this->output->newLine();
-        $heading = "  <options=bold>{$label}</>";
-
-        if ($suffix !== null) {
-            $heading .= "  <fg=yellow;options=bold>{$suffix}</>";
-        }
-
-        $this->output->writeln($heading);
-        $this->output->newLine();
     }
 }

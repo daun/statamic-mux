@@ -71,7 +71,6 @@ it('reports an empty inventory instead of a plan', function () {
 
     $this->artisan(UploadCommand::class)
         ->expectsOutputToContain('No assets found.')
-        ->expectsOutputToContain('Upload complete — no assets found.')
         ->assertSuccessful();
 });
 
@@ -83,7 +82,6 @@ it('reports an idle plan when only internal skips remain', function () {
 
     $this->artisan(UploadCommand::class, ['-vv' => true])
         ->expectsOutputToContain('No action needed.')
-        ->expectsOutputToContain('Upload complete — no action needed.')
         ->doesntExpectOutputToContain($proxy->id())
         ->assertSuccessful();
 });
@@ -229,7 +227,7 @@ it('honors container scope and dry run without writing', function () {
 
     $this->artisan(UploadCommand::class, ['--container' => $container, '--dry-run' => true, '-v' => true])
         ->expectsOutputToContain($video->id())
-        ->expectsOutputToContain('DRY RUN')
+        ->expectsOutputToContain('Dry run')
         ->expectsOutputToContain('1 upload pending.')
         ->doesntExpectOutputToContain($other->id())
         ->assertSuccessful();

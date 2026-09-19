@@ -163,6 +163,6 @@ it('can be called by command name', function () {
     bindRelinkPlan([muxLocalRecord($video, ReconciliationState::Linked, ['muxId' => 'mux-id'])]);
 
     $this->artisan('mux:relink', ['--no-interaction' => true])
-        ->expectsOutputToContain('Relink complete — no action needed.')
+        ->expectsOutputToContain('No action needed.')
         ->assertSuccessful();
 });

@@ -39,24 +39,27 @@ function mirrorReport(Tense $tense = Tense::Planned): CommandReport
         ->count(ReconciliationAction::Skip, 7);
 }
 
-test('renders the context block', function () {
+test('omits the command name and context block at normal verbosity', function () {
     $output = renderReport(mirrorReport());
 
-    expect($output)->toContain('mux:mirror');
-    expect($output)->toContain('Plan DRY RUN');
-    expect(substr_count($output, 'DRY RUN'))->toBe(1);
-    expect($output)->toContain('Containers assets');
-    expect($output)->toContain('Local videos 11');
-    expect($output)->toContain('Mux assets 453');
-    expect($output)->toContain('Queue redis (background)');
+    expect($output)->not->toContain('mux:mirror');
+    expect($output)->not->toContain('Plan');
+    expect($output)->not->toContain('11 local');
+    expect($output)->toContain('Dry run — no changes will be made');
+    expect(substr_count($output, 'Dry run'))->toBe(1);
+});
+
+test('renders the context one-liner at -v', function () {
+    $output = renderReport(mirrorReport(), OutputInterface::VERBOSITY_VERBOSE);
+
+    expect($output)->toContain('container: assets · 11 local · 453 on Mux · queue: redis (background)');
 });
 
 test('renders only visible plan rows with a count of one or more', function () {
     $output = renderReport(mirrorReport());
 
-    expect($output)->toContain('Plan DRY RUN');
-    expect($output)->toContain('upload local videos not yet on Mux 1');
-    expect($output)->toContain('prune superseded by a newer upload 442');
+    expect($output)->toContain('upload 1 local videos not yet on Mux');
+    expect($output)->toContain('prune 442 superseded by a newer upload');
     expect($output)->not->toContain('keep');
     expect($output)->not->toContain('skip');
 });
@@ -73,13 +76,14 @@ test('renders multiple reasons as indented plan rows', function () {
 
     expect($output)
         ->toContain('prune 3')
-        ->toContain('local asset no longer exists 1')
-        ->toContain('expired placeholder clip 2')
+        ->toContain('1 local asset no longer exists')
+        ->toContain('2 expired placeholder clip')
         ->not->toContain('local asset no longer exists (1)');
 
+    // Sub-rows are indented past the verb column with aligned counts.
     expect($raw)
-        ->toMatch('/^  \x{00A0}{10}local asset no longer exists/mu')
-        ->toMatch('/^  \x{00A0}{10}expired placeholder clip/mu');
+        ->toMatch('/^ {2,}1 {2}local asset no longer exists$/mu')
+        ->toMatch('/^ {2,}2 {2}expired placeholder clip$/mu');
 });
 
 test('never renders per-record lines at normal verbosity', function () {
@@ -89,7 +93,6 @@ test('never renders per-record lines at normal verbosity', function () {
 test('renders the detail block at -v only', function () {
     $verbose = renderReport(mirrorReport(), OutputInterface::VERBOSITY_VERBOSE);
 
-    expect($verbose)->toContain('Detail');
     expect($verbose)->toContain('assets::trailer.mp4 local videos not yet on Mux UPLOAD');
 });
 
@@ -166,10 +169,13 @@ test('escapes dynamic console markup', function () {
 });
 
 test('renders a dry run summary without repeating the run mode', function () {
-    expect(renderReport(mirrorReport()))
+    $output = renderReport(mirrorReport());
+
+    expect($output)
         ->toContain('1 upload and 442 prunes pending.')
-        ->not->toContain('Dry run —')
         ->not->toContain('Nothing was changed.');
+
+    expect(substr_count($output, 'Dry run'))->toBe(1);
 });
 
 test('renders a completed summary in command-aware grammar', function () {
@@ -190,7 +196,7 @@ test('renders a failure summary and the failure list', function () {
 
     $output = renderReport($report);
 
-    expect($output)->toContain('assets::trailer.mp4: Boom');
+    expect($output)->toContain('assets::trailer.mp4 Boom');
     expect($output)->toContain('Upload finished with 1 failure — 1 uploaded.');
 });
 
@@ -202,20 +208,23 @@ test('renders an aborted summary override', function () {
     expect(renderReport($report))->toContain('Prune aborted — 2 assets could not be re-linked.');
 });
 
-test('distinguishes an empty inventory from an idle plan', function () {
+test('distinguishes an empty inventory from an idle plan without repeating it', function () {
     $empty = (new CommandReport('mux:prune', Tense::Applied))->scope([], locals: 0, remotes: 0);
     $idle = (new CommandReport('mux:prune', Tense::Applied))->scope([], locals: 4, remotes: 9);
 
-    expect(renderReport($empty))
-        ->toContain('No assets found.')
-        ->toContain('Prune complete — no assets found.');
+    $emptyOutput = renderReport($empty);
+    $idleOutput = renderReport($idle);
 
-    expect(renderReport($idle))
-        ->toContain('No action needed.')
-        ->toContain('Prune complete — no action needed.');
+    expect($emptyOutput)->toContain('No assets found.');
+    expect(substr_count($emptyOutput, 'assets found'))->toBe(1);
+    expect($emptyOutput)->not->toContain('complete');
+
+    expect($idleOutput)->toContain('No action needed.');
+    expect(substr_count($idleOutput, 'action needed'))->toBe(1);
+    expect($idleOutput)->not->toContain('complete');
 });
 
-test('omits the plan block for commands without an inventory', function () {
+test('always renders context rows for commands without an inventory', function () {
     $report = (new CommandReport('mux:debug', Tense::Applied))
         ->context('Credentials', 'OK')
         ->context('Queue', 'SYNC (not recommended)');

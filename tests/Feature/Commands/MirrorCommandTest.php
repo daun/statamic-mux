@@ -224,6 +224,6 @@ it('can be called by command name', function () {
     bindMirrorPlan([], []);
 
     $this->artisan('mux:mirror', ['--dry-run' => true])
-        ->expectsOutputToContain('Mirror — no assets found.')
+        ->expectsOutputToContain('No assets found.')
         ->assertSuccessful();
 });
