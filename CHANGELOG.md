@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.5.0]
+
+- Add `mux:relink` artisan command for recovering orphaned Mux encodings of local assets
+- Add `Relink` row action for reconnecting Mux library items with local assets
+- Improve artisan command output by classifying and grouping assets by update state
+
 ## [3.4.3]
 
 - Avoid upload retry while asset is still processing
