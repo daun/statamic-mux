@@ -14,10 +14,11 @@ no-op and returns a success message.
 | [**`mux:relink`**](/commands/mux-relink) | Reconnect local videos to existing videos on Mux |
 | [**`mux:debug`**](/commands/mux-debug) | Debug Mux configuration and setup |
 
-## Verbosity
+## Output
 
-Every command accepts a `-v` flag to increase verbosity. It can be used multiple times to increase the amount of
-output.
+### Verbosity
+
+Every command accepts a `-v` flag to control verbosity.
 
 | Flag | Output |
 | --- | --- |
@@ -26,9 +27,9 @@ output.
 | `-v` | Lists every affected record with reason and status. |
 | `-vv` | Adds full Mux IDs, candidate comparisons, resolutions and statuses. |
 
-## JSON output {#json-output}
+### JSON {#json-output}
 
-Every command accepts `--json`. It suppresses all human output and writes a single object to stdout:
+Every command accepts `--json` to write a single object to stdout.
 
 ```json
 {

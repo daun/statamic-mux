@@ -2,20 +2,37 @@
 
 **Upload local video assets to Mux.**
 
-Videos already linked to Mux are skipped, unless the `--force` flag is set.
+Videos already linked to Mux are kept as they are, unless `--force` is set.
 
-Use `--dry-run` to print a list of affected files without actually performing the upload.
+## Usage
 
 ```sh
-# Upload videos to Mux, skip existing videos
 php artisan mux:upload
 
 # Upload videos to Mux, reupload existing videos
 php artisan mux:upload --force
 
+# Print the plan without uploading anything
+php artisan mux:upload --dry-run
+
 # Only upload videos from one asset container
 php artisan mux:upload --container=videos
+```
 
-# Perform a trial run and print a list of affected files
-php artisan mux:upload --dry-run
+## Options
+
+| Option | Description |
+| --- | --- |
+| `--container=` | Limit the command to one asset container |
+| `--force` | Reupload videos that are already linked to Mux |
+| `--dry-run` | Print the plan without uploading anything |
+| `--json` | Print a single machine-readable JSON object instead of human output |
+
+## Output
+
+```sh
+upload  3  local videos not yet on Mux
+keep    8
+
+● 3 uploads and 8 kept pending.
 ```
